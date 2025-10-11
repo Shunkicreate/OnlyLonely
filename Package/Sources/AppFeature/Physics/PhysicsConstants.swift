@@ -36,8 +36,8 @@ struct PhysicsConstants {
     static var windForceSensitivity: Float = 1.6
 
     /// 風力の上限（感度適用後）
-    static var windForce() -> Float {
-        
+    static func windForce(force: Float) -> Float {
+        return force * 50.0
     }
 
     /// 地面ラインのY座標（SpriteKit空間）

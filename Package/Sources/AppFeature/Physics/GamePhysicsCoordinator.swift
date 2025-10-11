@@ -78,7 +78,7 @@ class GamePhysicsCoordinator: ObservableObject {
         guard let player = resolveSlot(for: playerId) else { return }
 
         let scaledForce = force * PhysicsConstants.windForceSensitivity
-        let clampedForce = max(0, min(PhysicsConstants.maxWindForce, scaledForce))
+        let clampedForce = max(0, PhysicsConstants.windForce(force: force))
         latestForceInputs[player] = clampedForce
 
         let normalizedRoll = normalizeRoll(roll)
