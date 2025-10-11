@@ -7,5 +7,9 @@
 		<string>_nearby-devices._udp</string>
 		<string>_nearby-devices._tcp</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>07にくまるフォント.otf</string>
+	</array>
 </dict>
 </plist>

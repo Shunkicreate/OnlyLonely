@@ -148,19 +148,22 @@ HarajukuColors.candyGradient
 ### フォントファミリー
 
 ```swift
-// HarajukuTypography として実装済み
-
-// メインフォント
-.rounded  // .systemFont(design: .rounded)
+// デフォルトフォント: 07にくまるフォント
+Font.nikumaru(size: 18)  // カスタムフォント
 // 用途: すべてのテキスト（原則）
 
-// サブフォント
-.heavy    // .system(weight: .heavy)
-// 用途: 大きな数字、インパクトのあるタイトル
+// アプリ専用フォント拡張
+Font.appTitle(size: 48)      // タイトル用（大）
+Font.appHeadline(size: 32)   // 見出し用（中）
+Font.appBody(size: 18)       // 本文用（小）
+Font.appCaption(size: 14)    // キャプション用（極小）
 
-.bold     // .system(weight: .bold)
-// 用途: 強調したいテキスト
+// フォールバック（システムフォント）
+.system(size: 18, weight: .bold, design: .rounded)
+// 用途: にくまるフォントが使えない場合のみ
 ```
+
+**重要**: すべてのテキストで `Font.nikumaru()` または `Font.appTitle()` などの専用メソッドを使用してください。
 
 ### フォントサイズと用途
 

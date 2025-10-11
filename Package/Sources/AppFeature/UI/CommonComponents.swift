@@ -32,7 +32,7 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 20, weight: .medium, design: .rounded))
+                .nikumaruBody(size: 20)
                 .tracking(3)
                 .foregroundColor(.white)
                 .padding(.horizontal, 40)
@@ -70,7 +70,7 @@ struct GhostButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 16, weight: .light, design: .rounded))
+                .nikumaruBody(size: 16)
                 .tracking(2)
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.horizontal, 30)
@@ -143,7 +143,7 @@ struct GlowText: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: size, weight: .ultraLight, design: .rounded))
+            .nikumaru(size: size)
             .tracking(6)
             .foregroundColor(.white)
             .shadow(color: glowColor.opacity(0.8), radius: 10, x: 0, y: 0)
@@ -165,7 +165,7 @@ struct TypewriterText: View {
 
     var body: some View {
         Text(displayedText)
-            .font(.system(size: 20, weight: .light, design: .rounded))
+            .nikumaruBody(size: 20)
             .tracking(2)
             .foregroundColor(.white.opacity(0.9))
             .onAppear {
@@ -213,7 +213,7 @@ struct BreathMeter: View {
 
             // 中央のテキスト
             Text("\(Int(level * 100))%")
-                .font(.system(size: 32, weight: .bold, design: .monospaced))
+                .nikumaruHeadline(size: 32)
                 .foregroundColor(.white)
         }
         .frame(width: 200, height: 200)

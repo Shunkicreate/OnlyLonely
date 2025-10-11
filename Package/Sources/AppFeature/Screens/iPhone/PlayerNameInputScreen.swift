@@ -55,8 +55,7 @@ struct PlayerNameInputScreen: View {
                     .offset(y: showContent ? 0 : -20)
 
                     Text("🎈 ふうせんにかいてね 🎈")
-                        .font(HarajukuTypography.body(size: 16))
-                        .fontWeight(.semibold)
+                        .nikumaruBody(size: 16)
                         .foregroundColor(HarajukuColors.textSecondary)
                         .opacity(showContent ? 1 : 0)
                         .offset(y: showContent ? 0 : -10)
@@ -85,23 +84,22 @@ struct PlayerNameInputScreen: View {
                     )
 
                     Text("ふうせんにかざられるよ！")
-                        .font(HarajukuTypography.caption(size: 12))
-                        .fontWeight(.semibold)
+                        .nikumaruCaption(size: 12)
                         .foregroundColor(HarajukuColors.textSecondary)
 
                     // 文字数カウンター
                     HStack(spacing: 4) {
                         Text("\(playerName.count)")
+                            .nikumaruCaption(size: 11)
                             .foregroundColor(playerName.count > maxNameLength ? Color(hex: "#FF6B9D") : HarajukuColors.pastelPurple)
                         Text("/ \(maxNameLength) もじ")
+                            .nikumaruCaption(size: 11)
                             .foregroundColor(HarajukuColors.textSecondary)
                     }
-                    .font(HarajukuTypography.caption(size: 11))
-                    .fontWeight(.medium)
 
                     // バリデーションエラーメッセージ領域（固定高さでレイアウト崩れ防止）
                     Text(nameError ?? " ")
-                        .font(HarajukuTypography.caption(size: 12))
+                        .nikumaruCaption(size: 12)
                         .foregroundColor(Color(hex: "#FF6B9D"))
                         .multilineTextAlignment(.center)
                         .opacity(nameError != nil ? 1 : 0)
@@ -126,8 +124,7 @@ struct PlayerNameInputScreen: View {
                     .opacity(showContent ? (isValidInput ? 1.0 : 0.5) : 0)
 
                     Text(playerName.isEmpty ? "なまえをいれてね" : "'\(playerName)' でさんかするよ！")
-                        .font(HarajukuTypography.caption(size: 12))
-                        .fontWeight(.medium)
+                        .nikumaruCaption(size: 12)
                         .foregroundColor(HarajukuColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, HarajukuSpacing.xl)
