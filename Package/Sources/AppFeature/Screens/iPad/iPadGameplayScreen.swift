@@ -11,11 +11,17 @@ import SpriteKit
 
 struct iPadGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @StateObject private var gameManager = GameManager()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
+    @StateObject private var screenModel: iPadGameplayScreenModel
 
     @State private var playerAAltitude: Double = 0
     @State private var playerBAltitude: Double = 0
+
+    init() {
+        _screenModel = StateObject(wrappedValue: iPadGameplayScreenModel())
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -143,9 +149,13 @@ struct iPadGameplayScreen: View {
             }
         }
         .onAppear {
+            screenModel.configure(sessionManager: sessionManager)
             gameManager.startGame()
             // TODO: 雲データ読み込み
             // try? physicsCoordinator.loadCloudData(json: "...")
+        }
+        .onDisappear {
+            screenModel.cancelSubscriptions()
         }
         .onChange(of: gameManager.gamePhase) { _, newPhase in
             if newPhase == .finished {
@@ -333,4 +343,5 @@ class GameScene: SKScene {
 #Preview {
     iPadGameplayScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(P2PSessionManager())
 }

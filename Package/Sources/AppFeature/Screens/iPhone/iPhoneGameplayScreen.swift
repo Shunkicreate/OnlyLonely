@@ -12,14 +12,23 @@ import UIKit
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @EnvironmentObject private var connectionModel: ConnectionScreenModel
     @StateObject private var micLevelManager = MicrophoneLevelManager()
     @StateObject private var motionManager = MotionManager()
+    @StateObject private var screenModel: iPhoneGameplayScreenModel
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
     @State private var gameTimer: Timer?
     @State private var altitudeTimer: Timer?
+
+    private let playerId: String
+
+    init(playerId: String = "A") {
+        _screenModel = StateObject(wrappedValue: iPhoneGameplayScreenModel())
+        self.playerId = playerId
+    }
 
     var body: some View {
         ZStack {
@@ -113,12 +122,15 @@ struct iPhoneGameplayScreen: View {
             }
         }
         .onAppear {
+            screenModel.configure(sessionManager: sessionManager, playerId: playerId)
+            screenModel.bindInputs(microphone: micLevelManager, motionManager: motionManager)
             startGame()
         }
         .onDisappear {
             micLevelManager.stopMonitoring()
             motionManager.stopDeviceMotionUpdates()
             stopTimers()
+            screenModel.cancelBindings()
         }
         .navigationBarBackButtonHidden()
     }
