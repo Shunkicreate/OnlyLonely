@@ -30,7 +30,7 @@
 | -------------- | -------------------------------------------- |
 | 言語           | Swift 5.9                                    |
 | フレームワーク | SwiftUI / SpriteKit / AVFoundation / Network |
-| 通信方式       | WebSocket (URLSessionWebSocketTask)          |
+| 通信方式       | MultipeerConnectivity (P2P)                   |
 | 音声入力       | AVAudioEngine + RMS 音圧計算                 |
 | 物理演算       | SpriteKit PhysicsBody                        |
 | デバイス構成   | iPad（サーバー）＋ iPhone ×2（クライアント） |
@@ -42,12 +42,12 @@
 
 ### 通信方式
 
-- WebSocket (LAN 通信) によるリアルタイム同期
-- iPad がサーバー、iPhone がクライアント
+- MultipeerConnectivity によるローカル P2P 通信
+- iPad がホスト（Advertiser + Browser）、iPhone がゲスト（Advertiser）
 
 ### 通信フォーマット（JSON）
 
-#### iPhone → iPad
+#### iPhone → iPad（P2P メッセージ）
 
 ```json
 {
@@ -59,7 +59,7 @@
 
 **Note**: `force` は息の強さを表し、風船を持った子供を上昇させます。
 
-#### iPad → iPhone
+#### iPad → iPhone（P2P メッセージ）
 
 ```json
 {
@@ -81,7 +81,7 @@
 
 ### 今後定義すべきメッセージ
 
-- [ ] 接続確立メッセージ
+- [ ] 接続確立メッセージ（P2P 接続時のロール/参加通知）
 - [ ] ゲーム開始メッセージ
 - [ ] ゲーム終了メッセージ
 - [ ] エラーメッセージ
@@ -224,11 +224,11 @@ func handleLightningHit() {
 
 ## アーキテクチャ設計
 
-### iPad (サーバー側)
+### iPad (ホスト側)
 
 - TBD
 
-### iPhone (クライアント側)
+### iPhone (ゲスト側)
 
 - TBD
 
@@ -258,7 +258,7 @@ func handleLightningHit() {
 ## 開発者向けメモ
 
 - マイク音圧は `AVAudioEngine` + RMS 計算で取得
-- 通信は `URLSessionWebSocketTask` (LAN 内接続前提)
+- 通信は `MultipeerConnectivity` を使用
 - キャリブレーション画面で感度調整必須
 - 音声データは送らず、音圧値のみ送信
 - SpriteKit の `SKEmitterNode` で風・粒子演出
