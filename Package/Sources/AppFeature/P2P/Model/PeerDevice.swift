@@ -8,7 +8,25 @@
 import Foundation
 import MultipeerConnectivity
 
+enum PeerConnectionStatus: Equatable {
+    case available
+    case invited
+    case awaitingResponse
+    case connected
+}
+
 struct PeerDevice: Identifiable, Hashable {
-    let id = UUID()
     let peerId: MCPeerID
+    var status: PeerConnectionStatus = .available
+
+    var id: String { peerId.displayName }
+    var displayName: String { peerId.displayName }
+
+    static func == (lhs: PeerDevice, rhs: PeerDevice) -> Bool {
+        lhs.peerId == rhs.peerId
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(peerId)
+    }
 }

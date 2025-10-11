@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PlayerNameInputScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var playerName: String = ""
     @State private var isFloating = false
     @State private var showContent = false
@@ -88,6 +89,14 @@ struct PlayerNameInputScreen: View {
                         .font(HarajukuTypography.caption(size: 12))
                         .fontWeight(.semibold)
                         .foregroundColor(HarajukuColors.textSecondary)
+                        .overlay(alignment: .trailing) {
+                            if sessionManager.connectedPeers.isEmpty {
+                                Text("⏳ せつぞくをまってるよ")
+                                    .font(HarajukuTypography.caption(size: 10))
+                                    .foregroundColor(HarajukuColors.textSecondary.opacity(0.8))
+                                    .padding(.top, 4)
+                            }
+                        }
 
                     // 文字数カウンター
                     HStack(spacing: 4) {
@@ -122,7 +131,7 @@ struct PlayerNameInputScreen: View {
                     ) {
                         joinGame()
                     }
-                    .disabled(!isValidInput)
+                    .disabled(sessionManager.connectedPeers.isEmpty || !isValidInput)
                     .opacity(showContent ? (isValidInput ? 1.0 : 0.5) : 0)
 
                     Text(playerName.isEmpty ? "なまえをいれてね" : "'\(playerName)' でさんかするよ！")
@@ -192,9 +201,7 @@ struct PlayerNameInputScreen: View {
     }
 
     private func joinGame() {
-        // バリデーションチェック
-        guard isValidInput else { return }
-
+        guard !sessionManager.connectedPeers.isEmpty || isValidInput else { return }
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
@@ -232,6 +239,8 @@ private struct PlayerBalloonView: View {
 }
 
 #Preview {
-    PlayerNameInputScreen()
+    let sessionManager = P2PSessionManager()
+    return PlayerNameInputScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
 }

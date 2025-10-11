@@ -4,8 +4,10 @@
 <dict>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_nearby-devices._udp</string>
-		<string>_nearby-devices._tcp</string>
+		<string>_onlylonelyp2p._tcp</string>
+		<string>_onlylonelyp2p._udp</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>近くのデバイスと直接通信してゲームをプレイするためにローカルネットワークを利用します。</string>
 </dict>
 </plist>

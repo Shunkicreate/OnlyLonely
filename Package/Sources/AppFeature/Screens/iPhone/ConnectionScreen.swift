@@ -10,34 +10,17 @@ import SwiftUI
 
 struct ConnectionScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
-    @StateObject private var webSocketService = WebSocketService()
+    @EnvironmentObject private var connectionModel: ConnectionScreenModel
 
-    @State private var ipAddress: String = "192.168.1.100"
-    @State private var port: String = "8080"
-    @State private var connectionState: ConnectionState = .idle
-    @State private var errorMessage: String = ""
     @State private var isPulsing = false
     @State private var rotationAngle: Double = 0
     @State private var sparkleRotation: Double = 0
 
-    // バリデーション状態
-    @State private var ipAddressError: String? = nil
-    @State private var portError: String? = nil
-
-    enum ConnectionState {
-        case idle
-        case connecting
-        case connected
-        case failed
-    }
-
     var body: some View {
         ZStack {
-            // カラフル虹色背景
             RainbowBackground()
                 .ignoresSafeArea()
 
-            // ふわふわ雲
             FluffyCloudBackground()
                 .ignoresSafeArea()
                 .opacity(0.4)
@@ -45,9 +28,7 @@ struct ConnectionScreen: View {
             VStack(spacing: HarajukuSpacing.xl) {
                 Spacer()
 
-                // タイトルセクション
                 VStack(spacing: HarajukuSpacing.md) {
-                    // きらきら装飾
                     HStack(spacing: 12) {
                         Text("✨")
                             .font(.system(size: 24))
@@ -59,86 +40,68 @@ struct ConnectionScreen: View {
                     }
                     .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
 
-                    Text("おなじWi-Fiでつながろう！")
+                    Text("近くの iPad とふわっとペアリングしよう！")
                         .font(HarajukuTypography.body(size: 14))
                         .fontWeight(.semibold)
                         .foregroundColor(HarajukuColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
-                // 接続状態インジケーター
-                ConnectionIndicator(state: connectionState, isPulsing: $isPulsing, rotationAngle: $rotationAngle)
-                    .frame(height: 140)
-                    .padding(.vertical, HarajukuSpacing.lg)
+                ConnectionIndicator(
+                    state: connectionModel.phase,
+                    isPulsing: $isPulsing,
+                    rotationAngle: $rotationAngle
+                )
+                .frame(height: 140)
+                .padding(.vertical, HarajukuSpacing.lg)
 
-                // 入力フィールド
-                VStack(spacing: HarajukuSpacing.lg) {
-                    // IP アドレス入力
-                    FluffyTextField(
-                        placeholder: "192.168.1.100",
-                        text: $ipAddress,
-                        emoji: "🌐",
-                        gradient: HarajukuColors.skyGradient,
-                        borderColor: HarajukuColors.pastelBlue,
-                        keyboardType: .decimalPad,
-                        isDisabled: connectionState == .connecting
-                    )
+                VStack(spacing: HarajukuSpacing.md) {
+                    if connectionModel.phase == .idle {
+                        Text("iPadで「接続待機画面」をひらいてから\nせつぞくボタンをおしてね")
+                            .font(HarajukuTypography.body(size: 14))
+                            .foregroundColor(HarajukuColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
 
-                    // ポート番号入力
-                    FluffyTextField(
-                        placeholder: "8080",
-                        text: $port,
-                        emoji: "🔌",
-                        gradient: HarajukuColors.blueMintGradient,
-                        borderColor: HarajukuColors.pastelMint,
-                        keyboardType: .numberPad,
-                        isDisabled: connectionState == .connecting
-                    )
-                }
-                .padding(.horizontal, HarajukuSpacing.xl)
+                    if connectionModel.phase == .connecting {
+                        if let host = connectionModel.hostDisplayName {
+                            Label("\(host) とペアリング中…", systemImage: "sparkles")
+                                .font(HarajukuTypography.body(size: 14))
+                                .foregroundColor(HarajukuColors.pastelPurple)
+                        } else {
+                            Label("iPadがあなたをみつけるのを待ってるよ", systemImage: "antenna.radiowaves.left.and.right")
+                                .font(HarajukuTypography.body(size: 14))
+                                .foregroundColor(HarajukuColors.pastelBlue)
+                        }
+                    }
 
-                // QR コードボタン
-                FluffyOutlineButton(
-                    title: "QRコードでつなぐ",
-                    emoji: "📷",
-                    color: HarajukuColors.pastelPurple
-                ) {
-                    // QR コードスキャン機能（後で実装）
-                }
-                .padding(.top, HarajukuSpacing.sm)
+                    if connectionModel.phase == .connected, let host = connectionModel.hostDisplayName {
+                        Label("\(host) とつながったよ！", systemImage: "checkmark.circle.fill")
+                            .font(HarajukuTypography.body(size: 14))
+                            .foregroundColor(HarajukuColors.pastelMint)
+                    }
 
-                // バリデーションエラーメッセージ領域（固定高さでレイアウト崩れ防止）
-                VStack(spacing: 4) {
-                    Text(ipAddressError ?? " ")
-                        .font(HarajukuTypography.caption(size: 12))
-                        .foregroundColor(Color(hex: "#FF6B9D"))
-                        .multilineTextAlignment(.center)
-                        .opacity(ipAddressError != nil ? 1 : 0)
-                        .frame(minHeight: 16)
-
-                    Text(portError ?? " ")
-                        .font(HarajukuTypography.caption(size: 12))
-                        .foregroundColor(Color(hex: "#FF6B9D"))
-                        .multilineTextAlignment(.center)
-                        .opacity(portError != nil ? 1 : 0)
-                        .frame(minHeight: 16)
+                    if connectionModel.isAdvertising {
+                        Text("いま、あなたの iPhone からシグナルをとばしてるよ")
+                            .font(HarajukuTypography.caption(size: 12))
+                            .foregroundColor(HarajukuColors.textSecondary)
+                    }
                 }
                 .padding(.horizontal, HarajukuSpacing.xl)
 
                 // 接続ボタン
                 FluffyButton(
-                    title: connectionState == .connecting ? "つなぎちゅう..." : "せつぞく！",
-                    emoji: connectionState == .connecting ? "🔄" : "🎈",
+                    title: buttonTitle,
+                    emoji: buttonEmoji,
                     gradient: HarajukuColors.candyGradient,
                     shadowColor: HarajukuColors.pastelPink
                 ) {
                     connect()
                 }
-                .disabled(connectionState == .connecting || !isValidInput)
-                .opacity((connectionState == .connecting || !isValidInput) ? 0.5 : 1.0)
+                .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
+                .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
                 .padding(.top, HarajukuSpacing.lg)
 
-                // 状態メッセージ
                 VStack(spacing: HarajukuSpacing.sm) {
                     HStack(spacing: 6) {
                         Text(statusEmoji)
@@ -149,10 +112,11 @@ struct ConnectionScreen: View {
                             .foregroundColor(statusColor)
                     }
 
-                    if !errorMessage.isEmpty {
+                    if let errorMessage = connectionModel.errorMessage {
                         Text(errorMessage)
                             .font(HarajukuTypography.caption(size: 12))
                             .foregroundColor(Color(hex: "#FF6B9D").opacity(0.8))
+                            .multilineTextAlignment(.center)
                     }
                 }
                 .multilineTextAlignment(.center)
@@ -166,25 +130,81 @@ struct ConnectionScreen: View {
             withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
                 sparkleRotation = 360
             }
-            // 初期バリデーション
-            ipAddressError = validateIPAddress(ipAddress)
-            portError = validatePort(port)
         }
-        .onChange(of: ipAddress) { _, newValue in
-            ipAddressError = validateIPAddress(newValue)
+        .onChange(of: connectionModel.phase) { phase in
+            switch phase {
+            case .connecting:
+                withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                    rotationAngle = 360
+                }
+            default:
+                rotationAngle = 0
+            }
+
+            if phase == .failed {
+                let feedback = UINotificationFeedbackGenerator()
+                feedback.notificationOccurred(.error)
+            }
         }
-        .onChange(of: port) { _, newValue in
-            portError = validatePort(newValue)
+        .onChange(of: connectionModel.isReadyToProceed) { ready in
+            guard ready else { return }
+
+            withAnimation(HarajukuAnimation.bounce(duration: 0.6)) {
+                rotationAngle = 0
+            }
+
+            let feedback = UINotificationFeedbackGenerator()
+            feedback.notificationOccurred(.success)
+
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+//                coordinator.navigate(to: .playerNameInput)
+//            }
         }
         .navigationBarBackButtonHidden()
+        .alert(
+            "接続リクエスト",
+            isPresented: invitationAlertBinding,
+            presenting: connectionModel.hostDisplayName
+        ) { host in
+            Button("承認する") {
+                connectionModel.acceptInvitation()
+            }
+            Button("今回はやめる", role: .cancel) {
+                connectionModel.declineInvitation()
+            }
+        } message: { host in
+            Text("\(host) から接続リクエストが届きました。\n接続を承認しますか？")
+        }
+    }
+
+    private var buttonTitle: String {
+        switch connectionModel.phase {
+        case .idle, .failed:
+            return "せつぞく！"
+        case .connecting:
+            return "つなぎちゅう..."
+        case .connected:
+            return "つながった！"
+        }
+    }
+
+    private var buttonEmoji: String {
+        switch connectionModel.phase {
+        case .idle, .failed:
+            return "🎈"
+        case .connecting:
+            return "🔄"
+        case .connected:
+            return "✨"
+        }
     }
 
     private var statusMessage: String {
-        switch connectionState {
+        switch connectionModel.phase {
         case .idle:
-            return "じょうほうをいれてね"
+            return "iPadで接続待機画面をひらいてね"
         case .connecting:
-            return "iPadをさがしてるよ..."
+            return connectionModel.hostDisplayName != nil ? "iPadとつながり中..." : "iPadをよんでいるよ..."
         case .connected:
             return "つながったよ！"
         case .failed:
@@ -193,7 +213,7 @@ struct ConnectionScreen: View {
     }
 
     private var statusEmoji: String {
-        switch connectionState {
+        switch connectionModel.phase {
         case .idle:
             return "💭"
         case .connecting:
@@ -206,7 +226,7 @@ struct ConnectionScreen: View {
     }
 
     private var statusColor: Color {
-        switch connectionState {
+        switch connectionModel.phase {
         case .idle:
             return HarajukuColors.textSecondary
         case .connecting:
@@ -218,132 +238,44 @@ struct ConnectionScreen: View {
         }
     }
 
-    // MARK: - バリデーション関数
-
-    private func validateIPAddress(_ ip: String) -> String? {
-        // 空欄チェック
-        if ip.isEmpty {
-            return nil // デフォルト値を使用
-        }
-
-        // IPv4形式チェック
-        let components = ip.split(separator: ".")
-        guard components.count == 4 else {
-            return "IPアドレスは xxx.xxx.xxx.xxx の形式で入力してね"
-        }
-
-        // 各オクテットのバリデーション
-        for component in components {
-            guard let value = Int(component), value >= 0 && value <= 255 else {
-                return "各数字は 0〜255 の範囲で入力してね"
-            }
-        }
-
-        return nil // エラーなし
-    }
-
-    private func validatePort(_ portString: String) -> String? {
-        // 空欄チェック
-        if portString.isEmpty {
-            return nil // デフォルト値を使用
-        }
-
-        // 数値チェック
-        guard let portNumber = Int(portString) else {
-            return "ポート番号は数字だけ入力してね"
-        }
-
-        // 範囲チェック
-        guard portNumber >= 1024 && portNumber <= 65535 else {
-            return "ポート番号は 1024〜65535 の範囲で入力してね"
-        }
-
-        // 桁数チェック
-        guard portString.count <= 5 else {
-            return "ポート番号は5桁以内で入力してね"
-        }
-
-        return nil // エラーなし
-    }
-
-    private var isValidInput: Bool {
-        ipAddressError == nil && portError == nil && !ipAddress.isEmpty && !port.isEmpty
-    }
-
     // MARK: - 接続処理
 
     private func connect() {
-        // バリデーション実行
-        ipAddressError = validateIPAddress(ipAddress)
-        portError = validatePort(port)
-
-        if !isValidInput {
-            errorMessage = "ただしいばんごうをいれてね"
-            withAnimation(HarajukuAnimation.jump) {
-                connectionState = .failed
-            }
-            return
-        }
-
-        guard let portNumber = Int(port) else {
+        guard connectionModel.phase != .connecting && connectionModel.phase != .connected else {
             return
         }
 
         withAnimation(HarajukuAnimation.bounce(duration: 0.5)) {
-            connectionState = .connecting
-            errorMessage = ""
+            connectionModel.connect()
         }
 
-        // 回転アニメーション開始
-        withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
-            rotationAngle = 360
-        }
+        rotationAngle = 0
 
-        Task {
-            do {
-                try await webSocketService.connectToServer(host: ipAddress, port: portNumber)
-                await MainActor.run {
-                    withAnimation(HarajukuAnimation.bounce(duration: 0.6)) {
-                        connectionState = .connected
-                        rotationAngle = 0
-                    }
+        let feedback = UIImpactFeedbackGenerator(style: .medium)
+        feedback.impactOccurred()
+    }
 
-                    // 触覚フィードバック
-                    let successFeedback = UINotificationFeedbackGenerator()
-                    successFeedback.notificationOccurred(.success)
-
-                    // 接続成功後、プレイヤー名入力画面へ遷移
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        coordinator.navigate(to: .playerNameInput)
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    withAnimation(HarajukuAnimation.wiggle()) {
-                        connectionState = .failed
-                        errorMessage = error.localizedDescription
-                        rotationAngle = 0
-                    }
-
-                    // 触覚フィードバック
-                    let errorFeedback = UINotificationFeedbackGenerator()
-                    errorFeedback.notificationOccurred(.error)
+    private var invitationAlertBinding: Binding<Bool> {
+        Binding(
+            get: { connectionModel.invitationReceived },
+            set: { isPresented in
+                if !isPresented {
+                    connectionModel.dismissInvitationPrompt()
                 }
             }
-        }
+        )
     }
 }
 
 // MARK: - Connection Indicator
 
 private struct ConnectionIndicator: View {
-    let state: ConnectionScreen.ConnectionState
+    let state: ConnectionScreenModel.ConnectionPhase
     @Binding var isPulsing: Bool
     @Binding var rotationAngle: Double
 
     var body: some View {
         ZStack {
-            // ふわふわ外側のリング
             Circle()
                 .stroke(
                     LinearGradient(
@@ -362,7 +294,6 @@ private struct ConnectionIndicator: View {
                 .opacity(isPulsing ? 0.4 : 0.7)
                 .animation(HarajukuAnimation.bounce(duration: 1.5), value: isPulsing)
 
-            // 虹色リング（接続中のみ回転）
             if state == .connecting {
                 Circle()
                     .trim(from: 0, to: 0.6)
@@ -375,7 +306,6 @@ private struct ConnectionIndicator: View {
                     .harajukuShadow(color: HarajukuColors.pastelPink)
             }
 
-            // ふわふわ中央アイコン
             ZStack {
                 Circle()
                     .fill(
@@ -402,6 +332,7 @@ private struct ConnectionIndicator: View {
     }
 
     private var iconEmoji: String {
+        print("👹 \(state)")
         switch state {
         case .idle:
             return "📡"
@@ -429,6 +360,10 @@ private struct ConnectionIndicator: View {
 }
 
 #Preview {
-    ConnectionScreen()
+    let sessionManager = P2PSessionManager()
+    let model = ConnectionScreenModel(sessionManager: sessionManager)
+    return ConnectionScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
+        .environmentObject(model)
 }

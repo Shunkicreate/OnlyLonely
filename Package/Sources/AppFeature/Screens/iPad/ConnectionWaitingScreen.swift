@@ -10,11 +10,7 @@ import SwiftUI
 
 struct ConnectionWaitingScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
-    @StateObject private var webSocketService = WebSocketService()
-    @State private var playerAState: PlayerState = .disconnected
-    @State private var playerBState: PlayerState = .disconnected
-    @State private var serverIP: String = "192.168.1.100"
-    @State private var serverPort: Int = 8080
+    @EnvironmentObject private var connectionModel: ConnectionWaitinScreenModel
 
     var body: some View {
         ZStack {
@@ -36,22 +32,56 @@ struct ConnectionWaitingScreen: View {
 
                 // 接続情報
                 VStack(spacing: 8) {
-                    Text("接続情報: \(serverIP):\(serverPort)")
-                        .font(.system(size: 18, design: .monospaced))
+                    Text("ホスト端末: \(connectionModel.hostDisplayName)")
+                        .font(.system(size: 18, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
+
+                    if connectionModel.isBrowsing {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            Text("近くのプレイヤーを探索中")
+                                .font(.system(size: 16, design: .rounded))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    } else {
+                        Text("探索を停止中")
+                            .font(.system(size: 16, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+
+                    if !connectionModel.connectedPeerNames.isEmpty {
+                        Text("接続済み: \(connectionModel.connectedPeerNames.joined(separator: ", "))")
+                            .font(.system(size: 16, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+
+                    if let error = connectionModel.errorMessage {
+                        Text(error)
+                            .font(.system(size: 14, design: .rounded))
+                            .foregroundColor(.red.opacity(0.8))
+                    }
                 }
                 .padding(.vertical, 20)
+
+                WaitingGuestList(
+                    guests: connectionModel.discoveredGuests,
+                    inviteAction: { guest in
+                        connectionModel.invitePeer(guest)
+                    }
+                )
+                .padding(.horizontal, 40)
 
                 // プレイヤー状態表示
                 VStack(spacing: 16) {
                     PlayerStatusCard(
                         playerName: "Player A",
-                        state: playerAState
+                        state: connectionModel.playerState(for: .playerA)
                     )
 
                     PlayerStatusCard(
                         playerName: "Player B",
-                        state: playerBState
+                        state: connectionModel.playerState(for: .playerB)
                     )
                 }
                 .padding(.horizontal, 40)
@@ -84,7 +114,7 @@ struct ConnectionWaitingScreen: View {
 
                 // キャンセルボタン
                 Button {
-                    webSocketService.stopServer()
+                    connectionModel.stopHosting()
                     coordinator.navigateToRoot()
                 } label: {
                     Text("キャンセル")
@@ -101,42 +131,19 @@ struct ConnectionWaitingScreen: View {
             }
         }
         .onAppear {
-            startServer()
+            connectionModel.startHosting()
         }
-        .onChange(of: playerAState) { _, _ in
-            checkReadyToStart()
-        }
-        .onChange(of: playerBState) { _, _ in
-            checkReadyToStart()
+        .onChange(of: connectionModel.isSessionReady) { ready in
+            handleReadinessChange(isReady: ready)
         }
         .navigationBarBackButtonHidden()
     }
 
-    private func startServer() {
-        Task {
-            do {
-                try await webSocketService.startServer(port: serverPort)
-                // Get local IP address
-                serverIP = getLocalIPAddress() ?? "192.168.1.100"
-            } catch {
-                print("Failed to start server: \(error)")
-            }
-        }
-    }
-
-    private func checkReadyToStart() {
-        if playerAState == .ready && playerBState == .ready {
-            // 両プレイヤー準備完了
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                coordinator.navigate(to: .iPadGameplay)
-            }
-        }
-    }
-
-    private func getLocalIPAddress() -> String? {
-        // 実装: ローカルIPアドレスを取得
-        // Network.framework を使用して実装
-        return "192.168.1.100" // プレースホルダー
+    private func handleReadinessChange(isReady: Bool) {
+        guard isReady else { return }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//            coordinator.navigate(to: .iPadGameplay)
+//        }
     }
 }
 
@@ -195,7 +202,129 @@ struct PlayerStatusCard: View {
     }
 }
 
+private struct WaitingGuestList: View {
+    let guests: [PeerDevice]
+    let inviteAction: (PeerDevice) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("近くのプレイヤー")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+
+            if guests.isEmpty {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("接続待機中の iPhone を探しています")
+                        .font(.system(size: 16, design: .rounded))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                )
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(guests) { guest in
+                        WaitingGuestRow(guest: guest) {
+                            inviteAction(guest)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct WaitingGuestRow: View {
+    let guest: PeerDevice
+    let inviteAction: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(guest.displayName)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(statusLabel)
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            Spacer()
+
+            statusIndicator
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.18))
+        )
+    }
+
+    private var statusIndicator: some View {
+        switch guest.status {
+        case .available:
+            return AnyView(
+                Button {
+                    inviteAction()
+                } label: {
+                    Text("接続する")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(red: 0.1, green: 0.3, blue: 0.6))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.white)
+                        )
+                }
+            )
+        case .invited, .awaitingResponse:
+            return AnyView(
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("承認待ち")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+            )
+        case .connected:
+            return AnyView(
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                    Text("接続済み")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+            )
+        }
+    }
+
+    private var statusLabel: String {
+        switch guest.status {
+        case .available:
+            return "タップして接続"
+        case .invited:
+            return "招待を送信中"
+        case .awaitingResponse:
+            return "相手の承認待ち"
+        case .connected:
+            return "接続完了"
+        }
+    }
+}
+
 #Preview {
-    ConnectionWaitingScreen()
+    let sessionManager = P2PSessionManager()
+    let model = ConnectionWaitinScreenModel(sessionManager: sessionManager)
+    return ConnectionWaitingScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
+        .environmentObject(model)
 }
