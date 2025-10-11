@@ -126,12 +126,9 @@ iPhone のみ
 
 ### 音圧計算
 
-```swift
-// RMS 計算（キャリブレーション済みの閾値を使用）
-let rms = sqrt(samples.map { $0 * $0 }.reduce(0, +) / Float(samples.count))
-let normalizedForce = (rms - minThreshold) / (maxThreshold - minThreshold)
-let clampedForce = max(0.0, min(1.0, normalizedForce))
-```
+- RMS (Root Mean Square) で音圧を計算
+- キャリブレーション済みの閾値（最小・最大）を使用して正規化
+- 0.0 〜 1.0 の範囲にクランプして iPad に送信
 
 ### 送信頻度
 
@@ -204,69 +201,13 @@ let clampedForce = max(0.0, min(1.0, normalizedForce))
   - 「相手とぶつかった！」
   - 「雷に当たった！」
 
-#### 実装メモ
+#### 実装のポイント
 
-```swift
-import CoreHaptics
-import UIKit
-
-class CollisionFeedbackManager {
-    private var hapticEngine: CHHapticEngine?
-
-    init() {
-        prepareHaptics()
-    }
-
-    func prepareHaptics() {
-        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
-        do {
-            hapticEngine = try CHHapticEngine()
-            try hapticEngine?.start()
-        } catch {
-            print("Haptic engine error: \(error)")
-        }
-    }
-
-    func playCollisionFeedback(type: CollisionType) {
-        switch type {
-        case .character:
-            triggerImpact(.medium)
-        case .weak:
-            triggerImpact(.light)
-        case .medium:
-            triggerImpact(.medium)
-        case .strong:
-            triggerImpact(.heavy)
-            flashScreen()
-        case .lightning:
-            triggerImpact(.heavy)
-            triggerContinuousHaptic(duration: 0.3)
-            flashScreen()
-        }
-    }
-
-    private func triggerImpact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
-        generator.impactOccurred()
-    }
-
-    private func flashScreen() {
-        // 画面フラッシュエフェクト
-        let flashView = UIView(frame: UIScreen.main.bounds)
-        flashView.backgroundColor = .white
-        flashView.alpha = 0.5
-        // アニメーションで消す
-    }
-}
-
-enum CollisionType {
-    case character  // キャラクター衝突
-    case weak       // 弱い衝突
-    case medium     // 中程度の衝突
-    case strong     // 強い衝突
-    case lightning  // 雷ヒット
-}
-```
+- `CoreHaptics` フレームワークを使用してハプティクスエンジンを初期化
+- 衝突タイプに応じて `UIImpactFeedbackGenerator` で振動パターンを再生
+- 画面フラッシュは `UIView` のアニメーションで実装
+- 衝突インジケーターは SwiftUI の `ZStack` で画面上部にオーバーレイ表示
+- iPad からの衝突通知メッセージ（WebSocket）を受信して各フィードバックをトリガー
 
 ## 未定事項
 
