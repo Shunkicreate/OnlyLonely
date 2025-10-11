@@ -22,10 +22,15 @@ final class ConnectionWaitinScreenModel: ObservableObject {
     private let serviceType = "onlylonelyp2p"
     private let sessionManager: P2PSessionManager
     private var cancellables = Set<AnyCancellable>()
+    private var characterManager: CharacterAssignmentManager?
 
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
         observeSessionManager()
+    }
+
+    func configure(characterManager: CharacterAssignmentManager) {
+        self.characterManager = characterManager
     }
 
     var canProceedToNextStep: Bool {
@@ -115,6 +120,28 @@ final class ConnectionWaitinScreenModel: ObservableObject {
 
     func advanceConnectedDevicesToCountdown() {
         guard canProceedToNextStep else { return }
+
+        // キャラクターをランダムに割り当て
+        characterManager?.assignRandomCharacters()
+
+        // 各プレイヤーにキャラクター割り当てを送信
+        if let characterManager = characterManager {
+            let peers = connectedDevices.map(\.peer)
+
+            // PlayerAの割り当てを送信
+            if let characterA = characterManager.playerACharacter {
+                let messageA = CharacterAssignmentMessage(playerId: "A", character: characterA)
+                sessionManager.sendCharacterAssignment(messageA, to: peers)
+            }
+
+            // PlayerBの割り当てを送信
+            if let characterB = characterManager.playerBCharacter {
+                let messageB = CharacterAssignmentMessage(playerId: "B", character: characterB)
+                sessionManager.sendCharacterAssignment(messageB, to: peers)
+            }
+        }
+
+        // カウントダウン画面へ遷移
         let peers = connectedDevices.map(\.peer)
         let command = DeviceNavigationCommand(action: .showCountdown)
         sessionManager.sendNavigationCommand(command, to: peers)
