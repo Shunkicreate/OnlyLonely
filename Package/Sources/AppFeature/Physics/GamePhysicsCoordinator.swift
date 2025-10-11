@@ -29,7 +29,7 @@ class GamePhysicsCoordinator: ObservableObject {
     private var latestForceInputs: [PlayerSlot: Float] = [:]
     private var latestRollInputs: [PlayerSlot: Double] = [:]
     private var laneCenters: [PlayerSlot: CGFloat] = [:]
-    private var laneHalfWidth: CGFloat = 0
+    private var laneHalfWidths: [PlayerSlot: CGFloat] = [:]
     private var balloonBodies: [PlayerSlot: SKPhysicsBody] = [:]
 
     // MARK: - Initialization
@@ -77,7 +77,6 @@ class GamePhysicsCoordinator: ObservableObject {
     ) {
         guard let player = resolveSlot(for: playerId) else { return }
 
-        let scaledForce = force * PhysicsConstants.windForceSensitivity
         let clampedForce = max(0, PhysicsConstants.windForce(force: force))
         latestForceInputs[player] = clampedForce
 
@@ -152,23 +151,25 @@ class GamePhysicsCoordinator: ObservableObject {
         !balloonBodies.isEmpty
     }
 
-    func configureHorizontalBounds(sceneSize: CGSize) {
-        let centerA = sceneSize.width / 4
-        let centerB = sceneSize.width * 3 / 4
-        laneCenters[.playerA] = centerA
-        laneCenters[.playerB] = centerB
+    func configureLaneBounds(for slot: PlayerSlot, sceneSize: CGSize) {
+        let center = sceneSize.width / 2
+        laneCenters[slot] = center
+        let halfLane = max(0, center - PhysicsConstants.laneHorizontalPadding)
+        laneHalfWidths[slot] = halfLane
 
-        let halfLane = max(0, (sceneSize.width / 4) - PhysicsConstants.laneHorizontalPadding)
-        laneHalfWidth = halfLane
-
-        playerAState.position.x = centerA
-        playerBState.position.x = centerB
-
-        latestRollInputs[.playerA] = 0
-        latestRollInputs[.playerB] = 0
-
-        balloonBodies[.playerA]?.node?.position.x = centerA
-        balloonBodies[.playerB]?.node?.position.x = centerB
+        var updatedPosition = CGPoint(x: center, y: PhysicsConstants.groundBaseline)
+        switch slot {
+        case .playerA:
+            playerAState.position.x = center
+            playerAState.position.y = PhysicsConstants.groundBaseline
+            latestRollInputs[.playerA] = 0
+            balloonBodies[.playerA]?.node?.position = updatedPosition
+        case .playerB:
+            playerBState.position.x = center
+            playerBState.position.y = PhysicsConstants.groundBaseline
+            latestRollInputs[.playerB] = 0
+            balloonBodies[.playerB]?.node?.position = updatedPosition
+        }
     }
 
     func register(balloonBody: SKPhysicsBody, for slot: PlayerSlot) {
@@ -178,6 +179,11 @@ class GamePhysicsCoordinator: ObservableObject {
         balloonBody.linearDamping = PhysicsConstants.dragCoefficient
         balloonBody.friction = 0.2
         balloonBody.restitution = 0.2
+
+        if let center = laneCenters[slot] {
+            balloonBody.node?.position.x = center
+            balloonBody.node?.position.y = PhysicsConstants.groundBaseline
+        }
     }
 
     func handleGroundContact(for slot: PlayerSlot) {
@@ -206,6 +212,7 @@ class GamePhysicsCoordinator: ObservableObject {
 
         if usingPhysicsBodies {
             if let center = laneCenters[.playerA],
+               let halfWidth = laneHalfWidths[.playerA],
                let body = balloonBodies[.playerA],
                let node = body.node {
                 let normalized = CGFloat(latestRollInputs[.playerA] ?? 0)
@@ -214,11 +221,12 @@ class GamePhysicsCoordinator: ObservableObject {
                 velocity.dx = targetDx
                 body.velocity = velocity
 
-                let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+                let range = (center - halfWidth)...(center + halfWidth)
                 node.position.x = clamp(node.position.x, to: range)
             }
 
             if let center = laneCenters[.playerB],
+               let halfWidth = laneHalfWidths[.playerB],
                let body = balloonBodies[.playerB],
                let node = body.node {
                 let normalized = CGFloat(latestRollInputs[.playerB] ?? 0)
@@ -227,23 +235,25 @@ class GamePhysicsCoordinator: ObservableObject {
                 velocity.dx = targetDx
                 body.velocity = velocity
 
-                let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+                let range = (center - halfWidth)...(center + halfWidth)
                 node.position.x = clamp(node.position.x, to: range)
             }
         } else {
-            if let center = laneCenters[.playerA] {
+            if let center = laneCenters[.playerA],
+               let halfWidth = laneHalfWidths[.playerA] {
                 let normalized = CGFloat(latestRollInputs[.playerA] ?? 0)
                 playerAState.velocity.dx = normalized * PhysicsConstants.horizontalSpeed
                 playerAState.position.x += playerAState.velocity.dx * dt
-                let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+                let range = (center - halfWidth)...(center + halfWidth)
                 playerAState.position.x = clamp(playerAState.position.x, to: range)
             }
 
-            if let center = laneCenters[.playerB] {
+            if let center = laneCenters[.playerB],
+               let halfWidth = laneHalfWidths[.playerB] {
                 let normalized = CGFloat(latestRollInputs[.playerB] ?? 0)
                 playerBState.velocity.dx = normalized * PhysicsConstants.horizontalSpeed
                 playerBState.position.x += playerBState.velocity.dx * dt
-                let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+                let range = (center - halfWidth)...(center + halfWidth)
                 playerBState.position.x = clamp(playerBState.position.x, to: range)
             }
         }
