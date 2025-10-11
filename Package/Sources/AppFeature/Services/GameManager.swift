@@ -11,10 +11,10 @@ class GameManager: ObservableObject {
     @Published var gamePhase: GamePhase = .idle
     @Published var playerA: PlayerInfo?
     @Published var playerB: PlayerInfo?
-    @Published var timeRemaining: Int = 60
+    @Published var timeRemaining: Int = 30
 
     private var gameTimer: Timer?
-    private let gameDuration: Int = 60 // seconds
+    private let gameDuration: Int = 30 // seconds
 
     func startGame() {
         gamePhase = .playing
