@@ -20,6 +20,10 @@ struct ConnectionScreen: View {
     @State private var rotationAngle: Double = 0
     @State private var sparkleRotation: Double = 0
 
+    // バリデーション状態
+    @State private var ipAddressError: String? = nil
+    @State private var portError: String? = nil
+
     enum ConnectionState {
         case idle
         case connecting
@@ -103,6 +107,24 @@ struct ConnectionScreen: View {
                 }
                 .padding(.top, HarajukuSpacing.sm)
 
+                // バリデーションエラーメッセージ領域（固定高さでレイアウト崩れ防止）
+                VStack(spacing: 4) {
+                    Text(ipAddressError ?? " ")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .foregroundColor(Color(hex: "#FF6B9D"))
+                        .multilineTextAlignment(.center)
+                        .opacity(ipAddressError != nil ? 1 : 0)
+                        .frame(minHeight: 16)
+
+                    Text(portError ?? " ")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .foregroundColor(Color(hex: "#FF6B9D"))
+                        .multilineTextAlignment(.center)
+                        .opacity(portError != nil ? 1 : 0)
+                        .frame(minHeight: 16)
+                }
+                .padding(.horizontal, HarajukuSpacing.xl)
+
                 // 接続ボタン
                 FluffyButton(
                     title: connectionState == .connecting ? "つなぎちゅう..." : "せつぞく！",
@@ -112,7 +134,8 @@ struct ConnectionScreen: View {
                 ) {
                     connect()
                 }
-                .disabled(connectionState == .connecting)
+                .disabled(connectionState == .connecting || !isValidInput)
+                .opacity((connectionState == .connecting || !isValidInput) ? 0.5 : 1.0)
                 .padding(.top, HarajukuSpacing.lg)
 
                 // 状態メッセージ
@@ -143,6 +166,15 @@ struct ConnectionScreen: View {
             withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
                 sparkleRotation = 360
             }
+            // 初期バリデーション
+            ipAddressError = validateIPAddress(ipAddress)
+            portError = validatePort(port)
+        }
+        .onChange(of: ipAddress) { _, newValue in
+            ipAddressError = validateIPAddress(newValue)
+        }
+        .onChange(of: port) { _, newValue in
+            portError = validatePort(newValue)
         }
         .navigationBarBackButtonHidden()
     }
@@ -186,12 +218,74 @@ struct ConnectionScreen: View {
         }
     }
 
+    // MARK: - バリデーション関数
+
+    private func validateIPAddress(_ ip: String) -> String? {
+        // 空欄チェック
+        if ip.isEmpty {
+            return nil // デフォルト値を使用
+        }
+
+        // IPv4形式チェック
+        let components = ip.split(separator: ".")
+        guard components.count == 4 else {
+            return "IPアドレスは xxx.xxx.xxx.xxx の形式で入力してね"
+        }
+
+        // 各オクテットのバリデーション
+        for component in components {
+            guard let value = Int(component), value >= 0 && value <= 255 else {
+                return "各数字は 0〜255 の範囲で入力してね"
+            }
+        }
+
+        return nil // エラーなし
+    }
+
+    private func validatePort(_ portString: String) -> String? {
+        // 空欄チェック
+        if portString.isEmpty {
+            return nil // デフォルト値を使用
+        }
+
+        // 数値チェック
+        guard let portNumber = Int(portString) else {
+            return "ポート番号は数字だけ入力してね"
+        }
+
+        // 範囲チェック
+        guard portNumber >= 1024 && portNumber <= 65535 else {
+            return "ポート番号は 1024〜65535 の範囲で入力してね"
+        }
+
+        // 桁数チェック
+        guard portString.count <= 5 else {
+            return "ポート番号は5桁以内で入力してね"
+        }
+
+        return nil // エラーなし
+    }
+
+    private var isValidInput: Bool {
+        ipAddressError == nil && portError == nil && !ipAddress.isEmpty && !port.isEmpty
+    }
+
+    // MARK: - 接続処理
+
     private func connect() {
-        guard !ipAddress.isEmpty, let portNumber = Int(port) else {
+        // バリデーション実行
+        ipAddressError = validateIPAddress(ipAddress)
+        portError = validatePort(port)
+
+        if !isValidInput {
             errorMessage = "ただしいばんごうをいれてね"
             withAnimation(HarajukuAnimation.jump) {
                 connectionState = .failed
             }
+            return
+        }
+
+        guard let portNumber = Int(port) else {
             return
         }
 

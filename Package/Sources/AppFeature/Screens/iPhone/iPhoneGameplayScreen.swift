@@ -15,6 +15,8 @@ struct iPhoneGameplayScreen: View {
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
+    @State private var windForce: Float = 0
+    @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
 
     var body: some View {
         ZStack {
@@ -48,10 +50,6 @@ struct iPhoneGameplayScreen: View {
                     Text("Player A")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-
-                    Text("現在の高度: \(Int(currentAltitude))m")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.yellow)
                 }
 
                 // 風船
@@ -131,7 +129,9 @@ struct iPhoneGameplayScreen: View {
             } else {
                 timer.invalidate()
                 // ゲーム終了
-                coordinator.navigate(to: .iPhoneResult)
+                Task { @MainActor in
+                    coordinator.navigate(to: .iPhoneResult)
+                }
             }
         }
 
@@ -139,6 +139,65 @@ struct iPhoneGameplayScreen: View {
         Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
             // 高度を更新（簡易シミュレーション）
             currentAltitude += Double(micLevelManager.windForce) * 2.0
+        }
+    }
+
+    // MARK: - バリデーション関数
+
+    /// RMS 値のバリデーション
+    private func validateRMSValue(_ value: Float) -> Float? {
+        // NaN/Infinite チェック
+        guard value.isFinite else {
+            print("⚠️ Invalid RMS value (NaN or Infinite): \(value)")
+            return nil
+        }
+
+        // 負の値チェック
+        guard value >= 0 else {
+            print("⚠️ Negative RMS value: \(value), using 0.0")
+            return 0.0
+        }
+
+        return value
+    }
+
+    /// 正規化後の風力値のバリデーション
+    private func validateNormalizedForce(_ force: Float) -> Float {
+        // NaN/Infinite チェック
+        guard force.isFinite else {
+            print("⚠️ Invalid normalized force (NaN or Infinite), using previous value")
+            return previousWindForce
+        }
+
+        // 0.0〜1.0 にクランプ
+        let clampedForce = max(0.0, min(1.0, force))
+
+        if clampedForce != force {
+            print("⚠️ Force value \(force) out of range, clamped to \(clampedForce)")
+        }
+
+        return clampedForce
+    }
+
+    private func updateWindForce() {
+        // マイクレベルから風力を計算
+        if let peakLevel = micLevelManager.peakHoldLevel {
+            // 最小閾値を設定（小さい音を拾わないようにする）
+            let threshold: Float = -20.0 // -20dB以下は無視
+
+            guard peakLevel > threshold else {
+                windForce = 0
+                return
+            }
+
+            // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
+            let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
+            // さらに0.7倍して感度を下げる
+            let sensitivity = 0.7
+            windForce = max(0, min(1.0, normalized * Float(sensitivity)))
+        } else {
+            // サンプル不足時は前回の値を使用
+            windForce = previousWindForce
         }
     }
 }
