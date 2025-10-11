@@ -11,9 +11,8 @@ import Foundation
 class MotionManager: ObservableObject {
     private let motionManager = CMMotionManager()
 
-    @Published var pitch: Double = 0.0  // 前後の傾き（X軸）
-    @Published var roll: Double = 0.0   // 左右の傾き（Y軸）
-    @Published var yaw: Double = 0.0    // 回転（Z軸）
+    /// 左右の傾き（Y軸）
+    @Published var roll: Double = 0.0
 
     init() {
         startDeviceMotionUpdates()
@@ -33,11 +32,7 @@ class MotionManager: ObservableObject {
                 }
                 return
             }
-
-            // 姿勢データを度数法に変換（ラジアンから度へ）
-            self?.pitch = motion.attitude.pitch * 180.0 / .pi
             self?.roll = motion.attitude.roll * 180.0 / .pi
-            self?.yaw = motion.attitude.yaw * 180.0 / .pi
         }
     }
 
