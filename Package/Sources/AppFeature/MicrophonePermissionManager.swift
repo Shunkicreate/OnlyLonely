@@ -32,7 +32,7 @@ final class MicrophonePermissionManager: ObservableObject {
             return
         }
 
-        AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+        AVAudioApplication.requestRecordPermission { [weak self] granted in
             Task { @MainActor in
                 self?.permission = granted ? .granted : .denied
             }
