@@ -69,6 +69,11 @@ class GamePhysicsCoordinator: ObservableObject {
         try cloudSystem.loadClouds(from: json)
     }
 
+    /// 特定の位置での雲との衝突をチェック（GameScene から呼び出し用）
+    func checkCollision(balloonPosition: CGPoint, balloonVelocity: CGVector) -> CollisionResult {
+        return cloudSystem.checkCollision(balloonPosition: balloonPosition, balloonVelocity: balloonVelocity)
+    }
+
     // MARK: - Private Methods
 
     private func applyInterpolatedInput() {
