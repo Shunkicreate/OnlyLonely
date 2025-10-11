@@ -97,35 +97,53 @@ struct iPhoneGameplayScreen: View {
     }
 
     private var contentView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 0) {
+            // Player名を上部に配置
+            playerNameView
+                .padding(.top, 60)
+
             Spacer()
 
-            playerNameView
-
+            // 風船とキャラクター（中央）
             balloonView
 
-            windMeterView
-
             Spacer()
 
+            // 風力メーター
+            windMeterView
+
+            // 指示テキスト
             instructionView
+                .padding(.bottom, 40)
         }
     }
 
     private var playerNameView: some View {
         ZStack {
-            // 影
+            // 4方向黒枠（視認性向上）
             Text(playerDisplayName)
-                .nikumaruHeadline(size: 28)
-                .foregroundColor(.black.opacity(0.3))
-                .offset(y: 2)
+                .nikumaruHeadline(size: 32)
+                .foregroundColor(.black)
+                .offset(x: -1.5, y: -1.5)
+            Text(playerDisplayName)
+                .nikumaruHeadline(size: 32)
+                .foregroundColor(.black)
+                .offset(x: 1.5, y: -1.5)
+            Text(playerDisplayName)
+                .nikumaruHeadline(size: 32)
+                .foregroundColor(.black)
+                .offset(x: -1.5, y: 1.5)
+            Text(playerDisplayName)
+                .nikumaruHeadline(size: 32)
+                .foregroundColor(.black)
+                .offset(x: 1.5, y: 1.5)
 
             // メインテキスト
             Text(playerDisplayName)
-                .nikumaruHeadline(size: 28)
+                .nikumaruHeadline(size: 32)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [.white, .white.opacity(0.9)],
+                        colors: [.white, .white.opacity(0.95)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -136,14 +154,14 @@ struct iPhoneGameplayScreen: View {
     private var balloonView: some View {
         ZStack {
             // キャラクターが風船を持っているビュー
-            VStack(spacing: -10) {
+            VStack(spacing: -8) {
                 // 風船本体（上部）
                 ZStack {
                     // グロー効果
                     Circle()
                         .fill(Color(hex: balloonColor).opacity(0.5))
-                        .frame(width: 130, height: 130)
-                        .blur(radius: 20)
+                        .frame(width: 100, height: 100)
+                        .blur(radius: 18)
                         .scaleEffect(1.0 + CGFloat(micLevelManager.windForce) * 0.4)
 
                     // 風船（円形グラデーション + Assets画像）
@@ -157,10 +175,10 @@ struct iPhoneGameplayScreen: View {
                                     ],
                                     center: .topLeading,
                                     startRadius: 0,
-                                    endRadius: 50
+                                    endRadius: 40
                                 )
                             )
-                            .frame(width: 100, height: 100)
+                            .frame(width: 80, height: 80)
                             .overlay(
                                 // ハイライト
                                 Circle()
@@ -174,15 +192,15 @@ struct iPhoneGameplayScreen: View {
                                             endPoint: .bottomTrailing
                                         )
                                     )
-                                    .frame(width: 40, height: 40)
-                                    .offset(x: -20, y: -20)
+                                    .frame(width: 32, height: 32)
+                                    .offset(x: -16, y: -16)
                             )
 
                         // Assets画像
                         Image(balloonImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 100, height: 100)
+                            .frame(width: 80, height: 80)
                     }
                     .scaleEffect(1.0 + CGFloat(micLevelManager.windForce) * 0.3)
                 }
@@ -190,22 +208,22 @@ struct iPhoneGameplayScreen: View {
                 // 紐
                 Path { path in
                     path.move(to: CGPoint(x: 0, y: 0))
-                    path.addLine(to: CGPoint(x: 0, y: 40))
+                    path.addLine(to: CGPoint(x: 0, y: 35))
                 }
-                .stroke(Color(hex: balloonColor).opacity(0.7), lineWidth: 3)
-                .frame(width: 30, height: 40)
+                .stroke(Color(hex: balloonColor).opacity(0.7), lineWidth: 2.5)
+                .frame(width: 25, height: 35)
 
                 // キャラクター（風船を持っている）
                 Image(balloonImageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 120, height: 120)
-                    .offset(y: -15)
+                    .frame(width: 90, height: 90)
+                    .offset(y: -12)
             }
 
             if micLevelManager.windForce > 0.5 {
                 sparkleEffect
-                    .offset(y: -60) // キラキラを風船の上に
+                    .offset(y: -55) // キラキラを風船の上に
             }
         }
         .offset(x: balloonHorizontalOffset, y: balloonBounce)
