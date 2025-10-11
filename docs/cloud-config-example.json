@@ -1,0 +1,116 @@
+{
+  "gameArea": {
+    "width": 768,
+    "height": 1024,
+    "comment": "iPad の画面サイズを想定（縦向き基準）"
+  },
+  "clouds": [
+    {
+      "id": 1,
+      "type": "pine",
+      "position": {
+        "x": 200,
+        "y": 150
+      },
+      "size": {
+        "width": 100,
+        "height": 50
+      },
+      "comment": "松：通り抜け不可の完全障害物"
+    },
+    {
+      "id": 2,
+      "type": "bamboo",
+      "position": {
+        "x": 350,
+        "y": 300
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "speedThreshold": 50,
+      "comment": "竹：速度50以上で通過可能"
+    },
+    {
+      "id": 3,
+      "type": "plum",
+      "position": {
+        "x": 150,
+        "y": 450
+      },
+      "size": {
+        "width": 150,
+        "height": 70
+      },
+      "lightningInterval": 3.0,
+      "comment": "梅：3秒ごとに雷が発生"
+    },
+    {
+      "id": 4,
+      "type": "bamboo",
+      "position": {
+        "x": 500,
+        "y": 600
+      },
+      "size": {
+        "width": 110,
+        "height": 55
+      },
+      "speedThreshold": 60,
+      "comment": "竹：速度60以上で通過可能"
+    },
+    {
+      "id": 5,
+      "type": "pine",
+      "position": {
+        "x": 300,
+        "y": 750
+      },
+      "size": {
+        "width": 120,
+        "height": 60
+      },
+      "comment": "松：通り抜け不可"
+    },
+    {
+      "id": 6,
+      "type": "plum",
+      "position": {
+        "x": 450,
+        "y": 900
+      },
+      "size": {
+        "width": 140,
+        "height": 65
+      },
+      "lightningInterval": 4.0,
+      "comment": "梅：4秒ごとに雷が発生"
+    }
+  ],
+  "cloudTypes": {
+    "pine": {
+      "description": "通り抜け不可の完全障害物",
+      "color": "#666666",
+      "passable": false
+    },
+    "bamboo": {
+      "description": "強い勢いで通過可能",
+      "color": "#999999",
+      "passable": true,
+      "requiresSpeed": true
+    },
+    "plum": {
+      "description": "雷ギミック付き",
+      "color": "#555555",
+      "passable": true,
+      "hasLightning": true
+    }
+  },
+  "lightningConfig": {
+    "damage": 50,
+    "fallDistance": 50,
+    "respawnTime": 1.0,
+    "comment": "雷ダメージ、落下距離（m）、再生成時間（秒）"
+  }
+}

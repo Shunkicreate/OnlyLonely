@@ -32,6 +32,10 @@ iPad がメインディスプレイ、iPhone が風入力端末となり、
 
 - [📱 画面設計書](./docs/screens/README.md) - 全 12 画面の詳細仕様と画面遷移フロー
 
+### データファイル
+
+- [☁️ 雲配置サンプル](./docs/cloud-config-example.json) - 雲の配置データ（JSON）
+
 ---
 
 ## 🚀 Getting Started
