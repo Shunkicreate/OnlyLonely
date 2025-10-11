@@ -51,7 +51,9 @@ struct ConnectionWaitingScreen: View {
                     Spacer()
                         .frame(height: 60)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .scrollIndicators(.hidden)
         }
         .onAppear {
             hostModel.configure(characterManager: characterManager)

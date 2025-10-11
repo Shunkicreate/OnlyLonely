@@ -11,8 +11,9 @@ import SwiftUI
 struct iPadResultScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject private var sessionManager: P2PSessionManager
-    @State private var playerAAltitude: Double = 450
-    @State private var playerBAltitude: Double = 380
+    @EnvironmentObject private var resultStore: GameResultStore
+    @State private var playerAAltitude: Double = 0
+    @State private var playerBAltitude: Double = 0
     
     // アニメーション状態
     @State private var titleScale: CGFloat = 0.8
@@ -312,7 +313,17 @@ struct iPadResultScreen: View {
             }
         }
         .onAppear {
+            playerAAltitude = resultStore.playerAAltitude
+            playerBAltitude = resultStore.playerBAltitude
+            displayedAltitudeA = 0
+            displayedAltitudeB = 0
             startAnimations()
+        }
+        .onChange(of: resultStore.playerAAltitude) { _, newValue in
+            playerAAltitude = newValue
+        }
+        .onChange(of: resultStore.playerBAltitude) { _, newValue in
+            playerBAltitude = newValue
         }
         .navigationBarBackButtonHidden()
     }
@@ -943,5 +954,6 @@ struct FluffyResultButton: View {
 #Preview {
     iPadResultScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(GameResultStore())
         .environmentObject(P2PSessionManager())
 }

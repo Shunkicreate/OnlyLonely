@@ -15,9 +15,12 @@ struct iPadGameplayScreen: View {
     @StateObject private var gameManager = GameManager()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
     @StateObject private var screenModel: iPadGameplayScreenModel
+    @EnvironmentObject private var resultStore: GameResultStore
 
     @State private var playerAAltitude: Double = 0
     @State private var playerBAltitude: Double = 0
+    @State private var playerAScene = PlayerLaneScene(lane: .playerA)
+    @State private var playerBScene = PlayerLaneScene(lane: .playerB)
     @State private var hasBroadcastGameFinished = false
 
     init() {
@@ -29,14 +32,15 @@ struct iPadGameplayScreen: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let laneSize = CGSize(width: geometry.size.width / 2, height: geometry.size.height)
             ZStack {
                 // スカイブルー→宇宙グラデーション背景
                 LinearGradient(
                     colors: [
-                        Color(hex: "#87CEEB"),   // スカイブルー
-                        Color(hex: "#B4D4FF"),   // 明るいブルー
-                        Color(hex: "#FFE5B3"),   // はちみつイエロー
-                        Color(hex: "#FFD4E5")    // パステルピンク
+                        Color(hex: "#87CEEB"),
+                        Color(hex: "#B4D4FF"),
+                        Color(hex: "#FFE5B3"),
+                        Color(hex: "#FFD4E5")
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -53,12 +57,34 @@ struct iPadGameplayScreen: View {
                     )
                 }
 
-                // SpriteKit Scene
-                SpriteView(
-                    scene: createGameScene(size: geometry.size),
-                    options: [.allowsTransparency]
-                )
+                // 各プレイヤー用レーン
+                HStack(spacing: 0) {
+                    SpriteView(scene: playerAScene, options: [.allowsTransparency])
+                        .frame(width: laneSize.width, height: laneSize.height)
+                        .onAppear {
+                            playerAScene.configure(
+                                size: laneSize,
+                                lane: .playerA,
+                                physicsCoordinator: physicsCoordinator
+                            )
+                        }
+
+                    SpriteView(scene: playerBScene, options: [.allowsTransparency])
+                        .frame(width: laneSize.width, height: laneSize.height)
+                        .onAppear {
+                            playerBScene.configure(
+                                size: laneSize,
+                                lane: .playerB,
+                                physicsCoordinator: physicsCoordinator
+                            )
+                        }
+                }
                 .ignoresSafeArea()
+                .onChange(of: geometry.size) { newSize in
+                    let lane = CGSize(width: newSize.width / 2, height: newSize.height)
+                    playerAScene.configure(size: lane, lane: .playerA, physicsCoordinator: physicsCoordinator)
+                    playerBScene.configure(size: lane, lane: .playerB, physicsCoordinator: physicsCoordinator)
+                }
 
                 // UI Overlay
                 VStack {
@@ -128,7 +154,6 @@ struct iPadGameplayScreen: View {
 
                     // プレイヤー情報（Harajukuスタイル）
                     HStack(spacing: 0) {
-                        // Player A
                         FluffyPlayerPanel(
                             playerName: screenModel.displayName(for: .playerA),
                             altitude: playerAAltitude,
@@ -145,27 +170,25 @@ struct iPadGameplayScreen: View {
                         )
                         .frame(width: geometry.size.width / 2)
 
-                        // Divider（キラキラ）
-                        VStack(spacing: 8) {
-                            ForEach(0..<5, id: \.self) { index in
+                        VStack(spacing: 10) {
+                            ForEach(0..<6, id: \.self) { index in
                                 Circle()
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(hex: "#FFFFFF").opacity(0.8),
-                                                Color(hex: "#FFE5B3").opacity(0.6)
+                                                Color.white.opacity(0.9),
+                                                Color(hex: "#FFE5B3").opacity(0.7)
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
-                                    .frame(width: 8, height: 8)
-                                    .shadow(color: .white.opacity(0.6), radius: 4)
+                                    .frame(width: 10, height: 10)
                             }
                         }
-                        .frame(width: 2)
+                        .padding(.vertical, 24)
+                        .frame(width: 20)
 
-                        // Player B
                         FluffyPlayerPanel(
                             playerName: screenModel.displayName(for: .playerB),
                             altitude: playerBAltitude,
@@ -192,6 +215,7 @@ struct iPadGameplayScreen: View {
         .onAppear {
             screenModel.configure(sessionManager: sessionManager, physicsCoordinator: physicsCoordinator)
             hasBroadcastGameFinished = false
+            resultStore.reset()
             gameManager.startGame()
             // TODO: 雲データ読み込み
             // try? physicsCoordinator.loadCloudData(json: "...")
@@ -201,6 +225,14 @@ struct iPadGameplayScreen: View {
         }
         .onChange(of: gameManager.gamePhase) { _, newPhase in
             if newPhase == .finished {
+                let finalAltitudeA = physicsCoordinator.playerAState.altitude
+                let finalAltitudeB = physicsCoordinator.playerBState.altitude
+                resultStore.updateResults(
+                    playerAAltitude: finalAltitudeA,
+                    playerBAltitude: finalAltitudeB,
+                    timestamp: Date()
+                )
+
                 if !hasBroadcastGameFinished {
                     hasBroadcastGameFinished = true
                     let event = GameEventMessage(type: .gameFinished, timestamp: Date())
@@ -216,13 +248,6 @@ struct iPadGameplayScreen: View {
             playerBAltitude = newAltitude
         }
         .navigationBarBackButtonHidden()
-    }
-
-    private func createGameScene(size: CGSize) -> SKScene {
-        let scene = GameScene(size: size, physicsCoordinator: physicsCoordinator)
-        scene.scaleMode = .aspectFill
-        scene.backgroundColor = .clear
-        return scene
     }
 
     private func startDecorationAnimations() {
@@ -393,139 +418,163 @@ private enum PhysicsCategory {
     static let ground: UInt32 = 1 << 2
 }
 
-class GameScene: SKScene, SKPhysicsContactDelegate {
-    private var balloonA: SKSpriteNode!
-    private var balloonB: SKSpriteNode!
-    private var clouds: [Int: SKNode] = [:]  // cloudId -> SKNode
-    private var lightningNodes: [Int: SKNode] = [:]  // cloudId -> 雷エフェクト
-
-    // 物理エンジンへの参照（弱参照で保持）
+final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
+    private let lane: PlayerSlot
     private weak var physicsCoordinator: GamePhysicsCoordinator?
+    private var balloon: SKSpriteNode?
+    private var clouds: [Int: SKNode] = [:]
+    private var lightningNodes: [Int: SKNode] = [:]
+    private var cameraNode = SKCameraNode()
+    private var isSceneConfigured = false
+    private var lastConfiguredSize: CGSize = .zero
 
-    init(size: CGSize, physicsCoordinator: GamePhysicsCoordinator) {
-        self.physicsCoordinator = physicsCoordinator
-        super.init(size: size)
+    init(lane: PlayerSlot) {
+        self.lane = lane
+        super.init(size: .zero)
+        scaleMode = .resizeFill
+        backgroundColor = .clear
     }
 
     required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
+        fatalError("init(coder:) has not been implemented")
     }
 
-    override func didMove(to view: SKView) {
-        setupScene()
-        clouds = CloudLoader.loadRandomClouds(
-            sceneSize: size,
-            cloudsPerPlayer: 10,
-            physicsCoordinator: physicsCoordinator,
-            scene: self
-        )
-    }
+    func configure(size: CGSize, lane: PlayerSlot, physicsCoordinator: GamePhysicsCoordinator) {
+        guard lane == self.lane else { return }
 
-    private func setupScene() {
+        let expandedHeight = max(size.height * 2.5, size.height + 600)
+        let targetSize = CGSize(width: size.width, height: expandedHeight)
+        if targetSize != self.size {
+            self.size = targetSize
+        }
+        self.physicsCoordinator = physicsCoordinator
         physicsWorld.gravity = CGVector(dx: 0, dy: PhysicsConstants.gravity)
         physicsWorld.contactDelegate = self
 
-        // 背景は透明（SwiftUIのグラデーションを使用）
-        physicsCoordinator?.configureHorizontalBounds(sceneSize: size)
-
-        // 中央の分割線
-        let divider = SKSpriteNode(color: .white.withAlphaComponent(0.3), size: CGSize(width: 2, height: size.height))
-        divider.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        divider.zPosition = 1
-        addChild(divider)
-
-        // Player A の風船（左側・赤）
-        balloonA = createBalloon(color: .red)
-        balloonA.position = CGPoint(x: size.width / 4, y: 100)
-        balloonA.zPosition = 10 // 前面に表示
-        balloonA.physicsBody = SKPhysicsBody(circleOfRadius: 30)
-        balloonA.physicsBody?.categoryBitMask = PhysicsCategory.balloonA
-        balloonA.physicsBody?.contactTestBitMask = PhysicsCategory.ground
-        balloonA.physicsBody?.collisionBitMask = PhysicsCategory.ground
-        balloonA.physicsBody?.mass = PhysicsConstants.childMass
-        balloonA.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
-        balloonA.physicsBody?.allowsRotation = false
-        balloonA.physicsBody?.usesPreciseCollisionDetection = true
-        balloonA.physicsBody?.affectedByGravity = true
-        balloonA.physicsBody?.velocity = .zero
-        addChild(balloonA)
-
-        // Player B の風船（右側・青）
-        balloonB = createBalloon(color: .blue)
-        balloonB.position = CGPoint(x: size.width * 3 / 4, y: 100)
-        balloonB.zPosition = 10 // 前面に表示
-        balloonB.physicsBody = SKPhysicsBody(circleOfRadius: 30)
-        balloonB.physicsBody?.categoryBitMask = PhysicsCategory.balloonB
-        balloonB.physicsBody?.contactTestBitMask = PhysicsCategory.ground
-        balloonB.physicsBody?.collisionBitMask = PhysicsCategory.ground
-        balloonB.physicsBody?.mass = PhysicsConstants.childMass
-        balloonB.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
-        balloonB.physicsBody?.allowsRotation = false
-        balloonB.physicsBody?.usesPreciseCollisionDetection = true
-        balloonB.physicsBody?.affectedByGravity = true
-        balloonB.physicsBody?.velocity = .zero
-        addChild(balloonB)
-
-        // 物理エンジンに初期位置を設定
-        if let coordinator = physicsCoordinator {
-            let centerA = coordinator.laneCenter(for: .playerA) ?? size.width / 4
-            let centerB = coordinator.laneCenter(for: .playerB) ?? size.width * 3 / 4
-            coordinator.playerAState.position = CGPoint(x: centerA, y: 100)
-            coordinator.playerBState.position = CGPoint(x: centerB, y: 100)
-            if let bodyA = balloonA.physicsBody {
-                coordinator.register(balloonBody: bodyA, for: .playerA)
-            }
-            if let bodyB = balloonB.physicsBody {
-                coordinator.register(balloonBody: bodyB, for: .playerB)
-            }
+        if !isSceneConfigured || lastConfiguredSize != targetSize {
+            lastConfiguredSize = targetSize
+            isSceneConfigured = false
         }
 
-        // 地面
-        let groundLeft = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width / 2, height: 50))
-        groundLeft.position = CGPoint(x: size.width / 4, y: 25)
-        groundLeft.zPosition = 0
-        groundLeft.physicsBody = SKPhysicsBody(rectangleOf: groundLeft.size)
-        groundLeft.physicsBody?.isDynamic = false
-        groundLeft.physicsBody?.categoryBitMask = PhysicsCategory.ground
-        groundLeft.physicsBody?.contactTestBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
-        groundLeft.physicsBody?.collisionBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
-        groundLeft.physicsBody?.restitution = 0
-        groundLeft.physicsBody?.friction = 1.0
-        addChild(groundLeft)
+        if !isSceneConfigured {
+            setupScene()
+            isSceneConfigured = true
+        }
 
-        let groundRight = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width / 2, height: 50))
-        groundRight.position = CGPoint(x: size.width * 3 / 4, y: 25)
-        groundRight.zPosition = 0
-        groundRight.physicsBody = SKPhysicsBody(rectangleOf: groundRight.size)
-        groundRight.physicsBody?.isDynamic = false
-        groundRight.physicsBody?.categoryBitMask = PhysicsCategory.ground
-        groundRight.physicsBody?.contactTestBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
-        groundRight.physicsBody?.collisionBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
-        groundRight.physicsBody?.restitution = 0
-        groundRight.physicsBody?.friction = 1.0
-        addChild(groundRight)
+        physicsCoordinator.configureLaneBounds(for: lane, sceneSize: self.size)
+        updateCameraPosition()
     }
 
-    private func createBalloon(color: UIColor) -> SKSpriteNode {
-        // Assets画像を使った風船
-        let imageName = (color == .red) ? "red" : "blue"
+    private func setupScene() {
+        removeAllChildren()
+        clouds.removeAll()
+        lightningNodes.removeAll()
 
-        let balloonTexture = SKTexture(imageNamed: imageName)
-        let balloon = SKSpriteNode(texture: balloonTexture, size: CGSize(width: 60, height: 60))
+        cameraNode = SKCameraNode()
+        addChild(cameraNode)
+        camera = cameraNode
+
+        addBackground()
+        addGround()
+        addBalloon()
+    }
+
+    private func addBackground() {
+        let backgroundHeight = size.height
+        let background = SKSpriteNode(color: .clear, size: CGSize(width: size.width, height: backgroundHeight))
+        background.anchorPoint = CGPoint(x: 0.5, y: 0)
+        background.position = CGPoint(x: size.width / 2, y: 0)
+        background.zPosition = -5
+        addChild(background)
+
+        let skyTop = SKSpriteNode(
+            color: UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0),
+            size: CGSize(width: size.width, height: backgroundHeight)
+        )
+        skyTop.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        skyTop.position = CGPoint(x: size.width / 2, y: backgroundHeight)
+        skyTop.zPosition = -6
+        addChild(skyTop)
+    }
+
+    private func addGround() {
+        let groundHeight: CGFloat = 60
+
+        let soilHeight = groundHeight + 120
+        let soil = SKSpriteNode(color: UIColor(red: 0.55, green: 0.37, blue: 0.2, alpha: 1.0), size: CGSize(width: size.width, height: soilHeight))
+        soil.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        soil.position = CGPoint(x: size.width / 2, y: PhysicsConstants.groundBaseline - groundHeight / 2)
+        soil.zPosition = -1
+        addChild(soil)
+
+        let ground = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width, height: groundHeight))
+        ground.position = CGPoint(
+            x: size.width / 2,
+            y: PhysicsConstants.groundBaseline - groundHeight / 2
+        )
+        ground.zPosition = 0
+        ground.physicsBody = SKPhysicsBody(rectangleOf: ground.size)
+        ground.physicsBody?.isDynamic = false
+        ground.physicsBody?.categoryBitMask = PhysicsCategory.ground
+        ground.physicsBody?.contactTestBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        ground.physicsBody?.collisionBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        ground.physicsBody?.restitution = 0
+        ground.physicsBody?.friction = 1.0
+        addChild(ground)
+    }
+
+    private func addBalloon() {
+        let balloonNode = createBalloon(for: lane)
+        balloonNode.position = CGPoint(x: size.width / 2, y: PhysicsConstants.groundBaseline)
+        balloonNode.zPosition = 10
+        let body = SKPhysicsBody(circleOfRadius: 30)
+        body.categoryBitMask = lane == .playerA ? PhysicsCategory.balloonA : PhysicsCategory.balloonB
+        body.contactTestBitMask = PhysicsCategory.ground
+        body.collisionBitMask = PhysicsCategory.ground
+        body.mass = PhysicsConstants.childMass
+        body.linearDamping = PhysicsConstants.dragCoefficient
+        body.allowsRotation = false
+        body.affectedByGravity = true
+        body.usesPreciseCollisionDetection = true
+        body.velocity = .zero
+        balloonNode.physicsBody = body
+        addChild(balloonNode)
+        balloon = balloonNode
+        physicsCoordinator?.register(balloonBody: body, for: lane)
+    }
+
+    private func updateCameraPosition() {
+        guard let balloon else { return }
+        let targetY = max(balloon.position.y, PhysicsConstants.groundBaseline + size.height * 0.2)
+        cameraNode.position = CGPoint(x: size.width / 2, y: targetY)
+    }
+
+    private func createBalloon(for lane: PlayerSlot) -> SKSpriteNode {
+        let imageName: String
+        let glowColor: UIColor
+
+        switch lane {
+        case .playerA:
+            imageName = "red"
+            glowColor = UIColor(red: 1.0, green: 0.42, blue: 0.62, alpha: 1.0)
+        case .playerB:
+            imageName = "blue"
+            glowColor = UIColor(red: 0.29, green: 0.56, blue: 0.87, alpha: 1.0)
+        }
+
+        let texture = SKTexture(imageNamed: imageName)
+        let balloon = SKSpriteNode(texture: texture, size: CGSize(width: 60, height: 60))
         balloon.name = "balloon"
 
-        // グロー効果（円形の光）
         let glowCircle = SKShapeNode(circleOfRadius: 35)
-        glowCircle.fillColor = color.withAlphaComponent(0.3)
+        glowCircle.fillColor = glowColor.withAlphaComponent(0.35)
         glowCircle.strokeColor = .clear
         glowCircle.zPosition = -1
         balloon.addChild(glowCircle)
 
-        // パルスアニメーション
         let scaleUp = SKAction.scale(to: 1.15, duration: 0.8)
         let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
-        let pulse = SKAction.sequence([scaleUp, scaleDown])
-        glowCircle.run(SKAction.repeatForever(pulse))
+        glowCircle.run(SKAction.repeatForever(SKAction.sequence([scaleUp, scaleDown])))
 
         return balloon
     }
@@ -533,37 +582,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func update(_ currentTime: TimeInterval) {
         super.update(currentTime)
 
-        // 物理演算を更新
-        physicsCoordinator?.update(currentTime: currentTime)
-
-        if physicsCoordinator?.usesSpriteKitPhysics != true {
-            if let stateA = physicsCoordinator?.playerAState {
-                balloonA.position = stateA.position
-            }
-            if let stateB = physicsCoordinator?.playerBState {
-                balloonB.position = stateB.position
-            }
+        if lane == .playerA || physicsCoordinator?.usesSpriteKitPhysics != true {
+            physicsCoordinator?.update(currentTime: currentTime)
         }
 
-        // 雲との衝突チェック
-        guard let coordinator = physicsCoordinator else { return }
+        updateCameraPosition()
+
+        guard let coordinator = physicsCoordinator, let balloon = balloon else { return }
+        let playerId = lane == .playerA ? "A" : "B"
+        let state = lane == .playerA ? coordinator.playerAState : coordinator.playerBState
 
         CloudCollisionDetector.checkBalloonCloudCollision(
-            balloon: balloonA,
-            playerId: "A",
-            balloonPosition: balloonA.position,
-            balloonVelocity: coordinator.playerAState.velocity,
-            physicsCoordinator: coordinator,
-            clouds: clouds,
-            lightningNodes: &lightningNodes,
-            scene: self
-        )
-
-        CloudCollisionDetector.checkBalloonCloudCollision(
-            balloon: balloonB,
-            playerId: "B",
-            balloonPosition: balloonB.position,
-            balloonVelocity: coordinator.playerBState.velocity,
+            balloon: balloon,
+            playerId: playerId,
+            balloonPosition: balloon.position,
+            balloonVelocity: state.velocity,
             physicsCoordinator: coordinator,
             clouds: clouds,
             lightningNodes: &lightningNodes,
@@ -596,4 +629,5 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     iPadGameplayScreen()
         .environmentObject(AppCoordinator())
         .environmentObject(P2PSessionManager())
+        .environmentObject(GameResultStore())
 }
