@@ -2,7 +2,7 @@
 //  PlayerNameInputScreen.swift
 //  OnlyLonely
 //
-//  07. プレイヤー名入力画面（iPhone）
+//  07. プレイヤー名入力画面（iPhone）- 原宿系ふわふわバージョン
 //  iPhone のみ
 //
 
@@ -11,82 +11,161 @@ import SwiftUI
 struct PlayerNameInputScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @State private var playerName: String = ""
+    @State private var isFloating = false
+    @State private var showContent = false
+    @State private var sparkleRotation: Double = 0
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            LinearGradient(
-                colors: [
-                    Color(red: 0.6, green: 0.8, blue: 1.0),
-                    Color(red: 0.8, green: 0.9, blue: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // カラフル虹色背景
+            RainbowBackground()
+                .ignoresSafeArea()
 
-            VStack(spacing: 30) {
+            // ふわふわ雲
+            FluffyCloudBackground()
+                .ignoresSafeArea()
+                .opacity(0.3)
+
+            VStack(spacing: HarajukuSpacing.xl) {
                 Spacer()
 
-                Text("プレイヤー名を入力")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                // タイトル
+                VStack(spacing: HarajukuSpacing.lg) {
+                    // きらきら装飾
+                    HStack(spacing: 12) {
+                        Text("🌟")
+                            .font(.system(size: 20))
+                            .rotationEffect(.degrees(sparkleRotation))
+                        RainbowText(
+                            text: "あなたのなまえは？",
+                            size: 32
+                        )
+                        Text("🌟")
+                            .font(.system(size: 20))
+                            .rotationEffect(.degrees(-sparkleRotation))
+                    }
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : -20)
 
-                Text("🎈")
-                    .font(.system(size: 60))
-
-                // プレイヤー名入力
-                VStack(spacing: 12) {
-                    TextField("あなたの名前", text: $playerName)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 18))
-                        .multilineTextAlignment(.center)
-                        .focused($isTextFieldFocused)
-                        .submitLabel(.done)
-                        .onSubmit {
-                            joinGame()
-                        }
-
-                    Text("例: たろう、Player 1")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.6))
+                    Text("🎈 ふうせんにかいてね 🎈")
+                        .font(HarajukuTypography.body(size: 16))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
+                        .opacity(showContent ? 1 : 0)
+                        .offset(y: showContent ? 0 : -10)
                 }
-                .padding(.horizontal, 40)
+
+                // ふわふわ風船アニメーション
+                PlayerBalloonView()
+                    .frame(width: 130, height: 130)
+                    .offset(y: isFloating ? -15 : 15)
+                    .animation(
+                        HarajukuAnimation.bounce(duration: 2.5),
+                        value: isFloating
+                    )
+                    .opacity(showContent ? 1 : 0)
+                    .scaleEffect(showContent ? 1 : 0.5)
+                    .padding(.vertical, HarajukuSpacing.lg)
+
+                // 名前入力フィールド
+                VStack(spacing: HarajukuSpacing.md) {
+                    FluffyTextField(
+                        placeholder: "なまえをかいてね",
+                        text: $playerName,
+                        emoji: "✏️",
+                        gradient: HarajukuColors.pinkPurpleGradient,
+                        borderColor: HarajukuColors.pastelPink
+                    )
+
+                    Text("ふうせんにかざられるよ！")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
+                }
+                .padding(.horizontal, HarajukuSpacing.xl)
+                .opacity(showContent ? 1 : 0)
+
+                Spacer()
 
                 // 参加ボタン
-                Button {
-                    joinGame()
-                } label: {
-                    Text("参加する")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 200)
-                        .padding(.vertical, 16)
-                        .background(
-                            Capsule()
-                                .fill(Color.green.opacity(0.6))
-                        )
+                VStack(spacing: HarajukuSpacing.md) {
+                    FluffyButton(
+                        title: "そらへとびたつ！",
+                        emoji: "🎈",
+                        gradient: HarajukuColors.candyGradient,
+                        shadowColor: HarajukuColors.pastelPink
+                    ) {
+                        joinGame()
+                    }
+                    .opacity(showContent ? 1 : 0)
+
+                    Text(playerName.isEmpty ? "なまえがからっぽだと、じどうでつけるよ" : "'\(playerName)' でさんかするよ！")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .fontWeight(.medium)
+                        .foregroundColor(HarajukuColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, HarajukuSpacing.xl)
+                        .opacity(showContent ? 0.8 : 0)
                 }
-                .padding(.top, 20)
 
                 Spacer()
+                    .frame(height: HarajukuSpacing.xxxl)
             }
         }
         .onAppear {
-            isTextFieldFocused = true
+            startAnimations()
         }
         .navigationBarBackButtonHidden()
     }
 
+    private func startAnimations() {
+        isFloating = true
+
+        // きらきら回転
+        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            sparkleRotation = 360
+        }
+
+        // コンテンツフェードイン
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+            showContent = true
+        }
+
+        // キーボードを自動表示（少し遅延）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            isTextFieldFocused = true
+        }
+    }
+
     private func joinGame() {
-        let name = playerName.isEmpty ? "Player \(Int.random(in: 1...99))" : playerName
+        // 触覚フィードバック
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+
+        let name = playerName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : playerName
 
         // WebSocket でプレイヤー参加メッセージを送信（後で実装）
         // webSocketService.send(.playerJoin(playerName: name, playerId: UUID().uuidString))
 
         // キャリブレーション画面をスキップして待機画面へ（MVP）
-        coordinator.navigate(to: .waiting)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+            coordinator.navigate(to: .waiting)
+        }
+    }
+}
+
+// MARK: - Player Balloon View
+
+private struct PlayerBalloonView: View {
+    @State private var isPulsing = false
+
+    var body: some View {
+        FluffyBalloon(
+            color: HarajukuColors.pastelPink,
+            size: 100,
+            emoji: "❓"
+        )
     }
 }
 

@@ -220,5 +220,6 @@ open OnlyLonely.xcodeproj
 - [🎮 ゲーム設計書](./docs/game-design.md) - ゲームルール、コンセプト、世界観
 - [⚙️ 技術仕様書](./docs/technical-spec.md) - システム構成、通信仕様、開発ロードマップ
 - [🎨 ビジュアル設計書](./docs/visual-design.md) - 演出仕様、画面レイアウト
+- [🎨 UI設計プロンプト](./docs/ui-design-prompt.md) - **クリエイティブUI実装ガイド（Claude実装時に使用）**
 - [🔊 サウンド設計書](./docs/sound-design.md) - サウンドデザイン、効果音
 - [📱 画面設計書](./docs/screens/README.md) - 全 12 画面の詳細仕様と画面遷移フロー

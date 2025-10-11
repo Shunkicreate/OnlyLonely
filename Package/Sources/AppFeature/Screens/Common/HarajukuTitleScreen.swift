@@ -1,14 +1,13 @@
 //
-//  TitleScreen.swift
+//  HarajukuTitleScreen.swift
 //  OnlyLonely
 //
-//  01. タイトル画面 - 原宿系ふわふわバージョン
-//  iPad / iPhone 共通
+//  タイトル画面 - 原宿系ふわふわバージョン
 //
 
 import SwiftUI
 
-struct TitleScreen: View {
+struct HarajukuTitleScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @State private var isBouncing = false
     @State private var showContent = false
@@ -106,8 +105,7 @@ struct TitleScreen: View {
                     FluffyButton(
                         title: "はじめる",
                         emoji: "🎈",
-                        gradient: HarajukuColors.rainbowGradient,
-                        shadowColor: HarajukuColors.pastelPink
+                        gradient: HarajukuColors.rainbowGradient
                     ) {
                         handleStart()
                     }
@@ -189,6 +187,6 @@ struct TitleScreen: View {
 }
 
 #Preview {
-    TitleScreen()
+    HarajukuTitleScreen()
         .environmentObject(AppCoordinator())
 }
