@@ -23,6 +23,12 @@ struct PhysicsConstants {
     /// 空気抵抗係数（TBD: 調整が必要）
     static var dragCoefficient: CGFloat = 0.5
 
+    /// 風入力の感度（iPhone→iPad）
+    static var windForceSensitivity: Float = 1.6
+
+    /// 風力の上限（感度適用後）
+    static var maxWindForce: Float = 2.0
+
 
     // MARK: - 雲パラメータ
 

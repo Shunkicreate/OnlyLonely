@@ -11,12 +11,17 @@ import Foundation
 @MainActor
 final class iPadGameplayScreenModel: ObservableObject {
     private var sessionManager: P2PSessionManager?
+    private weak var physicsCoordinator: GamePhysicsCoordinator?
     private var cancellables = Set<AnyCancellable>()
 
-    func configure(sessionManager: P2PSessionManager) {
-        guard sessionManager !== self.sessionManager else { return }
+    func configure(sessionManager: P2PSessionManager, physicsCoordinator: GamePhysicsCoordinator) {
+        let sessionChanged = sessionManager !== self.sessionManager
         self.sessionManager = sessionManager
-        subscribe(to: sessionManager)
+        self.physicsCoordinator = physicsCoordinator
+
+        if sessionChanged {
+            subscribe(to: sessionManager)
+        }
     }
 
     func cancelSubscriptions() {
@@ -35,8 +40,11 @@ final class iPadGameplayScreenModel: ObservableObject {
     }
 
     private func handleWindForce(_ message: PlayerWindForceMessage) {
-        let formattedForce = String(format: "%.3f", message.force)
-        let formattedRoll = String(format: "%.2f", message.roll)
-        print("📥 Wind update <- \(message.playerId): force=\(formattedForce), roll=\(formattedRoll) at \(message.timestamp)")
+        print("📥 Wind update <- \(message.playerId): force=\(message.force), roll=\(message.roll) at \(message.timestamp)")
+        physicsCoordinator?.receiveWindInput(
+            playerId: message.playerId,
+            force: message.force,
+            timestamp: message.timestamp.timeIntervalSince1970
+        )
     }
 }

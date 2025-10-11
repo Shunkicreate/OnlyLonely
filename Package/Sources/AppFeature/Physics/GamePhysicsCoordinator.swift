@@ -24,7 +24,8 @@ class GamePhysicsCoordinator: ObservableObject {
     // MARK: - Internal State
 
     private var lastUpdateTime: TimeInterval = 0
-    private var inputBuffer: [(playerId: String, force: Float, timestamp: TimeInterval)] = []
+    private var inputBuffer: [(player: Player, force: Float, timestamp: TimeInterval)] = []
+    private var playerAssignments: [String: Player] = [:]
 
     // MARK: - Initialization
 
@@ -56,7 +57,11 @@ class GamePhysicsCoordinator: ObservableObject {
 
     /// iPhoneからの風力入力を受信（30Hzで呼ばれる）
     func receiveWindInput(playerId: String, force: Float, timestamp: TimeInterval = Date().timeIntervalSince1970) {
-        inputBuffer.append((playerId, force, timestamp))
+        guard let player = resolvePlayer(for: playerId) else { return }
+
+        let scaledForce = force * PhysicsConstants.windForceSensitivity
+        let clampedForce = max(0, min(PhysicsConstants.maxWindForce, scaledForce))
+        inputBuffer.append((player, clampedForce, timestamp))
 
         // バッファサイズ制限
         if inputBuffer.count > 10 {
@@ -80,12 +85,13 @@ class GamePhysicsCoordinator: ObservableObject {
         // 30Hz入力を60fps描画に補間
         // TODO: より高度な補間アルゴリズム実装
 
-        if let latest = inputBuffer.last {
-            if latest.playerId == "A" {
-                balloonPhysics.applyWindForce(latest.force, to: &playerAState)
-            } else if latest.playerId == "B" {
-                balloonPhysics.applyWindForce(latest.force, to: &playerBState)
-            }
+        guard let latest = inputBuffer.last else { return }
+
+        switch latest.player {
+        case .playerA:
+            balloonPhysics.applyWindForce(latest.force, to: &playerAState)
+        case .playerB:
+            balloonPhysics.applyWindForce(latest.force, to: &playerBState)
         }
     }
 
@@ -107,6 +113,41 @@ class GamePhysicsCoordinator: ObservableObject {
 
     private enum Player {
         case playerA, playerB
+    }
+
+    private func resolvePlayer(for playerId: String) -> Player? {
+        if let predefined = predefinedPlayer(for: playerId) {
+            return predefined
+        }
+
+        if let existing = playerAssignments[playerId] {
+            return existing
+        }
+
+        if !playerAssignments.values.contains(.playerA) {
+            playerAssignments[playerId] = .playerA
+            return .playerA
+        }
+
+        if !playerAssignments.values.contains(.playerB) {
+            playerAssignments[playerId] = .playerB
+            return .playerB
+        }
+
+        return nil
+    }
+
+    private func predefinedPlayer(for playerId: String) -> Player? {
+        switch playerId {
+        case "A":
+            playerAssignments[playerId] = .playerA
+            return .playerA
+        case "B":
+            playerAssignments[playerId] = .playerB
+            return .playerB
+        default:
+            return nil
+        }
     }
 
     private func handleCollisionResult(_ result: CollisionResult, forPlayer player: Player) {

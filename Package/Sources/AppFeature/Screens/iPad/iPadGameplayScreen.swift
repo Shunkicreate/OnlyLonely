@@ -149,7 +149,7 @@ struct iPadGameplayScreen: View {
             }
         }
         .onAppear {
-            screenModel.configure(sessionManager: sessionManager)
+            screenModel.configure(sessionManager: sessionManager, physicsCoordinator: physicsCoordinator)
             gameManager.startGame()
             // TODO: 雲データ読み込み
             // try? physicsCoordinator.loadCloudData(json: "...")

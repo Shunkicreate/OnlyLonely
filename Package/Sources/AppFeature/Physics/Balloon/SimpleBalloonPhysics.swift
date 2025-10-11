@@ -40,7 +40,7 @@ class SimpleBalloonPhysics: BalloonPhysicsEngine {
     }
 
     func applyWindForce(_ force: Float, to state: inout BalloonPhysicsState) {
-        state.windForce = max(0, min(1.0, force))
+        state.windForce = max(0, min(PhysicsConstants.maxWindForce, force))
     }
 
     func popBalloon(state: inout BalloonPhysicsState) {
