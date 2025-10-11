@@ -130,7 +130,7 @@ struct ConnectionScreen: View {
             presenting: connectionModel.invitationPeerName
         ) { _ in
             Button("受け入れる") {
-                connectionModel.acceptInvitation()
+                connectionModel.approveInvitation()
             }
             Button("拒否する", role: .cancel) {
                 connectionModel.declineInvitation()
@@ -175,7 +175,7 @@ struct ConnectionScreen: View {
 // MARK: - 接続状態インジケーター
 
 struct ConnectionStatusIndicator: View {
-    let phase: ConnectionPhase
+    let phase: ConnectionScreenModel.Phase
     @Binding var isPulsing: Bool
     @Binding var rotationAngle: Double
 
