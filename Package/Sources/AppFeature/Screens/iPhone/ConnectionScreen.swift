@@ -89,6 +89,7 @@ struct ConnectionScreen: View {
                 }
                 .padding(.horizontal, HarajukuSpacing.xl)
 
+                // 接続ボタン
                 FluffyButton(
                     title: buttonTitle,
                     emoji: buttonEmoji,
@@ -98,6 +99,7 @@ struct ConnectionScreen: View {
                     connect()
                 }
                 .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
+                .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
                 .padding(.top, HarajukuSpacing.lg)
 
                 VStack(spacing: HarajukuSpacing.sm) {
@@ -221,6 +223,8 @@ struct ConnectionScreen: View {
             return Color(hex: "#FF6B9D")
         }
     }
+
+    // MARK: - 接続処理
 
     private func connect() {
         guard connectionModel.phase != .connecting && connectionModel.phase != .connected else {

@@ -163,36 +163,17 @@ iPad のみ（横向き推奨）
 
 ### キャラクター衝突システム
 
-```swift
-// 衝突カテゴリの定義
-struct PhysicsCategory {
-    static let playerA: UInt32 = 0x1 << 0
-    static let playerB: UInt32 = 0x1 << 1
-    static let cloud: UInt32 = 0x1 << 2
-    static let obstacle: UInt32 = 0x1 << 3
-}
-
-// Player A の設定
-playerA.physicsBody?.categoryBitMask = PhysicsCategory.playerA
-playerA.physicsBody?.collisionBitMask = PhysicsCategory.playerB | PhysicsCategory.cloud
-playerA.physicsBody?.contactTestBitMask = PhysicsCategory.playerB
-
-// Player B の設定
-playerB.physicsBody?.categoryBitMask = PhysicsCategory.playerB
-playerB.physicsBody?.collisionBitMask = PhysicsCategory.playerA | PhysicsCategory.cloud
-playerB.physicsBody?.contactTestBitMask = PhysicsCategory.playerA
-```
+- `PhysicsCategory` を使って衝突カテゴリを定義
+- Player A と Player B はそれぞれ独立した物理ボディを持つ
+- `collisionBitMask` で相手プレイヤーと雲との衝突を有効化
+- `contactTestBitMask` で衝突検出イベントを設定
 
 ### 物理演算
 
-```swift
-// 上昇力の計算（仮）
-let liftForce = windForce * liftCoefficient
-let gravity = -9.8
-let resistance = velocity * resistanceCoefficient
-
-let acceleration = liftForce + gravity - resistance
-```
+- 上昇力: 息の強さ（音圧）× 上昇力係数
+- 重力: 常に下向きに作用
+- 抵抗: 速度に応じた空気抵抗
+- 加速度 = 上昇力 + 重力 - 抵抗
 
 ### パラメータ（仮）
 
@@ -250,6 +231,42 @@ let acceleration = liftForce + gravity - resistance
 - 雷鳴（松の雲）
 - 風船が割れる音
 - 風船再生成音
+- キャラクター同士の衝突音（ポンッという軽い音）
+- 障害物衝突時の固有効果音（[サウンド設計書：障害物衝突音](../sound-design.md#9-障害物衝突時のフィードバック音) を参照）
+
+### 衝突時のフィードバック
+
+#### ビジュアルフィードバック
+
+- **キャラクター衝突**: 衝突地点に白い波紋エフェクト、両キャラクターが軽く点滅
+- **障害物衝突**: 障害物ごとに固有のエフェクト（[ビジュアル設計書：衝突エフェクト](../visual-design.md#衝突時のフィードバックエフェクト) を参照）
+- **画面振動**: 大きな衝突（梅の雲、隕石）では画面全体が軽く振動（0.1〜0.2秒）
+- **スローモーション**: 重要な衝突（隕石、雷）では瞬間的にスローモーション演出（0.3倍速、0.2秒間）
+
+#### オーディオフィードバック
+
+- **空間オーディオ**: 衝突位置（左右）に応じてステレオパンニング
+- **音量変化**: 衝突の強度に応じて音量が変化（50%〜100%）
+- **固有効果音**: 各障害物ごとに異なる衝突音を再生
+
+#### 実装のポイント
+
+- 衝突検出時に `SKPhysicsContactDelegate` の `didBegin(_:)` メソッドで処理
+- 衝突タイプに応じてビジュアルエフェクト、サウンド、画面振動を実行
+- 画面振動は `SKAction` のシーケンスで実装
+- 空間オーディオは `AVAudioEngine` を使用して左右の位置に応じたパンニング
+
+## 入力バリデーション
+
+### 風力入力（force 値）
+
+| 項目           | ルール                              | エラー時の挙動                       |
+| -------------- | ----------------------------------- | ------------------------------------ |
+| 値の範囲       | 0.0 〜 1.0                          | 範囲外の値はクランプ（0.0 or 1.0）  |
+| データ型       | Float または Double                 | 型エラー時は 0.0 を設定              |
+| 受信頻度       | 最大 30Hz (33ms 間隔)               | 高頻度メッセージは間引き処理         |
+| playerId       | 接続済みプレイヤーの ID と一致      | 不一致時は無視                       |
+| Null/未定義    | 不可                                | Null の場合は 0.0 を設定             |
 
 ## 未定事項
 
@@ -265,3 +282,7 @@ let acceleration = liftForce + gravity - resistance
 - [ ] 一時停止機能の有無
 - [ ] 風船再生成のアニメーション
 - [ ] 宇宙飛行士の表示タイミング
+- [ ] 衝突エフェクトのパーティクルパラメータ
+- [ ] 画面振動の強度と持続時間の調整
+- [ ] スローモーション演出のトリガー条件
+- [ ] 空間オーディオの実装詳細（AVAudioEngine）

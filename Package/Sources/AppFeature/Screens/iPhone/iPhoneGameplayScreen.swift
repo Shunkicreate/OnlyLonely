@@ -12,10 +12,12 @@ import AVFoundation
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @StateObject private var micLevelManager = MicrophoneLevelManager()
+    @StateObject private var motionManager = MotionManager()
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
+    @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
 
     var body: some View {
         ZStack {
@@ -49,27 +51,25 @@ struct iPhoneGameplayScreen: View {
                     Text("Player A")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-
-                    Text("現在の高度: \(Int(currentAltitude))m")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.yellow)
                 }
 
                 // 風船
                 VStack {
                     Text("🎈")
                         .font(.system(size: 80))
-                        .scaleEffect(1.0 + CGFloat(windForce) * 0.3)
-                        .animation(.easeInOut(duration: 0.3), value: windForce)
+                        .scaleEffect(1.0 + CGFloat(micLevelManager.windForce) * 0.3)
+                        .animation(.easeInOut(duration: 0.3), value: micLevelManager.windForce)
 
                     Text("✨✨")
                         .font(.system(size: 24))
-                        .opacity(Double(windForce))
+                        .opacity(Double(micLevelManager.windForce))
                 }
+                .offset(x: balloonHorizontalOffset)
+                .animation(.easeInOut(duration: 0.15), value: motionManager.roll)
 
                 // 音圧レベルメーター
                 VStack(spacing: 8) {
-                    Text("音圧レベル")
+                    Text("風力レベル")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
@@ -88,8 +88,8 @@ struct iPhoneGameplayScreen: View {
                                         endPoint: .trailing
                                     )
                                 )
-                                .frame(width: geometry.size.width * CGFloat(windForce))
-                                .animation(.easeOut(duration: 0.1), value: windForce)
+                                .frame(width: geometry.size.width * CGFloat(micLevelManager.windForce))
+                                .animation(.easeOut(duration: 0.1), value: micLevelManager.windForce)
                         }
                     }
                     .frame(height: 30)
@@ -117,6 +117,7 @@ struct iPhoneGameplayScreen: View {
         }
         .onDisappear {
             micLevelManager.stopMonitoring()
+            motionManager.stopDeviceMotionUpdates()
         }
         .navigationBarBackButtonHidden()
     }
@@ -124,6 +125,7 @@ struct iPhoneGameplayScreen: View {
     private func startGame() {
         // マイク監視開始
         micLevelManager.startMonitoring()
+        motionManager.startDeviceMotionUpdates()
 
         // タイマー開始
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -132,14 +134,54 @@ struct iPhoneGameplayScreen: View {
             } else {
                 timer.invalidate()
                 // ゲーム終了
-                coordinator.navigate(to: .iPhoneResult)
+                Task { @MainActor in
+                    coordinator.navigate(to: .iPhoneResult)
+                }
             }
         }
 
-        // 音圧更新（30Hz）
+        // 高度更新（30Hz）
         Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
-            updateWindForce()
+            // 高度を更新（簡易シミュレーション）
+            currentAltitude += Double(micLevelManager.windForce) * 2.0
         }
+    }
+
+    // MARK: - バリデーション関数
+
+    /// RMS 値のバリデーション
+    private func validateRMSValue(_ value: Float) -> Float? {
+        // NaN/Infinite チェック
+        guard value.isFinite else {
+            print("⚠️ Invalid RMS value (NaN or Infinite): \(value)")
+            return nil
+        }
+
+        // 負の値チェック
+        guard value >= 0 else {
+            print("⚠️ Negative RMS value: \(value), using 0.0")
+            return 0.0
+        }
+
+        return value
+    }
+
+    /// 正規化後の風力値のバリデーション
+    private func validateNormalizedForce(_ force: Float) -> Float {
+        // NaN/Infinite チェック
+        guard force.isFinite else {
+            print("⚠️ Invalid normalized force (NaN or Infinite), using previous value")
+            return previousWindForce
+        }
+
+        // 0.0〜1.0 にクランプ
+        let clampedForce = max(0.0, min(1.0, force))
+
+        if clampedForce != force {
+            print("⚠️ Force value \(force) out of range, clamped to \(clampedForce)")
+        }
+
+        return clampedForce
     }
 
     private func updateWindForce() {
@@ -158,12 +200,19 @@ struct iPhoneGameplayScreen: View {
             // さらに0.7倍して感度を下げる
             let sensitivity = 0.7
             windForce = max(0, min(1.0, normalized * Float(sensitivity)))
-
-            // 高度を更新（簡易シミュレーション）
-            currentAltitude += Double(windForce) * 2.0
         } else {
-            windForce = 0
+            // サンプル不足時は前回の値を使用
+            windForce = previousWindForce
         }
+    }
+
+    /// 傾きに応じて風船の左右位置を調整
+    private var balloonHorizontalOffset: CGFloat {
+        // 25度の傾きで最大移動（左右）
+        let tiltRange: Double = 25
+        let normalizedTilt = max(-1, min(1, motionManager.roll / tiltRange))
+        let maxOffset: CGFloat = 120
+        return CGFloat(normalizedTilt) * maxOffset
     }
 }
 

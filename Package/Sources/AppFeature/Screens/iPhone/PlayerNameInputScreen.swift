@@ -17,6 +17,12 @@ struct PlayerNameInputScreen: View {
     @State private var sparkleRotation: Double = 0
     @FocusState private var isTextFieldFocused: Bool
 
+    // バリデーション状態
+    @State private var nameError: String? = nil
+
+    // 定数
+    private let maxNameLength = 10
+
     var body: some View {
         ZStack {
             // カラフル虹色背景
@@ -91,6 +97,24 @@ struct PlayerNameInputScreen: View {
                                     .padding(.top, 4)
                             }
                         }
+
+                    // 文字数カウンター
+                    HStack(spacing: 4) {
+                        Text("\(playerName.count)")
+                            .foregroundColor(playerName.count > maxNameLength ? Color(hex: "#FF6B9D") : HarajukuColors.pastelPurple)
+                        Text("/ \(maxNameLength) もじ")
+                            .foregroundColor(HarajukuColors.textSecondary)
+                    }
+                    .font(HarajukuTypography.caption(size: 11))
+                    .fontWeight(.medium)
+
+                    // バリデーションエラーメッセージ領域（固定高さでレイアウト崩れ防止）
+                    Text(nameError ?? " ")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .foregroundColor(Color(hex: "#FF6B9D"))
+                        .multilineTextAlignment(.center)
+                        .opacity(nameError != nil ? 1 : 0)
+                        .frame(minHeight: 16)
                 }
                 .padding(.horizontal, HarajukuSpacing.xl)
                 .opacity(showContent ? 1 : 0)
@@ -107,10 +131,10 @@ struct PlayerNameInputScreen: View {
                     ) {
                         joinGame()
                     }
-                    .disabled(sessionManager.connectedPeers.isEmpty)
-                    .opacity(showContent ? 1 : 0)
+                    .disabled(sessionManager.connectedPeers.isEmpty || !isValidInput)
+                    .opacity(showContent ? (isValidInput ? 1.0 : 0.5) : 0)
 
-                    Text(playerName.isEmpty ? "なまえがからっぽだと、じどうでつけるよ" : "'\(playerName)' でさんかするよ！")
+                    Text(playerName.isEmpty ? "なまえをいれてね" : "'\(playerName)' でさんかするよ！")
                         .font(HarajukuTypography.caption(size: 12))
                         .fontWeight(.medium)
                         .foregroundColor(HarajukuColors.textSecondary)
@@ -126,7 +150,35 @@ struct PlayerNameInputScreen: View {
         .onAppear {
             startAnimations()
         }
+        .onChange(of: playerName) { _, newValue in
+            validatePlayerName(newValue)
+        }
         .navigationBarBackButtonHidden()
+    }
+
+    // MARK: - バリデーション関数
+
+    private func validatePlayerName(_ name: String) {
+        // 最大文字数チェック
+        if name.count > maxNameLength {
+            nameError = "\(maxNameLength)もじいないでいれてね"
+            return
+        }
+
+        // 空白のみチェック
+        if !name.isEmpty && name.trimmingCharacters(in: .whitespaces).isEmpty {
+            nameError = "なまえをちゃんといれてね"
+            return
+        }
+
+        // バリデーション成功
+        nameError = nil
+    }
+
+    private var isValidInput: Bool {
+        nameError == nil &&
+        playerName.count <= maxNameLength &&
+        !playerName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func startAnimations() {
@@ -149,15 +201,21 @@ struct PlayerNameInputScreen: View {
     }
 
     private func joinGame() {
-        guard !sessionManager.connectedPeers.isEmpty else { return }
+        guard !sessionManager.connectedPeers.isEmpty || isValidInput else { return }
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
 
-        let name = playerName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : playerName
+        // 先頭・末尾の空白を削除（トリミング）
+        let trimmedName = playerName.trimmingCharacters(in: .whitespaces)
+
+        // 空欄またはトリミング後に空の場合はデフォルト名を使用
+        let finalName = trimmedName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : trimmedName
+
+        print("✅ Player joined: \(finalName)")
 
         // WebSocket でプレイヤー参加メッセージを送信（後で実装）
-        // webSocketService.send(.playerJoin(playerName: name, playerId: UUID().uuidString))
+        // webSocketService.send(.playerJoin(playerName: finalName, playerId: UUID().uuidString))
 
         // キャリブレーション画面をスキップして待機画面へ（MVP）
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
