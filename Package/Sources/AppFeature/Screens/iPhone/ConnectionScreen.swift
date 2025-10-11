@@ -70,6 +70,7 @@ struct ConnectionScreen: View {
                     .frame(height: 40)
 
                 titleSection
+                nameInputSection
                 statusIndicatorSection
                 hostNameSection
                 errorSection
@@ -106,6 +107,39 @@ struct ConnectionScreen: View {
                 .nikumaruBody(size: 14)
                 .foregroundColor(HarajukuColors.textSecondary)
                 .multilineTextAlignment(.center)
+        }
+    }
+
+    // MARK: - Name Input Section
+
+    private var nameInputSection: some View {
+        VStack(spacing: HarajukuSpacing.md) {
+            Text("あなたのなまえは？")
+                .nikumaruCaption(size: 14)
+                .foregroundColor(HarajukuColors.textSecondary)
+
+            FluffyTextField(
+                placeholder: "なまえをいれてね♪",
+                text: Binding(
+                    get: { connectionModel.playerName },
+                    set: { newValue in
+                        // 10文字制限
+                        if newValue.count <= 10 {
+                            connectionModel.playerName = newValue
+                        }
+                    }
+                ),
+                emoji: "✨",
+                gradient: HarajukuColors.skyGradient,
+                borderColor: HarajukuColors.pastelPink,
+                keyboardType: .default,
+                isDisabled: connectionModel.phase == .connecting || connectionModel.phase == .connected
+            )
+            .padding(.horizontal, HarajukuSpacing.xl)
+
+            Text("\(connectionModel.playerName.count)/10")
+                .nikumaruCaption(size: 12)
+                .foregroundColor(HarajukuColors.textSecondary.opacity(0.6))
         }
     }
 
@@ -197,8 +231,8 @@ struct ConnectionScreen: View {
         ) {
             connectionModel.connect()
         }
-        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
-        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
+        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected || connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected || connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) ? 0.5 : 1.0)
     }
 
     private var cancelButton: some View {
