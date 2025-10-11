@@ -328,16 +328,6 @@ struct iPhoneResultScreen: View {
 
     private var buttonsSection: some View {
         VStack(spacing: HarajukuSpacing.lg) {
-            // もう一度プレイ
-            FluffyButtonWithImage(
-                title: "もういちど",
-                imageName: "green",
-                gradient: HarajukuColors.blueMintGradient,
-                shadowColor: HarajukuColors.pastelMint
-            ) {
-                coordinator.replace(with: .connection)
-            }
-
             // タイトルに戻る
             FluffyOutlineButton(
                 title: "たいとるにもどる",

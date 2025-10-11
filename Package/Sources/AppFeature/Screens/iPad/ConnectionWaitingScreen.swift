@@ -246,24 +246,6 @@ struct ConnectionWaitingScreen: View {
         }
     }
 
-    // MARK: - Debug Button
-
-    private var debugButton: some View {
-        Button {
-            coordinator.navigate(to: .iPadResult)
-        } label: {
-            Text("けっかがめんへちょくせついどう (DEBUG)")
-                .nikumaruBody(size: 16)
-                .foregroundColor(.white)
-                .padding(.horizontal, 30)
-                .padding(.vertical, 12)
-                .background(
-                    Capsule()
-                        .fill(Color.orange.opacity(0.8))
-                )
-        }
-    }
-
     // MARK: - Animations
 
     private func startAnimations() {
