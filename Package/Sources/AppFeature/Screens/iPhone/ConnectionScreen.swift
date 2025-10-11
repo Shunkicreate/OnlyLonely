@@ -46,6 +46,12 @@ struct ConnectionScreen: View {
         } message: { peerName in
             Text("\(peerName) からの招待を受け入れますか？")
         }
+        .onReceive(sessionManager.navigationCommandPublisher) { command in
+            guard command.action == .showCountdown else { return }
+            if coordinator.currentRoute != .countdown {
+                coordinator.navigate(to: .countdown)
+            }
+        }
     }
 
     // MARK: - Background
