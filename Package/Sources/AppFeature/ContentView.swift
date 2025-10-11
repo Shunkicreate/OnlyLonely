@@ -9,6 +9,8 @@ import SwiftUI
 
 public struct ContentView: View {
     @StateObject private var coordinator = AppCoordinator()
+    @StateObject private var micPermissionManager = MicrophonePermissionManager()
+    @State private var showDebug = false
 
     public init() {}
 
@@ -20,6 +22,27 @@ public struct ContentView: View {
                 }
         }
         .environmentObject(coordinator)
+        .onAppear {
+            // アプリ起動時にマイク権限をリクエスト
+            micPermissionManager.requestPermission()
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                showDebug = true
+            } label: {
+                Image(systemName: "ladybug.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(16)
+                    .background(Color.red.opacity(0.9))
+                    .clipShape(Circle())
+                    .shadow(radius: 6)
+            }
+            .padding(16)
+        }
+        .sheet(isPresented: $showDebug) {
+            DebugScreen()
+        }
     }
 
     @ViewBuilder

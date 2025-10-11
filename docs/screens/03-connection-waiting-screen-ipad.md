@@ -6,7 +6,7 @@ iPad のみ
 
 ## 役割・目的
 
-- WebSocket サーバーとして起動し、iPhone からの接続を待つ
+- MultipeerConnectivity のホストとして待受し、iPhone からの接続を待つ
 - 接続状況をリアルタイムで表示
 - 両プレイヤーが接続＆キャリブレーション完了後、自動的にゲーム画面へ遷移
 
@@ -15,7 +15,7 @@ iPad のみ
 ### 必須要素
 
 - 画面タイトル: 「プレイヤーを待っています」
-- iPad の IP アドレス（接続情報）
+    - 近傍ホストとしての表示名（serviceType）
 - 接続状況
   - Player A: 未接続 / 接続中 / 準備完了
   - Player B: 未接続 / 接続中 / 準備完了
@@ -76,10 +76,10 @@ iPad のみ
 
 ## 通信
 
-### WebSocket サーバー起動
+### P2P ホスト起動（MultipeerConnectivity）
 
-- ローカルネットワーク内でサーバーを起動
-- ポート: 8080（仮）
+- `MCNearbyServiceAdvertiser` と `MCNearbyServiceBrowser` を起動
+- `serviceType`: `nearby-devices`（仮称）
 
 ### 受信メッセージ
 
@@ -134,8 +134,7 @@ iPad のみ
 ### 使用技術
 
 - SwiftUI で画面実装
-- URLSessionWebSocketTask でサーバー起動
-- Network.framework で IP アドレス取得
+- MultipeerConnectivity で P2P 接続
 
 ### 状態管理
 
@@ -151,8 +150,8 @@ iPad のみ
 
 ### ネットワーク
 
-- LAN 内での接続を前提
-- Bonjour サービスの使用も検討
+- 近接 P2P（Bluetooth/Wi‑Fi）を前提
+- Bonjour は MultipeerConnectivity に内包
 
 ## デザインメモ
 
@@ -171,7 +170,7 @@ iPad のみ
 
 ## 未定事項
 
-- [ ] ポート番号の決定
-- [ ] Bonjour サービスの使用要否
+- [ ] serviceType の最終決定
+- [ ] 招待フローと参加承認 UI
 - [ ] タイムアウト処理
 - [ ] エラーハンドリング

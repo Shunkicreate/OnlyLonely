@@ -62,7 +62,7 @@ iPad のみ
 ### 終了ボタン
 
 - タップで「タイトル画面」に戻る
-- WebSocket サーバーを停止
+- P2P ホスト（Advertiser/Browser）を停止
 
 ## 画面遷移
 

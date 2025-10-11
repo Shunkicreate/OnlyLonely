@@ -14,7 +14,6 @@ struct iPhoneGameplayScreen: View {
     @StateObject private var micLevelManager = MicrophoneLevelManager()
 
     @State private var timeRemaining: Int = 60
-    @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
     @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
 
@@ -50,10 +49,6 @@ struct iPhoneGameplayScreen: View {
                     Text("Player A")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-
-                    Text("現在の高度: \(Int(currentAltitude))m")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.yellow)
                 }
 
                 // 風船
@@ -185,24 +180,19 @@ struct iPhoneGameplayScreen: View {
     private func updateWindForce() {
         // マイクレベルから風力を計算
         if let peakLevel = micLevelManager.peakHoldLevel {
-            // RMS 値のバリデーション
-            guard let validatedLevel = validateRMSValue(peakLevel) else {
-                // サンプル不足時は前回の値を使用
-                windForce = previousWindForce
+            // 最小閾値を設定（小さい音を拾わないようにする）
+            let threshold: Float = -20.0 // -20dB以下は無視
+
+            guard peakLevel > threshold else {
+                windForce = 0
                 return
             }
 
-            // dBを0.0〜1.0に正規化
-            let normalized = (validatedLevel + 60) / 60 // -60dB 〜 0dB を 0.0 〜 1.0 に
-
-            // 正規化後の値をバリデーション
-            let validatedForce = validateNormalizedForce(normalized)
-
-            windForce = validatedForce
-            previousWindForce = validatedForce // 前回の値を保存
-
-            // 高度を更新（簡易シミュレーション）
-            currentAltitude += Double(windForce) * 2.0
+            // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
+            let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
+            // さらに0.7倍して感度を下げる
+            let sensitivity = 0.7
+            windForce = max(0, min(1.0, normalized * Float(sensitivity)))
         } else {
             // サンプル不足時は前回の値を使用
             windForce = previousWindForce
