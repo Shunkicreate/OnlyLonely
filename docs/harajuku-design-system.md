@@ -1,7 +1,9 @@
-# 🎀 原宿系ふわふわデザインシステム
+# ふわふわたいむ デザインシステム
 
 > **OnlyLonely の原宿スタイル UI 実装ガイド**
 > カラフル、ふわふわ、キラキラ、ポップで可愛い世界観を保つための完全リファレンス
+>
+> **重要**: 絵文字は使用せず、Assets画像を活用してビジュアル表現を行います
 
 ---
 
@@ -26,17 +28,19 @@
 
 - **カラフル**: 虹色、パステルカラー、明るくポップな配色
 - **ふわふわ**: 柔らかい質感、丸みのある形状、浮遊感のあるアニメーション
-- **キラキラ**: 絵文字の多用、光の表現、輝くエフェクト
-- **親しみやすさ**: ひらがな中心のテキスト、絵文字、優しい言葉遣い
+- **キラキラ**: グラデーション、光の表現、輝くエフェクト
+- **親しみやすさ**: ひらがな中心のテキスト、Assets画像、優しい言葉遣い
 - **楽しさ**: 動きのあるアニメーション、遊び心のあるインタラクション
+- **ビジュアル重視**: 絵文字ではなくAssetsの画像を使用してキャラクター性を表現
 
 ### デザイン原則
 
 1. **明るさ優先**: 暗い色は極力避け、明るくポジティブな印象を
 2. **柔らかさ**: 角を丸く、影を柔らかく、動きをスムーズに
 3. **視覚的な楽しさ**: 静的な画面を避け、常に何かが動いている
-4. **感情表現**: 絵文字を積極的に使い、感情を視覚化する
+4. **画像による表現**: **絵文字は使用せず**、Assets画像を使ってキャラクター性や感情を視覚化する
 5. **統一感**: すべての要素が原宿の世界観に調和している
+6. **3D効果**: タイトルやテキストにグラデーション・影・アウトラインで奥行きを表現
 
 ### 避けるべき表現
 
@@ -46,13 +50,15 @@
 - 無機質なアイコン（システムアイコンのみ）
 - カタカナ・漢字のみのテキスト
 - 静的で動きのないUI
+- **絵文字の使用**（タイトル、ボタン、装飾などすべて）
 
 ✅ **OK例**:
 - パステルカラーの背景に虹色のアクセント
 - 丸みを帯びた形状（border-radius: 20以上）
-- 絵文字とカスタムコンポーネントの組み合わせ
+- **Assets画像を使用したキャラクター表現**
 - ひらがな中心のやさしいテキスト
 - ふわふわ浮かぶアニメーション
+- グラデーション・影・アウトラインによる3D効果
 
 ---
 
@@ -121,10 +127,10 @@ HarajukuColors.candyGradient
 
 ### 使い方の指針
 
-- **背景**: 常に `RainbowBackground()` または `FluffyCloudBackground()` を使用
-- **ボタン**: `candyGradient` または `pinkPurpleGradient`
-- **入力フィールド**: `skyGradient` または `blueMintGradient`
-- **風船・キャラクター**: 単色のパステルカラー + 白のハイライト
+- **背景**: グラデーション背景を使用（スカイブルー→宇宙、虹色など）
+- **ボタン**: シンプルな白文字 + グロー効果
+- **タイトル**: 3Dグラデーション効果（グラデーション + 影 + 白いアウトライン）
+- **風船・キャラクター**: Assets画像 + 円形グラデーションUI + グロー効果
 
 ---
 
@@ -171,8 +177,9 @@ HarajukuTypography.caption(size: 12-14)
 
 1. **ひらがな優先**: 「接続」→「せつぞく」、「開始」→「スタート」
 2. **親しみやすい表現**: 「エラーが発生しました」→「うまくいかなかったよ…」
-3. **絵文字の活用**: 文末や文頭に感情を表す絵文字を追加
+3. **画像の活用**: 文末や文頭に感情を表すAssets画像を配置（絵文字は使用しない）
 4. **読みやすさ**: フォントサイズは14pt以上、行間は広めに
+5. **3D効果**: 重要なテキストにはグラデーション + 影 + アウトラインで奥行きを
 
 ### NG表現リスト
 
@@ -575,60 +582,222 @@ ZStack {
 
 ## 💡 実装例
 
-### 例1: タイトル画面
+### 例1: タイトル画面（最新実装）
 
 ```swift
 struct TitleScreen: View {
-    @State private var sparkleRotation: Double = 0
-    @State private var isFloating = false
+    @State private var backgroundPhase: CGFloat = 0
+    @State private var balloonOffsets: [CGFloat] = [0, 0, 0, 0, 0]
+    @State private var showStars = false
 
     var body: some View {
-        ZStack {
-            RainbowBackground().ignoresSafeArea()
-            FluffyCloudBackground().ignoresSafeArea().opacity(0.5)
+        GeometryReader { geometry in
+            ZStack {
+                // 背景（スカイブルー→宇宙へのグラデーション変化）
+                AnimatedBackground(phase: backgroundPhase)
+                    .ignoresSafeArea()
 
-            VStack(spacing: HarajukuSpacing.xxxl) {
-                // きらきら装飾
-                HStack(spacing: 20) {
-                    ForEach(["✨", "🌟", "💫"], id: \.self) { emoji in
-                        Text(emoji)
-                            .font(.system(size: 32))
-                            .rotationEffect(.degrees(sparkleRotation))
+                // 星（宇宙に近づくと表示）
+                if showStars {
+                    TwinklingStarsView()
+                        .opacity(Double(backgroundPhase))
+                }
+
+                // 飛んでいく風船たち（Assets画像使用）
+                ForEach(0..<5, id: \.self) { index in
+                    FloatingBalloon(
+                        index: index,
+                        screenHeight: geometry.size.height,
+                        offset: balloonOffsets[index]
+                    )
+                }
+
+                // UIオーバーレイ
+                VStack(spacing: 40) {
+                    Spacer()
+
+                    // タイトルセクション（3D効果）
+                    VStack(spacing: 24) {
+                        Text("ふわふわたいむ")
+                            .font(.system(size: 58, weight: .black, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(hex: "#FF6B9D"),
+                                        Color(hex: "#C44569"),
+                                        Color(hex: "#A29BFE"),
+                                        Color(hex: "#6C5CE7")
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .shadow(color: Color(hex: "#FF6B9D").opacity(0.5), radius: 10)
+                            .shadow(color: Color(hex: "#A29BFE").opacity(0.5), radius: 20)
+                            .overlay(
+                                // 白いアウトライン（3D効果）
+                                Text("ふわふわたいむ")
+                                    .font(.system(size: 58, weight: .black, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.3))
+                                    .offset(x: 0, y: -2)
+                            )
+
+                        // サブタイトル（3D効果）
+                        Text("息で飛ばす、ふたりの風船")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color(hex: "#FFFFFF"), Color(hex: "#E0E0FF")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .shadow(color: Color(hex: "#A29BFE").opacity(0.4), radius: 8)
+                            .overlay(
+                                Text("息で飛ばす、ふたりの風船")
+                                    .foregroundStyle(.white.opacity(0.2))
+                                    .offset(x: 0, y: -1)
+                            )
+                            .tracking(2)
                     }
-                }
 
-                // タイトル
-                RainbowText(text: "OnlyLonely", size: 56)
+                    Spacer()
 
-                // 風船
-                HStack(spacing: 40) {
-                    FluffyBalloon(color: HarajukuColors.pastelPink, size: 100, emoji: "💗")
-                    FluffyBalloon(color: HarajukuColors.pastelBlue, size: 120, emoji: "💙")
-                    FluffyBalloon(color: HarajukuColors.pastelMint, size: 90, emoji: "💚")
-                }
-                .offset(y: isFloating ? -15 : 15)
-                .animation(HarajukuAnimation.bounce(duration: 2.5), value: isFloating)
-
-                // ボタン
-                FluffyButton(
-                    title: "はじめる",
-                    emoji: "🎈",
-                    gradient: HarajukuColors.rainbowGradient,
-                    shadowColor: HarajukuColors.pastelPink
-                ) {
-                    // アクション
+                    // タップしてはじめる（グロー効果）
+                    Text("タップしてはじめる")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .opacity(opacity)  // グロー用
                 }
             }
         }
         .onAppear {
-            isFloating = true
-            withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
-                sparkleRotation = 360
+            startAnimation()
+        }
+    }
+
+    private func startAnimation() {
+        // 背景が原宿→宇宙に変化（6秒、1回のみ）
+        withAnimation(Animation.easeInOut(duration: 6.0)) {
+            backgroundPhase = 1.0
+        }
+
+        // 風船が順番に飛んでいく
+        for i in 0..<5 {
+            let delay = Double(i) * 0.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(Animation.easeOut(duration: 6.0)) {
+                    balloonOffsets[i] = -UIScreen.main.bounds.height * 1.8
+                }
+            }
+        }
+
+        // 6秒後、風船を戻してふわふわさせる
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+            balloonOffsets = [0, 0, 0, 0, 0]
+        }
+    }
+}
+
+// 風船コンポーネント（Assets画像 + UI）
+struct FloatingBalloon: View {
+    let index: Int
+    let screenHeight: CGFloat
+    let offset: CGFloat
+
+    @State private var swayX: CGFloat = 0
+    @State private var swayY: CGFloat = 0
+    @State private var rotation: Double = 0
+    @State private var scale: CGFloat = 1.0
+
+    // Assets画像データ
+    private let balloonData: [(imageName: String, color: String, size: CGFloat, xPosition: CGFloat)] = [
+        ("red", "#FF1493", 80, 0.15),
+        ("blue", "#1E90FF", 95, 0.35),
+        ("yellow", "#FFD700", 110, 0.5),
+        ("orange", "#FF6347", 85, 0.65),
+        ("green", "#32CD32", 90, 0.85)
+    ]
+
+    var body: some View {
+        let data = balloonData[index]
+        let screenWidth = UIScreen.main.bounds.width
+
+        VStack(spacing: 0) {
+            ZStack {
+                // グロー効果
+                Circle()
+                    .fill(Color(hex: data.color).opacity(0.5))
+                    .frame(width: data.size + 30, height: data.size + 30)
+                    .blur(radius: 20)
+
+                // 風船UI（円形グラデーション）
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color(hex: data.color).opacity(0.9),
+                                Color(hex: data.color)
+                            ],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: data.size
+                        )
+                    )
+                    .frame(width: data.size, height: data.size)
+
+                // Assets画像をオーバーレイ
+                Image(data.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: data.size, height: data.size)
+            }
+
+            // 紐
+            Path { path in
+                path.move(to: CGPoint(x: 0, y: 0))
+                path.addQuadCurve(
+                    to: CGPoint(x: 0, y: data.size * 0.5),
+                    control: CGPoint(x: sin(rotation * .pi / 180) * 12, y: data.size * 0.25)
+                )
+            }
+            .stroke(Color(hex: data.color).opacity(0.7), lineWidth: 3)
+
+            // キャラクター画像（風船を持っている）
+            Image(data.imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: data.size * 1.2, height: data.size * 1.2)
+        }
+        .position(
+            x: screenWidth * data.xPosition + swayX,
+            y: screenHeight * 0.6 + offset + swayY
+        )
+        .rotationEffect(.degrees(rotation))
+        .scaleEffect(scale)
+        .onAppear {
+            // ふわふわアニメーション
+            withAnimation(
+                Animation.easeInOut(duration: Double.random(in: 2.5...3.5))
+                    .repeatForever(autoreverses: true)
+            ) {
+                swayX = CGFloat.random(in: -40...40)
+                swayY = CGFloat.random(in: -20...20)
+                rotation = Double.random(in: -25...25)
+                scale = CGFloat.random(in: 0.9...1.1)
             }
         }
     }
 }
 ```
+
+**実装のポイント**:
+- ✅ 絵文字を一切使用していない
+- ✅ Assets画像（red, blue, yellow, orange, green）を活用
+- ✅ タイトルに3D効果（グラデーション + 影 + アウトライン）
+- ✅ 6秒間のアニメーション後、風船がふわふわ浮遊し続ける
+- ✅ スカイブルーから宇宙への背景トランジション
+- ✅ キャラクターが風船を持っているビジュアル
 
 ### 例2: 入力画面
 
@@ -758,20 +927,21 @@ struct CountdownScreen: View {
 新しい画面やコンポーネントを作る際は、必ず以下を確認：
 
 ✅ **背景**
-- [ ] `RainbowBackground()` を使用している
-- [ ] `FluffyCloudBackground()` を重ねている
+- [ ] グラデーション背景を使用している
 - [ ] 暗い背景色を使用していない
+- [ ] 必要に応じてアニメーション背景を実装
 
 ✅ **カラー**
-- [ ] パステルカラーのみを使用している
+- [ ] パステルカラーやビビッドカラーを使用している
 - [ ] 黒やダークグレーを避けている
 - [ ] グラデーションを効果的に使っている
 
 ✅ **テキスト**
 - [ ] ひらがな中心の表現になっている
 - [ ] 親しみやすい言葉遣いになっている
-- [ ] 絵文字を適切に配置している
+- [ ] **絵文字を使用していない**（重要！）
 - [ ] フォントサイズが14pt以上
+- [ ] 重要なテキストに3D効果を適用
 
 ✅ **形状**
 - [ ] 角が丸い（corner-radius: 20以上）
@@ -780,43 +950,47 @@ struct CountdownScreen: View {
 
 ✅ **アニメーション**
 - [ ] 画面に動きがある
-- [ ] バウンス系のアニメーションを使用
-- [ ] きらきら装飾が回転している
+- [ ] バウンス系やふわふわ系のアニメーションを使用
 - [ ] エラー時もネガティブすぎない動き
 
-✅ **絵文字**
-- [ ] タイトルや重要な箇所に配置
-- [ ] 状態を絵文字で表現している
-- [ ] 感情を視覚化している
+✅ **画像の使用**（絵文字の代わり）
+- [ ] **絵文字の代わりにAssets画像を使用している**
+- [ ] キャラクターや風船にAssets画像を配置
+- [ ] 状態を画像で表現している
+- [ ] 感情を画像で視覚化している
 
 ### コードレビューポイント
 
 **新規コンポーネント作成時**:
 
-1. **HarajukuColors を使っているか？**
-   - `Color.blue` ❌ → `HarajukuColors.pastelBlue` ✅
+1. **適切なカラーを使っているか？**
+   - `Color.blue` ❌ → パステルカラーやグラデーション ✅
 
-2. **HarajukuTypography を使っているか？**
-   - `.font(.title)` ❌ → `HarajukuTypography.title(size: 32)` ✅
+2. **適切なフォントを使っているか？**
+   - `.font(.title)` ❌ → `.system(size: X, weight: Y, design: .rounded)` ✅
 
-3. **HarajukuAnimation を使っているか？**
-   - `.easeInOut` ❌ → `HarajukuAnimation.bounce()` ✅
+3. **適切なアニメーションを使っているか？**
+   - 静的 ❌ → ふわふわ、バウンス、グロー ✅
 
-4. **HarajukuSpacing を使っているか？**
-   - `.padding(16)` ❌ → `.padding(HarajukuSpacing.lg)` ✅
+4. **適切なスペーシングを使っているか？**
+   - `.padding(16)` → `.padding(24)` など、適切な余白 ✅
 
-5. **絵文字を使っているか？**
-   - アイコンのみ ❌ → 絵文字 + テキスト ✅
+5. **絵文字を使っていないか？（最重要）**
+   - 絵文字使用 ❌ → **Assets画像を使用** ✅
+
+6. **3D効果を活用しているか？**
+   - 平面的なテキスト ❌ → グラデーション + 影 + アウトライン ✅
 
 ### デバッグ時の確認
 
 **「原宿っぽくない」と感じたら**:
 
-1. **色は明るいか？** → パステルカラーに変更
-2. **動きはあるか？** → バウンスアニメーション追加
+1. **色は明るいか？** → パステルカラーやビビッドカラーに変更
+2. **動きはあるか？** → バウンス、ふわふわアニメーション追加
 3. **硬くないか？** → corner-radius を大きく
-4. **親しみやすいか？** → ひらがな・絵文字を追加
-5. **楽しいか？** → きらきら装飾を追加
+4. **親しみやすいか？** → ひらがな・Assets画像を追加
+5. **楽しいか？** → グロー効果や3D効果を追加
+6. **絵文字を使っていないか？** → **絵文字をすべてAssets画像に置き換える**
 
 ---
 
@@ -825,73 +999,135 @@ struct CountdownScreen: View {
 ### よく使うコード片
 
 ```swift
-// 背景セット
-ZStack {
-    RainbowBackground().ignoresSafeArea()
-    FluffyCloudBackground().ignoresSafeArea().opacity(0.4)
-    // コンテンツ
-}
+// グラデーション背景
+LinearGradient(
+    colors: [
+        Color(hex: "#87CEEB"),  // スカイブルー
+        Color(hex: "#FF6B9D"),  // ピンク
+        Color(hex: "#FEA47F")   // オレンジ
+    ],
+    startPoint: .top,
+    endPoint: .bottom
+)
+.ignoresSafeArea()
 
-// きらきら装飾
-HStack(spacing: 12) {
-    Text("✨")
-        .rotationEffect(.degrees(sparkleRotation))
-    RainbowText(text: "タイトル", size: 32)
-    Text("✨")
-        .rotationEffect(.degrees(-sparkleRotation))
-}
+// 3Dタイトルテキスト
+Text("ふわふわたいむ")
+    .font(.system(size: 58, weight: .black, design: .rounded))
+    .foregroundStyle(
+        LinearGradient(
+            colors: [Color(hex: "#FF6B9D"), Color(hex: "#A29BFE")],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    )
+    .shadow(color: Color(hex: "#FF6B9D").opacity(0.5), radius: 10)
+    .overlay(
+        Text("ふわふわたいむ")
+            .foregroundStyle(.white.opacity(0.3))
+            .offset(x: 0, y: -2)
+    )
+
+// ふわふわ浮遊アニメーション
+@State private var swayX: CGFloat = 0
+@State private var swayY: CGFloat = 0
+
+.offset(x: swayX, y: swayY)
 .onAppear {
-    withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
-        sparkleRotation = 360
+    withAnimation(
+        Animation.easeInOut(duration: 2.5)
+            .repeatForever(autoreverses: true)
+    ) {
+        swayX = CGFloat.random(in: -40...40)
+        swayY = CGFloat.random(in: -20...20)
     }
 }
 
-// ふわふわ浮遊
-.offset(y: isFloating ? -15 : 15)
-.animation(HarajukuAnimation.bounce(duration: 2.5), value: isFloating)
-.onAppear { isFloating = true }
+// Assets画像 + グロー効果
+ZStack {
+    // グロー
+    Circle()
+        .fill(Color(hex: "#FF1493").opacity(0.5))
+        .frame(width: 110, height: 110)
+        .blur(radius: 20)
 
-// 状態表示（絵文字 + テキスト）
-HStack(spacing: 6) {
-    Text("🎉")  // 状態に応じた絵文字
-    Text("メッセージ")
-        .font(HarajukuTypography.body(size: 14))
-        .foregroundColor(HarajukuColors.pastelMint)
+    // 画像
+    Image("red")
+        .resizable()
+        .scaledToFit()
+        .frame(width: 80, height: 80)
 }
+
+// グロー効果のテキスト
+Text("タップしてはじめる")
+    .font(.system(size: 24, weight: .bold, design: .rounded))
+    .foregroundColor(.white)
+    .opacity(opacity)
+    .onAppear {
+        withAnimation(
+            Animation.easeInOut(duration: 1.5)
+                .repeatForever(autoreverses: true)
+        ) {
+            opacity = 1.0
+        }
+    }
 ```
 
-### 絵文字マッピング
+### Assets画像マッピング
 
-| 状態 | 絵文字 | 用途 |
-|------|--------|------|
-| 成功 | ✨🎉🌟 | 成功メッセージ、達成 |
-| 待機 | 💭🔍⏰ | ローディング、接続中 |
-| エラー | 😢💔😿 | エラー、失敗 |
-| 入力 | ✏️📝💭 | テキスト入力 |
-| 接続 | 📡🌐🔌 | 通信、ネットワーク |
-| 開始 | 🎈🚀💫 | スタート、開始 |
-| 風船 | 🎈💗💙💚 | キャラクター、プレイヤー |
-| 装飾 | ✨🌟💫⭐️💖🌈☁️ | 装飾、きらきら |
+**重要**: 絵文字は使用せず、すべてAssets画像で表現します。
+
+| 状態 | Assets画像 | 用途 |
+|------|------------|------|
+| プレイヤーA | red.png | プレイヤーAのキャラクター、風船 |
+| プレイヤーB | blue.png | プレイヤーBのキャラクター、風船 |
+| 中立 | yellow.png, orange.png, green.png | 装飾、その他のキャラクター |
+| 成功 | （今後追加予定） | 成功メッセージ、達成 |
+| 待機 | （今後追加予定） | ローディング、接続中 |
+| エラー | （今後追加予定） | エラー、失敗 |
+
+**現在利用可能なAssets画像**:
+- `red.png` - 赤い風船キャラクター
+- `blue.png` - 青い風船キャラクター
+- `yellow.png` - 黄色い風船キャラクター
+- `orange.png` - オレンジ色の風船キャラクター
+- `green.png` - 緑色の風船キャラクター
 
 ---
 
 ## 🎯 まとめ
 
-このドキュメントを守ることで、OnlyLonely の原宿系ふわふわデザインは一貫性を保ちます。
+このドキュメントを守ることで、OnlyLonely（ふわふわたいむ）のデザインは一貫性を保ちます。
 
-**核となる3つの約束**:
+**核となる4つの約束**:
 
 1. **明るく、柔らかく、楽しく**
-2. **常に動きがあり、絵文字があり、パステルカラー**
-3. **ユーザーを笑顔にする UI**
+2. **常に動きがあり、Assets画像があり、グラデーション**
+3. **絵文字は使用せず、画像でビジュアル表現**
+4. **ユーザーを笑顔にする UI**
 
-新しいコンポーネントを作る際は、このドキュメントを参照し、既存のコンポーネントを積極的に再利用してください。
+新しいコンポーネントを作る際は、このドキュメントを参照し、TOP画面の実装パターンを積極的に再利用してください。
+
+### 最重要ルール
+
+**🚫 絵文字の使用を禁止します**
+
+すべてのビジュアル表現は、Assets画像、グラデーション、3D効果（影・アウトライン）で行います。
 
 ---
 
 **実装ファイル**:
+- `Package/Sources/AppFeature/Screens/Common/TitleScreen.swift` - 最新のデザイン実装例
 - `Package/Sources/AppFeature/UI/HarajukuDesignSystem.swift`
 - `Package/Sources/AppFeature/UI/HarajukuComponents.swift`
 
+**Assets画像**:
+- `OnlyLonely/Assets.xcassets/red.imageset/red.png`
+- `OnlyLonely/Assets.xcassets/blue.imageset/blue.png`
+- `OnlyLonely/Assets.xcassets/yellow.imageset/yellow.png`
+- `OnlyLonely/Assets.xcassets/orange.imageset/orange.png`
+- `OnlyLonely/Assets.xcassets/green.imageset/green.png`
+
 **作成日**: 2025-10-11
-**バージョン**: 1.0.0
+**最終更新**: 2025-10-12（TOP画面実装反映、絵文字禁止ルール追加）
+**バージョン**: 2.0.0
