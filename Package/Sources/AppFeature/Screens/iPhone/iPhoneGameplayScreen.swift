@@ -16,6 +16,7 @@ struct iPhoneGameplayScreen: View {
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
+    @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
 
     var body: some View {
         ZStack {
@@ -132,7 +133,9 @@ struct iPhoneGameplayScreen: View {
             } else {
                 timer.invalidate()
                 // ゲーム終了
-                coordinator.navigate(to: .iPhoneResult)
+                Task { @MainActor in
+                    coordinator.navigate(to: .iPhoneResult)
+                }
             }
         }
 
@@ -142,17 +145,67 @@ struct iPhoneGameplayScreen: View {
         }
     }
 
+    // MARK: - バリデーション関数
+
+    /// RMS 値のバリデーション
+    private func validateRMSValue(_ value: Float) -> Float? {
+        // NaN/Infinite チェック
+        guard value.isFinite else {
+            print("⚠️ Invalid RMS value (NaN or Infinite): \(value)")
+            return nil
+        }
+
+        // 負の値チェック
+        guard value >= 0 else {
+            print("⚠️ Negative RMS value: \(value), using 0.0")
+            return 0.0
+        }
+
+        return value
+    }
+
+    /// 正規化後の風力値のバリデーション
+    private func validateNormalizedForce(_ force: Float) -> Float {
+        // NaN/Infinite チェック
+        guard force.isFinite else {
+            print("⚠️ Invalid normalized force (NaN or Infinite), using previous value")
+            return previousWindForce
+        }
+
+        // 0.0〜1.0 にクランプ
+        let clampedForce = max(0.0, min(1.0, force))
+
+        if clampedForce != force {
+            print("⚠️ Force value \(force) out of range, clamped to \(clampedForce)")
+        }
+
+        return clampedForce
+    }
+
     private func updateWindForce() {
         // マイクレベルから風力を計算
         if let peakLevel = micLevelManager.peakHoldLevel {
+            // RMS 値のバリデーション
+            guard let validatedLevel = validateRMSValue(peakLevel) else {
+                // サンプル不足時は前回の値を使用
+                windForce = previousWindForce
+                return
+            }
+
             // dBを0.0〜1.0に正規化
-            let normalized = (peakLevel + 60) / 60 // -60dB 〜 0dB を 0.0 〜 1.0 に
-            windForce = max(0, min(1.0, normalized))
+            let normalized = (validatedLevel + 60) / 60 // -60dB 〜 0dB を 0.0 〜 1.0 に
+
+            // 正規化後の値をバリデーション
+            let validatedForce = validateNormalizedForce(normalized)
+
+            windForce = validatedForce
+            previousWindForce = validatedForce // 前回の値を保存
 
             // 高度を更新（簡易シミュレーション）
             currentAltitude += Double(windForce) * 2.0
         } else {
-            windForce = 0
+            // サンプル不足時は前回の値を使用
+            windForce = previousWindForce
         }
     }
 }
