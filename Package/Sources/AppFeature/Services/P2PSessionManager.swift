@@ -27,45 +27,25 @@ final class P2PSessionManager: ObservableObject {
         }
     }
 
-    @Published private(set) var role: Role?
     @Published private(set) var transceiver: MultipeerTransceiver?
     @Published private(set) var availablePeers: [Peer] = []
     @Published private(set) var connectedPeers: [Peer] = []
-    @Published private(set) var localPeerID: String?
-    @Published private(set) var localPeerName: String?
 
     private let navigationCommandSubject = PassthroughSubject<DeviceNavigationCommand, Never>()
-    private var configuration: MultipeerConfiguration?
 
     func configure(role: Role, configuration: MultipeerConfiguration) {
         reset()
-
-        self.role = role
-        self.configuration = configuration
-        self.localPeerName = configuration.peerName
 
         let transceiver = MultipeerTransceiver(configuration: configuration)
         bind(transceiver)
         transceiver.resume()
     }
 
-    func resume() {
-        transceiver?.resume()
-    }
-
-    func stop() {
-        transceiver?.stop()
-    }
-
     func reset() {
         transceiver?.stop()
         transceiver = nil
-        role = nil
-        configuration = nil
         availablePeers = []
         connectedPeers = []
-        localPeerID = nil
-        localPeerName = nil
     }
 
     var navigationCommandPublisher: AnyPublisher<DeviceNavigationCommand, Never> {
@@ -74,7 +54,6 @@ final class P2PSessionManager: ObservableObject {
 
     private func bind(_ transceiver: MultipeerTransceiver) {
         self.transceiver = transceiver
-        localPeerID = transceiver.localPeerId
 
         transceiver.availablePeersDidChange = { [weak self] peers in
             guard let self else { return }

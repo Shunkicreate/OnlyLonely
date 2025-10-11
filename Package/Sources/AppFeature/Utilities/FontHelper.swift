@@ -8,19 +8,6 @@
 import UIKit
 
 enum FontHelper {
-    /// インストール済みのすべてのフォント名をコンソールに出力（デバッグ用）
-    static func printAllFonts() {
-        #if DEBUG
-        print("📝 インストール済みフォント一覧:")
-        for family in UIFont.familyNames.sorted() {
-            print("  ファミリー: \(family)")
-            for name in UIFont.fontNames(forFamilyName: family) {
-                print("    - \(name)")
-            }
-        }
-        #endif
-    }
-
     /// 07にくまるフォントが正しく読み込まれているか確認
     static func verifyNikumaruFont() -> Bool {
         let fontNames = [

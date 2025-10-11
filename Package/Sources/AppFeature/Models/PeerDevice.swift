@@ -12,6 +12,4 @@ struct PeerDevice: Identifiable, Hashable {
 
     var id: String { peer.id }
     var name: String { peer.name }
-    var isConnected: Bool { peer.isConnected }
-    var discoveryInfo: [String: String]? { peer.discoveryInfo }
 }

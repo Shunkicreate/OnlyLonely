@@ -39,17 +39,6 @@ final class MicrophonePermissionManager: ObservableObject {
         }
     }
 
-    var permissionMessage: String {
-        switch permission {
-        case .undetermined:
-            return "マイクの使用許可が必要です。"
-        case .granted:
-            return "マイクの使用が許可されています。"
-        case .denied:
-            return "マイクの使用が拒否されています。設定アプリから許可を付与してください。"
-        }
-    }
-
     static func isPermissionGranted() -> Bool {
         switch currentPermission() {
         case .granted:

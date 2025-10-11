@@ -8,6 +8,7 @@
 
 import SwiftUI
 import AVFoundation
+import UIKit
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
@@ -17,8 +18,6 @@ struct iPhoneGameplayScreen: View {
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
-    @State private var windForce: Float = 0
-    @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
     @State private var gameTimer: Timer?
     @State private var altitudeTimer: Timer?
 
@@ -50,7 +49,7 @@ struct iPhoneGameplayScreen: View {
                 Spacer()
 
                 // プレイヤー情報
-                Text(connectionModel.playerName)
+                Text(playerDisplayName)
                     .nikumaruHeadline(size: 24)
                     .foregroundColor(.white)
 
@@ -153,65 +152,6 @@ struct iPhoneGameplayScreen: View {
         }
     }
 
-    // MARK: - バリデーション関数
-
-    /// RMS 値のバリデーション
-    private func validateRMSValue(_ value: Float) -> Float? {
-        // NaN/Infinite チェック
-        guard value.isFinite else {
-            print("⚠️ Invalid RMS value (NaN or Infinite): \(value)")
-            return nil
-        }
-
-        // 負の値チェック
-        guard value >= 0 else {
-            print("⚠️ Negative RMS value: \(value), using 0.0")
-            return 0.0
-        }
-
-        return value
-    }
-
-    /// 正規化後の風力値のバリデーション
-    private func validateNormalizedForce(_ force: Float) -> Float {
-        // NaN/Infinite チェック
-        guard force.isFinite else {
-            print("⚠️ Invalid normalized force (NaN or Infinite), using previous value")
-            return previousWindForce
-        }
-
-        // 0.0〜1.0 にクランプ
-        let clampedForce = max(0.0, min(1.0, force))
-
-        if clampedForce != force {
-            print("⚠️ Force value \(force) out of range, clamped to \(clampedForce)")
-        }
-
-        return clampedForce
-    }
-
-    private func updateWindForce() {
-        // マイクレベルから風力を計算
-        if let peakLevel = micLevelManager.peakHoldLevel {
-            // 最小閾値を設定（小さい音を拾わないようにする）
-            let threshold: Float = -20.0 // -20dB以下は無視
-
-            guard peakLevel > threshold else {
-                windForce = 0
-                return
-            }
-
-            // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
-            let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
-            // さらに0.7倍して感度を下げる
-            let sensitivity = 0.7
-            windForce = max(0, min(1.0, normalized * Float(sensitivity)))
-        } else {
-            // サンプル不足時は前回の値を使用
-            windForce = previousWindForce
-        }
-    }
-
     /// 傾きに応じて風船の左右位置を調整
     private var balloonHorizontalOffset: CGFloat {
         // 25度の傾きで最大移動（左右）
@@ -226,5 +166,10 @@ struct iPhoneGameplayScreen: View {
         gameTimer = nil
         altitudeTimer?.invalidate()
         altitudeTimer = nil
+    }
+
+    private var playerDisplayName: String {
+        let trimmed = connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? UIDevice.current.name : trimmed
     }
 }

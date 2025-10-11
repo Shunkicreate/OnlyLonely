@@ -12,7 +12,6 @@ import SpriteKit
 struct iPadGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @StateObject private var gameManager = GameManager()
-    @StateObject private var webSocketService = WebSocketService()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
 
     @State private var playerAAltitude: Double = 0
@@ -329,10 +328,6 @@ class GameScene: SKScene {
         )
     }
 
-    func updateBalloonPosition(playerA: CGFloat, playerB: CGFloat) {
-        balloonA.position.y = 100 + playerA
-        balloonB.position.y = 100 + playerB
-    }
 }
 
 #Preview {
