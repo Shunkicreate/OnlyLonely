@@ -23,24 +23,6 @@ struct PhysicsConstants {
     /// 空気抵抗係数（TBD: 調整が必要）
     static var dragCoefficient: CGFloat = 0.5
 
-    // MARK: - ゲーム設定
-
-    /// ゲーム時間（秒）
-    static let gameDuration: TimeInterval = 30.0
-
-    /// 更新頻度（Hz）
-    static let updateFrequency: Double = 60.0
-
-    /// 入力頻度（Hz）- iPhoneからの音圧データ
-    static let inputFrequency: Double = 30.0
-
-    // MARK: - 高度設定
-
-    /// ゴール（星）の高度 (m)
-    static let goalAltitude: CGFloat = 800.0
-
-    /// 宇宙飛行士の登場高度 (m)
-    static let astronautAltitude: CGFloat = 800.0
 
     // MARK: - 雲パラメータ
 
@@ -49,7 +31,6 @@ struct PhysicsConstants {
 
     /// 雷の発生間隔（秒）
     static let lightningIntervalMin: TimeInterval = 3.0
-    static let lightningIntervalMax: TimeInterval = 5.0
 
     // MARK: - ダメージ設定
 
@@ -58,15 +39,4 @@ struct PhysicsConstants {
 
     /// 風船復活時間（秒）
     static let balloonRespawnTime: TimeInterval = 2.0
-
-    /// カラスの押し下げ距離 (m)
-    static let crowPushDownDistance: CGFloat = -20.0
-
-    /// 隕石ダメージ（落下距離 m）
-    static let meteoriteDamage: CGFloat = -50.0
-
-    // MARK: - 障害物設定
-
-    /// 電線での停止時間（秒）
-    static let powerLineFreezeDuration: TimeInterval = 1.5
 }

@@ -17,19 +17,6 @@ final class ConnectionScreenModel: ObservableObject {
         case connecting
         case connected
         case failed(String)
-
-        var statusText: String {
-            switch self {
-            case .idle:
-                return "未接続です"
-            case .connecting:
-                return "接続中..."
-            case .connected:
-                return "接続完了"
-            case .failed(let message):
-                return "接続に失敗しました: \(message)"
-            }
-        }
     }
 
     @Published private(set) var phase: Phase = .idle

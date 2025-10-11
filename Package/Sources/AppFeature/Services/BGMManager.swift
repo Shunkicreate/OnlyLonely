@@ -101,14 +101,6 @@ class BGMManager: ObservableObject {
         }
     }
     
-    /// BGMの停止
-    func stop() {
-        audioPlayer?.stop()
-        audioPlayer = nil
-        isPlaying = false
-        print("⏹️ BGMManager: BGM停止")
-    }
-    
     /// BGMの一時停止
     func pause() {
         audioPlayer?.pause()
@@ -121,13 +113,6 @@ class BGMManager: ObservableObject {
         audioPlayer?.play()
         isPlaying = true
         print("▶️ BGMManager: BGM再開")
-    }
-    
-    /// 音量の設定（0.0〜1.0）
-    func setVolume(_ newVolume: Float) {
-        volume = max(0.0, min(1.0, newVolume))
-        audioPlayer?.volume = volume
-        print("🔊 BGMManager: 音量設定 \(volume)")
     }
     
     /// フェードイン（指定秒数で音量を上げる）
@@ -150,23 +135,5 @@ class BGMManager: ObservableObject {
         print("🎵 BGMManager: フェードイン開始")
     }
     
-    /// フェードアウト（指定秒数で音量を下げる）
-    func fadeOut(duration: TimeInterval = 2.0) {
-        guard let player = audioPlayer else { return }
-        
-        let startVolume = player.volume
-        let steps = 20
-        let stepDuration = duration / Double(steps)
-        let volumeDecrement = startVolume / Float(steps)
-        
-        Task {
-            for step in 1...steps {
-                try? await Task.sleep(nanoseconds: UInt64(stepDuration * 1_000_000_000))
-                player.volume = startVolume - (volumeDecrement * Float(step))
-            }
-        }
-        
-        print("🎵 BGMManager: フェードアウト開始")
-    }
 }
 

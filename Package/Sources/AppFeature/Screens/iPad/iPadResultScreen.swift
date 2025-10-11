@@ -22,7 +22,6 @@ struct iPadResultScreen: View {
     @State private var showCards = false
     @State private var displayedAltitudeA: Double = 0
     @State private var displayedAltitudeB: Double = 0
-    @State private var fireworksOpacity: Double = 0
     @State private var petalOffsets: [(x: CGFloat, y: CGFloat, rotation: Double)] = Array(repeating: (0, 0, 0), count: 40)
     @State private var petalOpacities: [Double] = Array(repeating: 1.0, count: 40)
     
@@ -36,10 +35,6 @@ struct iPadResultScreen: View {
         }
     }
     
-    var isDraw: Bool {
-        winner == nil
-    }
-
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -480,8 +475,7 @@ struct CelebrationBalloon: View {
     @State private var swayY: CGFloat = 0
     @State private var rotation: Double = 0
     @State private var scale: CGFloat = 1.0
-    @State private var isFloating = false
-    
+
     private let positions: [CGFloat] = [0.15, 0.35, 0.5, 0.65, 0.85]
     private let sizes: [CGFloat] = [90, 100, 120, 95, 85]  // 中央を大きく
     

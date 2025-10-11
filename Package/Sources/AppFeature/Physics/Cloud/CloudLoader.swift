@@ -217,7 +217,7 @@ class CloudLoader {
     // MARK: - Helper Structures
 
     /// JSON構造
-    private struct CloudConfig: Codable {
+    struct CloudConfig: Codable {
         let clouds: [CloudData]
     }
 }

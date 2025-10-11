@@ -559,54 +559,6 @@ private struct FluffyCloud: View {
     }
 }
 
-// MARK: - Harajuku Progress
-
-/// ふわふわプログレスバー
-struct FluffyProgressBar: View {
-    let progress: Double // 0.0 ~ 1.0
-    let gradient: LinearGradient
-    let shadowColor: Color
-
-    init(
-        progress: Double,
-        gradient: LinearGradient = HarajukuColors.rainbowGradient,
-        shadowColor: Color = HarajukuColors.pastelPink
-    ) {
-        self.progress = progress
-        self.gradient = gradient
-        self.shadowColor = shadowColor
-    }
-
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // 背景
-                Capsule()
-                    .fill(Color.white.opacity(0.3))
-
-                // プログレス
-                Capsule()
-                    .fill(gradient)
-                    .frame(width: geometry.size.width * progress)
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.white.opacity(0.5), lineWidth: 2)
-                            .frame(width: geometry.size.width * progress)
-                    )
-                    .harajukuShadow(color: shadowColor)
-
-                // きらきら
-                Image(systemName: "sparkles")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white)
-                    .offset(x: geometry.size.width * progress - 20)
-            }
-        }
-        .frame(height: 16)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: progress)
-    }
-}
-
 // MARK: - Harajuku TextField
 
 /// ふわふわテキストフィールド

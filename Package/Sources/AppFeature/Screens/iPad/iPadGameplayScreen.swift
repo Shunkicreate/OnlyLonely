@@ -13,7 +13,6 @@ struct iPadGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject private var sessionManager: P2PSessionManager
     @StateObject private var gameManager = GameManager()
-    @StateObject private var webSocketService = WebSocketService()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
     @StateObject private var screenModel: iPadGameplayScreenModel
 
@@ -339,10 +338,6 @@ class GameScene: SKScene {
         )
     }
 
-    func updateBalloonPosition(playerA: CGFloat, playerB: CGFloat) {
-        balloonA.position.y = 100 + playerA
-        balloonB.position.y = 100 + playerB
-    }
 }
 
 #Preview {

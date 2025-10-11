@@ -142,7 +142,4 @@ protocol CloudSystem {
 
     /// 雲との衝突チェック
     func checkCollision(balloonPosition: CGPoint, balloonVelocity: CGVector) -> CollisionResult
-
-    /// 雷を発生（松の雲用）
-    func triggerLightning(at cloudId: Int)
 }
