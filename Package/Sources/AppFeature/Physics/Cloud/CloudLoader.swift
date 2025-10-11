@@ -143,30 +143,59 @@ class CloudLoader {
     private static func createCloudNode(cloudData: CloudData) -> SKNode {
         let container = SKNode()
 
-        // 雲の種類に応じた色
-        let cloudColor: UIColor
+        // 雲の画像を使用
+        let cloudTexture = SKTexture(imageNamed: "kumo")
+        let cloudSprite = SKSpriteNode(texture: cloudTexture, size: cloudData.size)
+
+        // 雲の種類に応じた色調整（カラーブレンド）
         switch cloudData.type {
-        case .matsu:  // 松：雷ギミック付き（グレー）
-            cloudColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 0.9)
-        case .take:   // 竹：速度依存（薄いグレー）
-            cloudColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.7)
-        case .ume:    // 梅：完全障害物（濃いグレー）
-            cloudColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1.0)
+        case .matsu:  // 松：雷ギミック付き（暗めのグレー）
+            cloudSprite.colorBlendFactor = 0.3
+            cloudSprite.color = UIColor(red: 0.3, green: 0.3, blue: 0.4, alpha: 1.0)
+        case .take:   // 竹：速度依存（薄い白）
+            cloudSprite.colorBlendFactor = 0.1
+            cloudSprite.color = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
+        case .ume:    // 梅：完全障害物（デフォルトカラー）
+            cloudSprite.colorBlendFactor = 0
         }
 
-        // 楕円形の雲
-        let cloudShape = SKShapeNode(ellipseOf: cloudData.size)
-        cloudShape.fillColor = cloudColor
-        cloudShape.strokeColor = .white.withAlphaComponent(0.5)
-        cloudShape.lineWidth = 2
-        container.addChild(cloudShape)
+        container.addChild(cloudSprite)
 
-        // 雲の種類を示すラベル
+        // 雲の種類を示すアイコン（小さめに表示）
         let typeLabel = SKLabelNode(text: cloudTypeEmoji(cloudData.type))
-        typeLabel.fontSize = 24
+        typeLabel.fontSize = 20
+        typeLabel.fontName = "HiraginoSans-W6"
         typeLabel.verticalAlignmentMode = .center
         typeLabel.position = CGPoint(x: 0, y: 0)
+        typeLabel.zPosition = 1
+
+        // アイコンの背景（見やすくするため）
+        let iconBackground = SKShapeNode(circleOfRadius: 15)
+        iconBackground.fillColor = .white.withAlphaComponent(0.7)
+        iconBackground.strokeColor = .clear
+        iconBackground.position = CGPoint(x: 0, y: 0)
+        iconBackground.zPosition = 0.5
+        container.addChild(iconBackground)
         container.addChild(typeLabel)
+
+        // ふわふわアニメーション
+        let floatUp = SKAction.moveBy(x: 0, y: 10, duration: TimeInterval.random(in: 2.0...3.0))
+        let floatDown = SKAction.moveBy(x: 0, y: -10, duration: TimeInterval.random(in: 2.0...3.0))
+        floatUp.timingMode = .easeInEaseOut
+        floatDown.timingMode = .easeInEaseOut
+        let floatSequence = SKAction.sequence([floatUp, floatDown])
+        let floatForever = SKAction.repeatForever(floatSequence)
+
+        // 少し拡大縮小
+        let scaleUp = SKAction.scale(to: 1.05, duration: TimeInterval.random(in: 2.5...3.5))
+        let scaleDown = SKAction.scale(to: 0.95, duration: TimeInterval.random(in: 2.5...3.5))
+        scaleUp.timingMode = .easeInEaseOut
+        scaleDown.timingMode = .easeInEaseOut
+        let scaleSequence = SKAction.sequence([scaleUp, scaleDown])
+        let scaleForever = SKAction.repeatForever(scaleSequence)
+
+        container.run(floatForever)
+        cloudSprite.run(scaleForever)
 
         return container
     }
@@ -178,6 +207,77 @@ class CloudLoader {
         case .take:   return "💨"  // 竹：風
         case .ume:    return "🚫"  // 梅：禁止
         }
+    }
+
+    /// 単一レーン用の雲データを生成して配置
+    /// - Parameters:
+    ///   - sceneSize: シーンのサイズ
+    ///   - cloudCount: 配置する雲の数
+    ///   - lane: プレイヤーレーン
+    ///   - physicsCoordinator: 物理エンジンコーディネーター
+    ///   - scene: 雲を追加するシーン
+    /// - Returns: 生成された雲ノードの辞書 [cloudId: SKNode]
+    @MainActor
+    static func loadCloudsForLane(
+        sceneSize: CGSize,
+        cloudCount: Int = 5,
+        lane: PlayerSlot,
+        physicsCoordinator: GamePhysicsCoordinator?,
+        scene: SKScene
+    ) -> [Int: SKNode] {
+        let cloudTypes: [CloudType] = [.matsu, .take, .ume]
+        var allCloudData: [CloudData] = []
+        var cloudNodes: [Int: SKNode] = [:]
+
+        // レーンごとのIDオフセット
+        let idOffset = lane == .playerA ? 1 : 101
+
+        // レーン用の雲を配置
+        for i in 0..<cloudCount {
+            let randomType = cloudTypes.randomElement() ?? .matsu
+            var cloudData: CloudData?
+            var attempts = 0
+            let maxAttempts = 50
+
+            while cloudData == nil && attempts < maxAttempts {
+                // レーンの中央付近にランダムに配置
+                let randomX = CGFloat.random(in: (sceneSize.width * 0.2)...(sceneSize.width * 0.8))
+                // 高さを調整（150〜画面の高さの50%まで）
+                let randomY = CGFloat.random(in: 150...(sceneSize.height * 0.5))
+                let randomWidth = CGFloat.random(in: 100...160)
+                let randomHeight = CGFloat.random(in: 50...80)
+
+                let candidateData = CloudData(
+                    id: i + idOffset,
+                    type: randomType,
+                    position: CGPoint(x: randomX, y: randomY),
+                    size: CGSize(width: randomWidth, height: randomHeight),
+                    lightningInterval: randomType == .matsu ? Double.random(in: 2.5...4.0) : nil,
+                    speedThreshold: randomType == .take ? CGFloat.random(in: 40...60) : nil
+                )
+
+                if !isOverlapping(candidateData, with: allCloudData) {
+                    cloudData = candidateData
+                }
+                attempts += 1
+            }
+
+            if let validCloudData = cloudData {
+                allCloudData.append(validCloudData)
+
+                let cloudNode = createCloudNode(cloudData: validCloudData)
+                cloudNode.position = validCloudData.position
+                cloudNode.zPosition = 5
+                scene.addChild(cloudNode)
+                cloudNodes[validCloudData.id] = cloudNode
+            }
+        }
+
+        // 雲データを物理エンジンに送信
+        sendCloudDataToPhysicsEngine(cloudData: allCloudData, physicsCoordinator: physicsCoordinator)
+
+        print("✅ Loaded \(cloudNodes.count) clouds for \(lane) lane")
+        return cloudNodes
     }
 
     /// 雲が既存の雲と重なっているかチェック
