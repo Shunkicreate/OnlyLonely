@@ -50,16 +50,3 @@ motionManager.yaw    // 回転（度）
 - プロジェクトは`PBXFileSystemSynchronizedRootGroup`を使用しているため、OnlyLonelyフォルダ内の新しいファイルは自動的にプロジェクトに追加されます
 - プレビュー機能が有効化されています（`ENABLE_PREVIEWS = YES`）
 
-## 初回セットアップ
-
-### Git Hooksの設定
-このプロジェクトでは、CLAUDE.mdの変更を自動的にAGENTS.mdに反映するpre-commitフックを使用しています。
-
-初回クローン後、以下のコマンドを実行してください:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-これにより、CLAUDE.mdをコミットする際に自動的にAGENTS.mdが更新されます。
-
