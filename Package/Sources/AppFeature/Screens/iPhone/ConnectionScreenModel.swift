@@ -35,6 +35,7 @@ final class ConnectionScreenModel: ObservableObject {
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var hostName: String?
     @Published private(set) var invitationPeerName: String?
+    @Published var playerName: String = ""
 
     private let serviceType = "onlylonelyp2p"
     private let sessionManager: P2PSessionManager
@@ -48,6 +49,12 @@ final class ConnectionScreenModel: ObservableObject {
 
     func connect() {
         guard phase != .connecting, phase != .connected else { return }
+
+        // 名前が入力されているか確認
+        guard !playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            phase = .failed("なまえをいれてね♪")
+            return
+        }
 
         hostName = nil
         phase = .connecting
@@ -102,7 +109,7 @@ final class ConnectionScreenModel: ObservableObject {
 
         return MultipeerConfiguration(
             serviceType: serviceType,
-            peerName: UIDevice.current.name,
+            peerName: playerName.trimmingCharacters(in: .whitespacesAndNewlines),
             defaults: .standard,
             security: security,
             invitation: .none
