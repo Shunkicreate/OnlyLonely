@@ -96,6 +96,30 @@ class HostViewModel: NSObject, ObservableObject {
             print("👹 \(messageData)")
             try? gameState.session?.send(messageData, toPeers: [peerIds[index]], with: .reliable)
         }
+        gameState.updatePhase(phase: .started)
+    }
+
+    private func applyTap(_ action: TapAction) {
+        let step: CGFloat = 24
+        let current = gameState.ballState?.position ?? BallPosition(x: 0, y: 0)
+        var dx: CGFloat = 0
+        var dy: CGFloat = 0
+        switch action {
+        case .up: dy = -step
+        case .down: dy = step
+        case .left: dx = -step
+        case .right: dx = step
+        }
+        let newPos = BallPosition(x: Int(CGFloat(current.x) + dx), y: Int(CGFloat(current.y) + dy))
+        let newState = BallState(position: newPos)
+        gameState.updateBallState(_ballState: newState)
+        // Broadcast new position
+        let message = UpdateBallStateMessage(ballState: newState)
+        guard
+            let json = message.toJson(),
+            let data = P2PMessage(type: .updateBallStateMessage, jsonData: json).toSendMessage().data(using: .utf8)
+        else { return }
+        try? gameState.session?.send(data, toPeers: gameState.session?.connectedPeers ?? [], with: .reliable)
     }
 }
 
@@ -130,16 +154,21 @@ extension HostViewModel: MCSessionDelegate {
     
     // sessionを通して送られてくるmessageをViewLogicのballStateReceiverに流す
     func session(_ session: MCSession, didReceive data: Data, fromPeer fromPeerID: MCPeerID) {
-        // guard let last = joinedPeers.last, last.peerId == peerID, let message = String(data: data, encoding: .utf8) else {
-        guard joinedPeers.map({$0.peerId}).contains([fromPeerID]), let message = String(data: data, encoding: .utf8) else {
+        guard let message = String(data: data, encoding: .utf8) else {
             return
         }
-        
+
         guard let _message = P2PMessage.fromReceivedMessage(message: message) else {
             return
         }
-        
-        messageReceiver.send(_message)
+        switch _message.type {
+        case .gameTapActionMessage:
+            if let tap = TapActionMessage.fromJson(_message.jsonData) {
+                DispatchQueue.main.async { [weak self] in self?.applyTap(tap.action) }
+            }
+        default:
+            messageReceiver.send(_message)
+        }
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

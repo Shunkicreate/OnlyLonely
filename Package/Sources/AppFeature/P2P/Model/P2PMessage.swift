@@ -13,6 +13,27 @@ enum MessageType: Int, Codable {
     case gameStartMessage = 1
     case gameBallAccelerationMessage = 2
     case gameFinishMessage = 3
+    case gameTapActionMessage = 4
+}
+
+enum TapAction: String, Codable {
+    case up
+    case down
+    case left
+    case right
+}
+
+final class TapActionMessage: Codable {
+    let action: TapAction
+    init(action: TapAction) { self.action = action }
+    func toJson() -> String? {
+        let encoder = JSONEncoder()
+        return try? String(data: encoder.encode(self), encoding: .utf8)
+    }
+    static func fromJson(_ json: String) -> TapActionMessage? {
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(TapActionMessage.self, from: data)
+    }
 }
 
 class P2PMessage: Codable {

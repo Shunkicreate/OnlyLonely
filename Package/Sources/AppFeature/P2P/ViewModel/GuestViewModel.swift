@@ -68,8 +68,10 @@ class GuestViewModel: NSObject, ObservableObject {
             }
             gameState.updateBallState(_ballState: message.ballState)
         case .gameStartMessage:
-            let startIndex = _message.jsonData.index(_message.jsonData.startIndex, offsetBy: 2)
-            let numberText = String(_message.jsonData[startIndex...])
+            gameState.updatePhase(phase: .started)
+        case .gameTapActionMessage:
+            // Guest does not handle tap echo; host computes and sends back position
+            break
         case .gameBallAccelerationMessage:
             let decoder = JSONDecoder()
             guard
@@ -122,7 +124,7 @@ extension GuestViewModel: MCSessionDelegate {
     // sessionを通して送られてくるmessageをViewLogicのmessageReciverに流す
     func session(_ session: MCSession, didReceive data: Data, fromPeer fromPeerID: MCPeerID) {
         //        guard let last = joinedPeers.last, last.peerId == peerID, let message = String(data: data, encoding: .utf8) else {
-        guard joinedPeers.map({$0.peerId}).contains([fromPeerID]), let message = String(data: data, encoding: .utf8) else {
+        guard let message = String(data: data, encoding: .utf8) else {
             return
         }
         

@@ -11,6 +11,7 @@ import MultipeerConnectivity
 struct HostView: View {
     @StateObject private var gameState = GameState()
     @StateObject private var viewModel: HostViewModel
+    @State private var startGameActive = false
 
     init() {
         let state = GameState()
@@ -50,13 +51,21 @@ struct HostView: View {
                     _ = viewModel.join()
                 }
                 .disabled(!viewModel.isParticipantsJoined())
-                Button("Send Start Message") {
+                Button("Start Game") {
+                    guard viewModel.sessionState == .connected else { return }
                     viewModel.sendGameStartMessage()
+                    startGameActive = true
                 }
-                .disabled(viewModel.joinedPeers.isEmpty)
+                .disabled(viewModel.sessionState != .connected)
             }
         }
         .navigationTitle("Host")
+        .background(
+            NavigationLink(
+                destination: GameView(role: .host).environmentObject(gameState),
+                isActive: $startGameActive
+            ) { EmptyView() }
+        )
     }
 
     private func sessionText(_ state: MCSessionState) -> String {

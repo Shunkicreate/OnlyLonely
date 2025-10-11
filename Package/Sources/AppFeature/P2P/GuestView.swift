@@ -44,6 +44,12 @@ struct GuestView: View {
                 }
             }
         }
+        .background(
+            NavigationLink(destination: GameView(role: .guest).environmentObject(gameState), isActive: Binding(
+                get: { gameState.phase == .gaming || gameState.phase == .started },
+                set: { _ in }
+            )) { EmptyView() }
+        )
         .navigationTitle("Guest")
     }
 }
