@@ -56,20 +56,13 @@ struct ContentView: View {
                 }
             }
 
-            if let error = levelManager.errorMessage {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-            }
-
             Spacer()
         }
         .padding()
         .onAppear {
             permissionManager.refreshPermissionStatus()
         }
-        .onChange(of: permissionManager.permission) { newValue in
+        .onChange(of: permissionManager.permission) { _, newValue in
             if newValue != .granted {
                 levelManager.stopMonitoring()
             }

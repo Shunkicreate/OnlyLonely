@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-@main
-struct OnlyLonelyApp: App {
-    var body: some Scene {
+public struct OnlyLonelyApp: App {
+    public init() {}
+    public var body: some Scene {
         WindowGroup {
             ContentView()
         }
