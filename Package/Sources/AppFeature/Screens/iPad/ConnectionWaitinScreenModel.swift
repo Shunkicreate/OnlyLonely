@@ -39,11 +39,6 @@ final class ConnectionWaitinScreenModel: NSObject, ObservableObject {
         browser.delegate = self
     }
 
-    deinit {
-        browser.stopBrowsingForPeers()
-        session.disconnect()
-    }
-
     var hostDisplayName: String {
         hostPeerID.displayName
     }

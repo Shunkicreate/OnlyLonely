@@ -49,11 +49,6 @@ final class ConnectionScreenModel: NSObject, ObservableObject {
         advertiser.delegate = self
     }
 
-    deinit {
-        advertiser.stopAdvertisingPeer()
-        session.disconnect()
-    }
-
     func connect() {
         guard phase != .connecting else { return }
 
