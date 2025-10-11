@@ -15,6 +15,7 @@ public struct ContentView: View {
     @StateObject private var guestConnectionModel: ConnectionScreenModel
     @StateObject private var bgmManager: BGMManager
     @StateObject private var resultStore: GameResultStore
+    @StateObject private var characterManager: CharacterAssignmentManager
 
     public init() {
         let coordinator = AppCoordinator()
@@ -22,6 +23,7 @@ public struct ContentView: View {
         let sessionManager = P2PSessionManager()
         let bgmManager = BGMManager.shared
         let resultStore = GameResultStore()
+        let characterManager = CharacterAssignmentManager()
         _coordinator = StateObject(wrappedValue: coordinator)
         _micPermissionManager = StateObject(wrappedValue: micPermissionManager)
         _sessionManager = StateObject(wrappedValue: sessionManager)
@@ -29,6 +31,7 @@ public struct ContentView: View {
         _guestConnectionModel = StateObject(wrappedValue: ConnectionScreenModel(sessionManager: sessionManager))
         _bgmManager = StateObject(wrappedValue: bgmManager)
         _resultStore = StateObject(wrappedValue: resultStore)
+        _characterManager = StateObject(wrappedValue: characterManager)
     }
 
     public var body: some View {
@@ -44,6 +47,7 @@ public struct ContentView: View {
         .environmentObject(guestConnectionModel)
         .environmentObject(bgmManager)
         .environmentObject(resultStore)
+        .environmentObject(characterManager)
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()

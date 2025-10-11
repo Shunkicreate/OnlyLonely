@@ -11,6 +11,7 @@ import SwiftUI
 struct ConnectionWaitingScreen: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @EnvironmentObject private var hostModel: ConnectionWaitinScreenModel
+    @EnvironmentObject private var characterManager: CharacterAssignmentManager
 
     @State private var sparkleRotation: Double = 0
     @State private var balloonFloat: CGFloat = 0
@@ -37,18 +38,15 @@ struct ConnectionWaitingScreen: View {
                     // ステータスセクション
                     statusSection
 
-                    // 接続可能なデバイス一覧
-                    if !hostModel.availableDevices.isEmpty {
-                        availableDevicesSection
-                    }
-
                     // 接続済みデバイス一覧
                     if !hostModel.connectedDevices.isEmpty {
                         connectedDevicesSection
                     }
 
-                    // デバッグボタン
-                    debugButton
+                    // 接続可能なデバイス一覧
+                    if !hostModel.availableDevices.isEmpty {
+                        availableDevicesSection
+                    }
 
                     Spacer()
                         .frame(height: 60)
@@ -58,6 +56,7 @@ struct ConnectionWaitingScreen: View {
             .scrollIndicators(.hidden)
         }
         .onAppear {
+            hostModel.configure(characterManager: characterManager)
             hostModel.startHosting()
             startAnimations()
         }
@@ -245,24 +244,6 @@ struct ConnectionWaitingScreen: View {
                         .fluffyBorder(color: HarajukuColors.pastelMint, width: 2)
                 )
                 .shadow(color: HarajukuColors.pastelMint.opacity(0.4), radius: 10, x: 0, y: 4)
-        }
-    }
-
-    // MARK: - Debug Button
-
-    private var debugButton: some View {
-        Button {
-            coordinator.navigate(to: .iPadResult)
-        } label: {
-            Text("けっかがめんへちょくせついどう (DEBUG)")
-                .nikumaruBody(size: 16)
-                .foregroundColor(.white)
-                .padding(.horizontal, 30)
-                .padding(.vertical, 12)
-                .background(
-                    Capsule()
-                        .fill(Color.orange.opacity(0.8))
-                )
         }
     }
 

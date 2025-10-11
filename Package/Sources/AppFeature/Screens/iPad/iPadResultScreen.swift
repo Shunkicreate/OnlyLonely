@@ -10,6 +10,7 @@ import SwiftUI
 
 struct iPadResultScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @EnvironmentObject private var resultStore: GameResultStore
     @State private var playerAAltitude: Double = 0
     @State private var playerBAltitude: Double = 0
@@ -17,6 +18,7 @@ struct iPadResultScreen: View {
     // アニメーション状態
     @State private var titleScale: CGFloat = 0.8
     @State private var titleOpacity: Double = 0
+    @State private var titleBounce: CGFloat = 0  // タイトルの上下動き
     @State private var balloonOffsets: [CGFloat] = [0, 0, 0, 0, 0]
     @State private var sparkleRotation: Double = 0
     @State private var confettiOpacity: Double = 0
@@ -25,7 +27,16 @@ struct iPadResultScreen: View {
     @State private var displayedAltitudeB: Double = 0
     @State private var petalOffsets: [(x: CGFloat, y: CGFloat, rotation: Double)] = Array(repeating: (0, 0, 0), count: 40)
     @State private var petalOpacities: [Double] = Array(repeating: 1.0, count: 40)
-    
+
+    // プレイヤー名を取得（接続順に基づく）
+    var playerAName: String {
+        sessionManager.connectedPeers.first?.name ?? "ぷれいやーA"
+    }
+
+    var playerBName: String {
+        sessionManager.connectedPeers.dropFirst().first?.name ?? "ぷれいやーB"
+    }
+
     var winner: PlayerSlot? {
         if playerAAltitude > playerBAltitude {
             return .playerA
@@ -65,63 +76,177 @@ struct iPadResultScreen: View {
                 VStack(spacing: 32) {
                     Spacer().frame(height: 40)
                     
-                    // タイトルセクション（3D効果）
+                    // タイトルセクション（3D効果強化）
                     VStack(spacing: 12) {
                         if let winner = winner {
-                            // 勝者表示
-                            Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
-                                .nikumaruTitle(size: 54)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: winner == .playerA ? [
-                                            Color(hex: "#FF6B9D"),
-                                            Color(hex: "#C44569"),
-                                            Color(hex: "#FF8FB3")
-                                        ] : [
-                                            Color(hex: "#4A90E2"),
-                                            Color(hex: "#357ABD"),
-                                            Color(hex: "#6BBFFF")
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                            // 勝者表示（3D多層エフェクト）
+                            let winnerText = winner == .playerA ? "\(playerAName)のかち！" : "\(playerBName)のかち！"
+                            ZStack {
+                                // Layer 1: 影（深み）
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.black.opacity(0.5))
+                                    .offset(x: 0, y: 8)
+                                    .blur(radius: 10)
+
+                                // Layer 2: グロー（輝き）
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: winner == .playerA ? [
+                                                Color(hex: "#FF6B9D"),
+                                                Color(hex: "#C44569")
+                                            ] : [
+                                                Color(hex: "#4A90E2"),
+                                                Color(hex: "#357ABD")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
                                     )
-                                )
-                                .shadow(color: (winner == .playerA ? Color(hex: "#FF6B9D") : Color(hex: "#4A90E2")).opacity(0.6), radius: 15)
-                                .shadow(color: .white.opacity(0.8), radius: 5)
-                                .overlay(
-                                    Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
-                                        .nikumaruTitle(size: 54)
-                                        .foregroundStyle(.white.opacity(0.3))
-                                        .offset(x: 0, y: -3)
-                                )
-                                .scaleEffect(titleScale)
-                                .opacity(titleOpacity)
-                            
-                            
+                                    .offset(x: 0, y: 4)
+                                    .blur(radius: 8)
+
+                                // Layer 3: 4方向ストローク（白い縁取り）
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: -2, y: -2)
+
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: 2, y: -2)
+
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: -2, y: 2)
+
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: 2, y: 2)
+
+                                // Layer 4: メインテキスト（グラデーション）
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: winner == .playerA ? [
+                                                Color(hex: "#FF6B9D"),
+                                                Color(hex: "#C44569"),
+                                                Color(hex: "#FF8FB3")
+                                            ] : [
+                                                Color(hex: "#4A90E2"),
+                                                Color(hex: "#357ABD"),
+                                                Color(hex: "#6BBFFF")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+
+                                // Layer 5: ハイライト（上部の輝き）
+                                Text(winnerText)
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                .white.opacity(0.6),
+                                                .white.opacity(0.0)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .center
+                                        )
+                                    )
+                                    .offset(x: 0, y: -2)
+                            }
+                            .scaleEffect(titleScale)
+                            .opacity(titleOpacity)
+                            .offset(y: titleBounce)
+
                         } else {
-                            // 引き分け
-                            Text("おなじだね！")
-                                .nikumaruTitle(size: 54)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "#FF6B9D"),
-                                            Color(hex: "#A29BFE"),
-                                            Color(hex: "#6BBFFF")
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                            // 引き分け（3D多層エフェクト）
+                            ZStack {
+                                // Layer 1: 影（深み）
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.black.opacity(0.5))
+                                    .offset(x: 0, y: 8)
+                                    .blur(radius: 10)
+
+                                // Layer 2: グロー（輝き）
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#A29BFE"),
+                                                Color(hex: "#6C5CE7")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
                                     )
-                                )
-                                .shadow(color: Color(hex: "#A29BFE").opacity(0.6), radius: 15)
-                                .overlay(
-                                    Text("おなじだね！")
-                                        .nikumaruTitle(size: 54)
-                                        .foregroundStyle(.white.opacity(0.3))
-                                        .offset(x: 0, y: -3)
-                                )
-                                .scaleEffect(titleScale)
-                                .opacity(titleOpacity)
+                                    .offset(x: 0, y: 4)
+                                    .blur(radius: 8)
+
+                                // Layer 3: 4方向ストローク（白い縁取り）
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: -2, y: -2)
+
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: 2, y: -2)
+
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: -2, y: 2)
+
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundColor(.white)
+                                    .offset(x: 2, y: 2)
+
+                                // Layer 4: メインテキスト（グラデーション）
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#FF6B9D"),
+                                                Color(hex: "#A29BFE"),
+                                                Color(hex: "#6BBFFF")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+
+                                // Layer 5: ハイライト（上部の輝き）
+                                Text("おなじだね！")
+                                    .nikumaruTitle(size: 54)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                .white.opacity(0.6),
+                                                .white.opacity(0.0)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .center
+                                        )
+                                    )
+                                    .offset(x: 0, y: -2)
+                            }
+                            .scaleEffect(titleScale)
+                            .opacity(titleOpacity)
+                            .offset(y: titleBounce)
                         }
                     }
                     
@@ -129,12 +254,14 @@ struct iPadResultScreen: View {
                     VStack(spacing: 20) {
                         FluffyScoreCard(
                             playerSlot: .playerA,
+                            playerName: playerAName,
                             altitude: displayedAltitudeA,
                             isWinner: winner == .playerA
                         )
-                        
+
                         FluffyScoreCard(
                             playerSlot: .playerB,
+                            playerName: playerBName,
                             altitude: displayedAltitudeB,
                             isWinner: winner == .playerB
                         )
@@ -211,7 +338,17 @@ struct iPadResultScreen: View {
             titleScale = 1.0
             titleOpacity = 1.0
         }
-        
+
+        // タイトルの上下バウンスアニメーション（登場後）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
+            withAnimation(
+                Animation.easeInOut(duration: 1.5)
+                    .repeatForever(autoreverses: true)
+            ) {
+                titleBounce = -15
+            }
+        }
+
         // 紙吹雪
         withAnimation(.easeIn(duration: 0.5).delay(0.5)) {
             confettiOpacity = 1.0
@@ -645,19 +782,16 @@ struct SparkleImage: View {
 
 struct FluffyScoreCard: View {
     let playerSlot: PlayerSlot
+    let playerName: String
     let altitude: Double
     let isWinner: Bool
-    
+
     @State private var pulseScale: CGFloat = 1.0
-    
-    var playerName: String {
-        playerSlot == .playerA ? "ぷれいやーA" : "ぷれいやーB"
-    }
-    
+
     var playerColor: Color {
         playerSlot == .playerA ? Color(hex: "#FF6B9D") : Color(hex: "#4A90E2")
     }
-    
+
     var balloonImage: String {
         playerSlot == .playerA ? "red" : "blue"
     }
@@ -821,4 +955,5 @@ struct FluffyResultButton: View {
     iPadResultScreen()
         .environmentObject(AppCoordinator())
         .environmentObject(GameResultStore())
+        .environmentObject(P2PSessionManager())
 }

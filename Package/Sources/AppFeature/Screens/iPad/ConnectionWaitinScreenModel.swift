@@ -22,10 +22,15 @@ final class ConnectionWaitinScreenModel: ObservableObject {
     private let serviceType = "onlylonelyp2p"
     private let sessionManager: P2PSessionManager
     private var cancellables = Set<AnyCancellable>()
+    private var characterManager: CharacterAssignmentManager?
 
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
         observeSessionManager()
+    }
+
+    func configure(characterManager: CharacterAssignmentManager) {
+        self.characterManager = characterManager
     }
 
     var canProceedToNextStep: Bool {
@@ -92,7 +97,23 @@ final class ConnectionWaitinScreenModel: ObservableObject {
         sessionManager.$availablePeers
             .receive(on: RunLoop.main)
             .map { $0.filter { !$0.isConnected }.map(PeerDevice.init) }
-            .assign(to: &$availableDevices)
+            .sink { [weak self] newDevices in
+                guard let self else { return }
+                
+                // 既存のデバイスIDセット
+                let existingIds = Set(self.availableDevices.map(\.id))
+                
+                // 新しく見つかったデバイス（既存にないもの）
+                let addedDevices = newDevices.filter { !existingIds.contains($0.id) }
+                
+                // 既存のデバイスで、まだ有効なもの（新しいリストに含まれているもの）
+                let newDeviceIds = Set(newDevices.map(\.id))
+                let remainingDevices = self.availableDevices.filter { newDeviceIds.contains($0.id) }
+                
+                // 新しく見つかったデバイスを先頭に、既存のデバイスをその後ろに配置
+                self.availableDevices = addedDevices + remainingDevices
+            }
+            .store(in: &cancellables)
 
         sessionManager.$connectedPeers
             .receive(on: RunLoop.main)
@@ -115,6 +136,28 @@ final class ConnectionWaitinScreenModel: ObservableObject {
 
     func advanceConnectedDevicesToCountdown() {
         guard canProceedToNextStep else { return }
+
+        // キャラクターをランダムに割り当て
+        characterManager?.assignRandomCharacters()
+
+        // 各プレイヤーにキャラクター割り当てを送信
+        if let characterManager = characterManager {
+            let peers = connectedDevices.map(\.peer)
+
+            // PlayerAの割り当てを送信
+            if let characterA = characterManager.playerACharacter {
+                let messageA = CharacterAssignmentMessage(playerId: "A", character: characterA)
+                sessionManager.sendCharacterAssignment(messageA, to: peers)
+            }
+
+            // PlayerBの割り当てを送信
+            if let characterB = characterManager.playerBCharacter {
+                let messageB = CharacterAssignmentMessage(playerId: "B", character: characterB)
+                sessionManager.sendCharacterAssignment(messageB, to: peers)
+            }
+        }
+
+        // カウントダウン画面へ遷移
         let peers = connectedDevices.map(\.peer)
         let command = DeviceNavigationCommand(action: .showCountdown)
         sessionManager.sendNavigationCommand(command, to: peers)
