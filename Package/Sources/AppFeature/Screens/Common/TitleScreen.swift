@@ -264,8 +264,8 @@ struct TitleScreen: View {
             startTwinkling()
         }
 
-        // 4.8秒後、風船を下に戻してふわふわさせる
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.8) {
+        // 4.5秒後、風船を下に戻してふわふわさせる
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
             resetBalloonsToFloat()
         }
     }
