@@ -24,8 +24,8 @@ class GamePhysicsCoordinator: ObservableObject {
     // MARK: - Internal State
 
     private var lastUpdateTime: TimeInterval = 0
-    private var inputBuffer: [(player: Player, force: Float, timestamp: TimeInterval)] = []
-    private var playerAssignments: [String: Player] = [:]
+    private var inputBuffer: [(player: PlayerSlot, force: Float, timestamp: TimeInterval)] = []
+    private var playerAssignments: [String: PlayerSlot] = [:]
 
     // MARK: - Initialization
 
@@ -57,7 +57,7 @@ class GamePhysicsCoordinator: ObservableObject {
 
     /// iPhoneからの風力入力を受信（30Hzで呼ばれる）
     func receiveWindInput(playerId: String, force: Float, timestamp: TimeInterval = Date().timeIntervalSince1970) {
-        guard let player = resolvePlayer(for: playerId) else { return }
+        guard let player = resolveSlot(for: playerId) else { return }
 
         let scaledForce = force * PhysicsConstants.windForceSensitivity
         let clampedForce = max(0, min(PhysicsConstants.maxWindForce, scaledForce))
@@ -111,12 +111,12 @@ class GamePhysicsCoordinator: ObservableObject {
         handleCollisionResult(collisionB, forPlayer: .playerB)
     }
 
-    private enum Player {
-        case playerA, playerB
+    func playerId(for slot: PlayerSlot) -> String? {
+        return playerAssignments.first { $0.value == slot }?.key
     }
 
-    private func resolvePlayer(for playerId: String) -> Player? {
-        if let predefined = predefinedPlayer(for: playerId) {
+    private func resolveSlot(for playerId: String) -> PlayerSlot? {
+        if let predefined = predefinedSlot(for: playerId) {
             return predefined
         }
 
@@ -137,7 +137,7 @@ class GamePhysicsCoordinator: ObservableObject {
         return nil
     }
 
-    private func predefinedPlayer(for playerId: String) -> Player? {
+    private func predefinedSlot(for playerId: String) -> PlayerSlot? {
         switch playerId {
         case "A":
             playerAssignments[playerId] = .playerA
@@ -150,7 +150,7 @@ class GamePhysicsCoordinator: ObservableObject {
         }
     }
 
-    private func handleCollisionResult(_ result: CollisionResult, forPlayer player: Player) {
+    private func handleCollisionResult(_ result: CollisionResult, forPlayer player: PlayerSlot) {
         switch result {
         case .none, .passThrough:
             break

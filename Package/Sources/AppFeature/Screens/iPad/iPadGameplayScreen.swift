@@ -56,7 +56,7 @@ struct iPadGameplayScreen: View {
                     HStack(spacing: 0) {
                         // Player A
                         PlayerInfoPanel(
-                            playerName: "Player A",
+                            playerName: screenModel.displayName(for: .playerA),
                             altitude: playerAAltitude,
                             color: .red
                         )
@@ -69,7 +69,7 @@ struct iPadGameplayScreen: View {
 
                         // Player B
                         PlayerInfoPanel(
-                            playerName: "Player B",
+                            playerName: screenModel.displayName(for: .playerB),
                             altitude: playerBAltitude,
                             color: .blue
                         )
