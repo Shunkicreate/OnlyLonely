@@ -67,6 +67,16 @@
 }
 ```
 
+#### 雷イベント（iPad → iPhone）
+
+```json
+{
+  "type": "lightning_hit",
+  "playerId": "A",
+  "altitude": 200.0
+}
+```
+
 ### 今後定義すべきメッセージ
 
 - [ ] 接続確立メッセージ
@@ -74,6 +84,7 @@
 - [ ] ゲーム終了メッセージ
 - [ ] エラーメッセージ
 - [ ] 切断メッセージ
+- [ ] 雷ヒット通知メッセージ（追加済み）
 
 ---
 
@@ -111,6 +122,102 @@
 - 空気抵抗: TBD
 - 風船の質量: TBD
 - 上昇力の係数: TBD
+
+---
+
+## 雲システム仕様
+
+### 雲の種類と物理特性
+
+| 種類 | タイプ       | 物理挙動                                          |
+| ---- | ------------ | ------------------------------------------------- |
+| 松   | ギミック付き | 通り抜けにくさ + 雷エフェクト                     |
+| 竹   | 速度依存障害 | 速度閾値チェック + 条件付き通過                   |
+| 梅   | 完全障害物   | PhysicsBody の `isDynamic = false` で完全ブロック |
+
+### 雲データフォーマット（JSON）
+
+雲の配置は JSON ファイルで管理します。  
+サンプルファイル: [`cloud-config-example.json`](./cloud-config-example.json)
+
+```json
+{
+  "clouds": [
+    {
+      "id": 1,
+      "type": "pine",
+      "position": { "x": 200, "y": 150 },
+      "size": { "width": 100, "height": 50 }
+    },
+    {
+      "id": 2,
+      "type": "bamboo",
+      "position": { "x": 350, "y": 300 },
+      "size": { "width": 120, "height": 60 },
+      "speedThreshold": 50
+    },
+    {
+      "id": 3,
+      "type": "plum",
+      "position": { "x": 150, "y": 450 },
+      "size": { "width": 150, "height": 70 },
+      "lightningInterval": 3.0
+    }
+  ]
+}
+```
+
+### 雲のタイプ定義
+
+```swift
+enum CloudType: String, Codable {
+    case pine     // 松：雷ギミック付き
+    case bamboo   // 竹：強い勢いで通過可能
+    case plum     // 梅：通り抜け不可
+}
+
+struct CloudData: Codable {
+    let id: Int
+    let type: CloudType
+    let position: CGPoint
+    let size: CGSize
+    let speedThreshold: CGFloat?        // 竹のみ
+    let lightningInterval: TimeInterval? // 松のみ
+}
+```
+
+### 雷システム（松の雲）
+
+#### 雷の発生
+
+- 松の雲から `lightningInterval` 秒ごとに雷が発生
+- 雷は下方向に降り注ぐアニメーション
+- SKEmitterNode で視覚的に表現
+
+#### 当たり判定
+
+```swift
+// 風船と雷の衝突検出
+func didBegin(_ contact: SKPhysicsContact) {
+    if contact.bodyA.categoryBitMask == PhysicsCategory.balloon
+       && contact.bodyB.categoryBitMask == PhysicsCategory.lightning {
+        handleLightningHit()
+    }
+}
+
+func handleLightningHit() {
+    // 1. 風船が割れる演出
+    // 2. 高度を減少（ペナルティ）
+    // 3. 新しい風船を生成
+}
+```
+
+### 風船再生成
+
+- 雷に当たったら、風船が割れる演出
+- 落下距離: TBD（例: -50m）
+- 再生成時間: TBD（例: 1 秒）
+- 再生成中は入力を無効化（オプション）
 
 ---
 
