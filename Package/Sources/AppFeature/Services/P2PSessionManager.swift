@@ -15,6 +15,17 @@ final class P2PSessionManager: ObservableObject {
         case guest
     }
 
+    enum SessionError: LocalizedError {
+        case transceiverUnavailable
+
+        var errorDescription: String? {
+            switch self {
+            case .transceiverUnavailable:
+                return "トランシーバーが利用できません。"
+            }
+        }
+    }
+
     @Published private(set) var role: Role?
     @Published private(set) var transceiver: MultipeerTransceiver?
     @Published private(set) var availablePeers: [Peer] = []
@@ -67,7 +78,20 @@ final class P2PSessionManager: ObservableObject {
         }
 
         transceiver.peerDisconnected = { [weak self] _ in
-            self?.refreshConnectedPeers()
+            guard let self else { return }
+            availablePeers = self.transceiver?.availablePeers ?? []
+            refreshConnectedPeers()
+        }
+
+        transceiver.peerAdded = { [weak self] _ in
+            guard let self else { return }
+            availablePeers = self.transceiver?.availablePeers ?? []
+        }
+
+        transceiver.peerRemoved = { [weak self] _ in
+            guard let self else { return }
+            availablePeers = self.transceiver?.availablePeers ?? []
+            refreshConnectedPeers()
         }
     }
 
@@ -79,5 +103,14 @@ final class P2PSessionManager: ObservableObject {
         } else {
             connectedPeers = []
         }
+    }
+
+    func invite(_ peer: Peer, timeout: TimeInterval = 30, completion: @escaping (Result<Peer, Error>) -> Void) {
+        guard let transceiver else {
+            completion(.failure(SessionError.transceiverUnavailable))
+            return
+        }
+
+        transceiver.invite(peer, with: nil, timeout: timeout, completion: completion)
     }
 }

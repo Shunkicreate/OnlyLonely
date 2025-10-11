@@ -10,6 +10,7 @@ import SwiftUI
 struct ConnectionScreen: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @EnvironmentObject private var connectionModel: ConnectionScreenModel
+    @State private var showInvitationAlert = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -50,6 +51,23 @@ struct ConnectionScreen: View {
         }
         .padding()
         .navigationTitle("接続")
+        .onChange(of: connectionModel.invitationPeerName) { name in
+            showInvitationAlert = (name != nil)
+        }
+        .alert(
+            "接続リクエスト",
+            isPresented: $showInvitationAlert,
+            presenting: connectionModel.invitationPeerName
+        ) { _ in
+            Button("許可する") {
+                connectionModel.approveInvitation()
+            }
+            Button("拒否する", role: .cancel) {
+                connectionModel.declineInvitation()
+            }
+        } message: { peerName in
+            Text("\(peerName) からの接続依頼です。許可しますか？")
+        }
     }
 }
 

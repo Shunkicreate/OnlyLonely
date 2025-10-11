@@ -12,42 +12,63 @@ struct ConnectionWaitingScreen: View {
     @EnvironmentObject private var hostModel: ConnectionWaitinScreenModel
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text("iPhone 接続待ち")
-                .font(.title)
-                .bold()
-
-            Text(hostModel.statusText)
-                .font(.body)
-
-            if !hostModel.connectedDevices.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("接続済みデバイス")
-                        .font(.headline)
-                    ForEach(hostModel.connectedDevices, id: \.id) { peer in
-                        Text(peer.name)
-                            .font(.callout)
-                    }
+        List {
+            Section("状態") {
+                Text(hostModel.statusMessage)
+                if let error = hostModel.lastErrorMessage {
+                    Text(error)
+                        .foregroundStyle(.red)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            HStack(spacing: 12) {
-                Button(hostModel.isHosting ? "停止" : "待機を開始") {
+            Section("接続可能なデバイス") {
+                if hostModel.availableDevices.isEmpty {
+                    Text("探索中...").foregroundStyle(.secondary)
+                } else {
+                    ForEach(hostModel.availableDevices) { device in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(device.name)
+                                if hostModel.invitingPeerID == device.id {
+                                    Text("招待中...")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Button("招待") {
+                                hostModel.invite(device)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(hostModel.invitingPeerID == device.id)
+                        }
+                    }
+                }
+            }
+
+            Section("接続済みデバイス") {
+                if hostModel.connectedDevices.isEmpty {
+                    Text("まだ接続されていません").foregroundStyle(.secondary)
+                } else {
+                    ForEach(hostModel.connectedDevices) { peer in
+                        Text(peer.name)
+                    }
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(hostModel.isHosting ? "停止" : "開始") {
                     hostModel.isHosting ? hostModel.stopHosting() : hostModel.startHosting()
                 }
-                .buttonStyle(.borderedProminent)
-
-                Button("タイトルへ戻る") {
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("タイトルへ") {
                     hostModel.stopHosting()
                     coordinator.navigateToRoot()
                 }
-                .buttonStyle(.bordered)
             }
-
-            Spacer()
         }
-        .padding()
         .onAppear(perform: hostModel.startHosting)
         .navigationTitle("接続待機")
     }

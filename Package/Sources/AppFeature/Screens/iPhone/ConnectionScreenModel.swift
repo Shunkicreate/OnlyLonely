@@ -34,11 +34,12 @@ final class ConnectionScreenModel: ObservableObject {
 
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var hostName: String?
+    @Published private(set) var invitationPeerName: String?
 
     private let serviceType = "onlylonelyp2p"
     private let sessionManager: P2PSessionManager
     private var cancellables = Set<AnyCancellable>()
-    private var isAttemptingConnection = false
+    private var pendingInvitationHandler: ((Bool) -> Void)?
 
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
@@ -49,7 +50,6 @@ final class ConnectionScreenModel: ObservableObject {
         guard phase != .connecting, phase != .connected else { return }
 
         hostName = nil
-        isAttemptingConnection = true
         phase = .connecting
 
         let configuration = guestConfiguration()
@@ -57,27 +57,46 @@ final class ConnectionScreenModel: ObservableObject {
     }
 
     func cancel() {
-        isAttemptingConnection = false
+        pendingInvitationHandler?(false)
+        pendingInvitationHandler = nil
+        invitationPeerName = nil
         hostName = nil
         phase = .idle
         sessionManager.reset()
     }
 
+    func approveInvitation() {
+        guard let handler = pendingInvitationHandler else { return }
+        handler(true)
+        pendingInvitationHandler = nil
+        invitationPeerName = nil
+    }
+
+    func declineInvitation() {
+        guard let handler = pendingInvitationHandler else { return }
+        handler(false)
+        pendingInvitationHandler = nil
+        invitationPeerName = nil
+        hostName = nil
+        phase = .idle
+    }
+
     private func guestConfiguration() -> MultipeerConfiguration {
         let security = MultipeerConfiguration.Security(
             identity: nil,
-            encryptionPreference: .required,
+            encryptionPreference: .none,
             invitationHandler: { [weak self] peer, _, completion in
                 guard let self else {
                     completion(false)
                     return
                 }
 
-                let shouldAccept = isAttemptingConnection
-                if shouldAccept {
-                    hostName = peer.name
+                Task { @MainActor in
+                    self.pendingInvitationHandler = completion
+                    self.invitationPeerName = peer.name
+                    self.hostName = peer.name
+                    self.phase = .connecting
                 }
-                completion(shouldAccept)
             }
         )
 
@@ -102,12 +121,14 @@ final class ConnectionScreenModel: ObservableObject {
     private func handleConnectedPeers(_ peers: [Peer]) {
         if let first = peers.first {
             hostName = first.name
-            isAttemptingConnection = false
             phase = .connected
+            invitationPeerName = nil
+            pendingInvitationHandler = nil
         } else if case .connected = phase {
             phase = .failed("接続が切断されました")
-            isAttemptingConnection = false
             hostName = nil
+            invitationPeerName = nil
+            pendingInvitationHandler = nil
         }
     }
 }
