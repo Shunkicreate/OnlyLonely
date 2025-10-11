@@ -12,6 +12,7 @@ import AVFoundation
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @StateObject private var micLevelManager = MicrophoneLevelManager()
+    @StateObject private var motionManager = MotionManager()
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
@@ -63,6 +64,8 @@ struct iPhoneGameplayScreen: View {
                         .font(.system(size: 24))
                         .opacity(Double(micLevelManager.windForce))
                 }
+                .offset(x: balloonHorizontalOffset)
+                .animation(.easeInOut(duration: 0.15), value: motionManager.roll)
 
                 // 音圧レベルメーター
                 VStack(spacing: 8) {
@@ -114,6 +117,7 @@ struct iPhoneGameplayScreen: View {
         }
         .onDisappear {
             micLevelManager.stopMonitoring()
+            motionManager.stopDeviceMotionUpdates()
         }
         .navigationBarBackButtonHidden()
     }
@@ -121,6 +125,7 @@ struct iPhoneGameplayScreen: View {
     private func startGame() {
         // マイク監視開始
         micLevelManager.startMonitoring()
+        motionManager.startDeviceMotionUpdates()
 
         // タイマー開始
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -199,6 +204,15 @@ struct iPhoneGameplayScreen: View {
             // サンプル不足時は前回の値を使用
             windForce = previousWindForce
         }
+    }
+
+    /// 傾きに応じて風船の左右位置を調整
+    private var balloonHorizontalOffset: CGFloat {
+        // 25度の傾きで最大移動（左右）
+        let tiltRange: Double = 25
+        let normalizedTilt = max(-1, min(1, motionManager.roll / tiltRange))
+        let maxOffset: CGFloat = 120
+        return CGFloat(normalizedTilt) * maxOffset
     }
 }
 
