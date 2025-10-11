@@ -43,6 +43,20 @@ struct ConnectionWaitingScreen: View {
                             .disabled(hostModel.invitingPeerID == device.id)
                         }
                     }
+                    
+                    Button {
+                        coordinator.navigate(to: .iPadResult)
+                    } label: {
+                        Text("結果画面へ直接移動")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(Color.purple.opacity(0.7))
+                            )
+                    }
                 }
             }
 

@@ -7,5 +7,9 @@
 		<string>_onlylonelyp2p._tcp</string>
 		<string>_onlylonelyp2p._udp</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>07にくまるフォント.otf</string>
+	</array>
 </dict>
 </plist>

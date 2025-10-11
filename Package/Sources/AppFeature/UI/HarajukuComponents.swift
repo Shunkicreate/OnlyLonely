@@ -194,16 +194,75 @@ struct SparkleText: View {
     }
 }
 
-/// 虹色テキスト
+/// 虹色テキスト（3D効果強化版）
 struct RainbowText: View {
     let text: String
     let size: CGFloat
 
     var body: some View {
-        Text(text)
-            .font(HarajukuTypography.hugeTitle(size: size))
-            .foregroundStyle(HarajukuColors.rainbowGradient)
-            .sparkleGlow(color: HarajukuColors.pastelPink)
+        ZStack {
+            // 影（最下層・濃い影）
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(.black.opacity(0.5))
+                .offset(x: 0, y: 6)
+                .blur(radius: 4)
+
+            // グロウ（中間層）
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(HarajukuColors.pastelPink)
+                .offset(x: 0, y: 3)
+                .blur(radius: 8)
+                .opacity(0.7)
+
+            // 白い縁取り（4方向）
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(.white)
+                .offset(x: -2, y: -2)
+                .opacity(0.9)
+
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(.white)
+                .offset(x: 2, y: -2)
+                .opacity(0.9)
+
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(.white)
+                .offset(x: -2, y: 2)
+                .opacity(0.9)
+
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(.white)
+                .offset(x: 2, y: 2)
+                .opacity(0.9)
+
+            // メインテキスト（虹色グラデーション）
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(HarajukuColors.rainbowGradient)
+
+            // ハイライト（上部）
+            Text(text)
+                .font(HarajukuTypography.hugeTitle(size: size))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            .white.opacity(0.7),
+                            .white.opacity(0.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+                .offset(x: 0, y: -1)
+        }
+        .shadow(color: HarajukuColors.pastelPink.opacity(0.6), radius: 15, x: 0, y: 4)
+        .shadow(color: HarajukuColors.pastelPurple.opacity(0.6), radius: 20, x: 0, y: 8)
     }
 }
 

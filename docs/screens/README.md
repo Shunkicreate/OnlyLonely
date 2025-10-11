@@ -15,8 +15,8 @@
 
 ### iPhone 専用画面
 
-- [06. 接続画面（iPhone）](./06-connection-screen-iphone.md) - iPad に接続
-- [07. プレイヤー名入力画面（iPhone）](./07-player-selection-screen-iphone.md) - プレイヤー名を入力
+- [06. プレイヤー名入力画面（iPhone）](./06-player-name-input-screen-iphone.md) - プレイヤー名を入力
+- [07. 接続画面（iPhone）](./07-connection-screen-iphone.md) - iPad に接続
 - [08. 待機画面（iPhone）](./08-waiting-screen-iphone.md) - ゲーム開始待ち
 - [09. カウントダウン画面（iPhone）](./09-countdown-screen-iphone.md) - 3, 2, 1, Start!
 - [10. ゲームプレイ画面（iPhone）](./10-gameplay-screen-iphone.md) - 息入力画面
@@ -47,10 +47,10 @@
 ```
 01. タイトル画面
       ↓ (iPhone を自動判定)
-06. 接続画面（iPhone）
-      ↓ (接続成功)
-07. プレイヤー名入力画面（iPhone）
+06. プレイヤー名入力画面（iPhone）
       ↓ (名前入力完了)
+07. 接続画面（iPhone）
+      ↓ (接続成功 + プレイヤー名送信)
 08. 待機画面（iPhone）
       ↓ (両プレイヤー準備完了)
 09. カウントダウン画面（iPhone）
@@ -59,7 +59,7 @@
       ↓ (ゴール到達 or 時間切れ: 30秒)
 11. リザルト画面（iPhone）
       ↓ (リトライ or 終了)
-06. 接続画面 or 01. タイトル画面
+06. プレイヤー名入力画面 or 01. タイトル画面
 ```
 
 ---
@@ -76,6 +76,8 @@
 ### 必須（MVP）
 
 - 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11
+
+**Note**: 画面番号は 06（プレイヤー名入力） → 07（接続） → 08（待機）の順序です。
 
 ---
 

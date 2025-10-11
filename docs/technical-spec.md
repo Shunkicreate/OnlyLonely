@@ -79,6 +79,40 @@
 }
 ```
 
+#### 虹色の綿菓子取得（iPad → 双方 iPhone）
+
+```json
+{
+  "type": "cotton_candy_trigger",
+  "ownerId": "A",
+  "targetId": "B",
+  "duration": 2.0,
+  "penalty": -10.0
+}
+```
+
+#### シャボン玉発射（iPad → 双方 iPhone）
+
+```json
+{
+  "type": "bubble_attack",
+  "ownerId": "B",
+  "sequence": 1,
+  "travelTime": 1.2
+}
+```
+
+#### シャボン玉命中（iPad → 双方 iPhone）
+
+```json
+{
+  "type": "bubble_hit",
+  "targetId": "A",
+  "penalty": -5.0,
+  "flinchDuration": 0.5
+}
+```
+
 ### 今後定義すべきメッセージ
 
 - [ ] 接続確立メッセージ（P2P 接続時のロール/参加通知）
@@ -86,7 +120,8 @@
 - [ ] ゲーム終了メッセージ
 - [ ] エラーメッセージ
 - [ ] 切断メッセージ
-- [ ] 雷ヒット通知メッセージ（追加済み）
+- [x] 雷ヒット通知メッセージ（追加済み）
+- [x] 攻撃アイテム取得・効果同期メッセージ（虹色の綿菓子、シャボン玉）
 
 ---
 
@@ -165,6 +200,25 @@
       "size": { "width": 150, "height": 70 },
       "lightningInterval": 3.0
     }
+  ],
+  "items": [
+    {
+      "id": 101,
+      "type": "cottonCandy",
+      "spawnAltitude": { "min": 200, "max": 550 },
+      "cooldown": 8.0,
+      "penalty": -10.0,
+      "duration": 2.0
+    },
+    {
+      "id": 102,
+      "type": "bubbleWand",
+      "spawnAltitude": { "min": 150, "max": 350 },
+      "cooldown": 10.0,
+      "shots": 3,
+      "penalty": -5.0,
+      "flinchDuration": 0.5
+    }
   ]
 }
 ```
@@ -185,6 +239,22 @@ struct CloudData: Codable {
     let size: CGSize
     let speedThreshold: CGFloat?        // 竹のみ
     let lightningInterval: TimeInterval? // 松のみ
+}
+
+enum AttackItemType: String, Codable {
+    case cottonCandy
+    case bubbleWand
+}
+
+struct AttackItemData: Codable {
+    let id: Int
+    let type: AttackItemType
+    let spawnAltitude: ClosedRange<CGFloat>
+    let cooldown: TimeInterval
+    let penalty: CGFloat
+    let duration: TimeInterval?
+    let shots: Int?
+    let flinchDuration: TimeInterval?
 }
 ```
 
@@ -219,6 +289,24 @@ func handleLightningHit() {
 - 雷に当たったら、風船が割れる演出
 - 落下距離と再生成時間は [ゲームパラメータ：ダメージ設定](./game-parameters.md#ダメージ設定) を参照
 - 再生成中は入力を無効化（オプション）
+
+### 攻撃アイテムシステム
+
+#### 虹色の綿菓子
+
+- `AttackItemManager` がアイテムリストを監視し、クールダウン経過後に指定高度帯へスポーン。
+- プレイヤーが接触した瞬間、対象プレイヤー（相手）の頭上に `RainbowCottonCloud` ノードを生成。
+- 雲は `duration` 秒間、定期的に `penalty / duration` の割合で高度を減少させる。
+- 効果中は対象プレイヤーの `verticalForce` に減衰係数を掛け、見た目や音をトリガー。
+- 効果終了後は `cotton_candy_end` イベントを送信し、雲ノードとパーティクルをフェードアウト。
+
+#### シャボン玉セット
+
+- 取得イベントを検知すると `BubbleLauncher` コンポーネントを起動し、相手側の画面端から吹き棒（SpriteKit ノード）をアニメーション表示。
+- `shots` 回分、一定間隔で `BubbleProjectile` を生成。物理ボディは低速で相手方向に移動。
+- プロジェクタイルがプレイヤーに当たったら `bubble_hit` メッセージを送信し、怯み時間とペナルティを適用。命中したバブルは破裂アニメーション。
+- 当たらなかったバブルは一定距離でフェードアウト。全弾処理後に吹き棒は退場し、再スポーンタイマーを開始。
+- iPhone には `bubble_attack` / `bubble_hit` 通知で UI・ハプティクスを同期。
 
 ---
 

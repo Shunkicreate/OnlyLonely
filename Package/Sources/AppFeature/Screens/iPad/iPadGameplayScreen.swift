@@ -34,7 +34,7 @@ struct iPadGameplayScreen: View {
                     HStack {
                         Spacer()
                         Text("残り時間: \(gameManager.timeRemaining)秒")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .nikumaruHeadline(size: 24)
                             .foregroundColor(.white)
                             .padding()
                             .background(
@@ -53,11 +53,11 @@ struct iPadGameplayScreen: View {
                         // Player A 風力ボタン（長押し対応）
                         VStack(spacing: 8) {
                             Text("Player A")
-                                .font(.system(size: 14, weight: .bold))
+                                .nikumaruCaption(size: 14)
                                 .foregroundColor(.red)
 
                             Text("🌬️ 風を送る")
-                                .font(.system(size: 16, weight: .semibold))
+                                .nikumaruBody(size: 16)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
@@ -81,11 +81,11 @@ struct iPadGameplayScreen: View {
                         // Player B 風力ボタン（長押し対応）
                         VStack(spacing: 8) {
                             Text("Player B")
-                                .font(.system(size: 14, weight: .bold))
+                                .nikumaruCaption(size: 14)
                                 .foregroundColor(.blue)
 
                             Text("🌬️ 風を送る")
-                                .font(.system(size: 16, weight: .semibold))
+                                .nikumaruBody(size: 16)
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
@@ -178,11 +178,11 @@ struct PlayerInfoPanel: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(playerName)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .nikumaruBody(size: 20)
                 .foregroundColor(.white)
 
             Text("高度: \(Int(altitude))m")
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .nikumaruBody(size: 18)
                 .foregroundColor(color)
         }
         .padding()
@@ -198,6 +198,8 @@ struct PlayerInfoPanel: View {
 class GameScene: SKScene {
     private var balloonA: SKSpriteNode!
     private var balloonB: SKSpriteNode!
+    private var clouds: [Int: SKNode] = [:]  // cloudId -> SKNode
+    private var lightningNodes: [Int: SKNode] = [:]  // cloudId -> 雷エフェクト
 
     // 物理エンジンへの参照（弱参照で保持）
     private weak var physicsCoordinator: GamePhysicsCoordinator?
@@ -213,6 +215,12 @@ class GameScene: SKScene {
 
     override func didMove(to view: SKView) {
         setupScene()
+        clouds = CloudLoader.loadRandomClouds(
+            sceneSize: size,
+            cloudsPerPlayer: 10,
+            physicsCoordinator: physicsCoordinator,
+            scene: self
+        )
     }
 
     private func setupScene() {
@@ -294,6 +302,31 @@ class GameScene: SKScene {
         if let stateB = physicsCoordinator?.playerBState {
             balloonB.position = CGPoint(x: size.width * 3 / 4, y: stateB.position.y)
         }
+
+        // 雲との衝突チェック
+        guard let coordinator = physicsCoordinator else { return }
+
+        CloudCollisionDetector.checkBalloonCloudCollision(
+            balloon: balloonA,
+            playerId: "A",
+            balloonPosition: balloonA.position,
+            balloonVelocity: coordinator.playerAState.velocity,
+            physicsCoordinator: coordinator,
+            clouds: clouds,
+            lightningNodes: &lightningNodes,
+            scene: self
+        )
+
+        CloudCollisionDetector.checkBalloonCloudCollision(
+            balloon: balloonB,
+            playerId: "B",
+            balloonPosition: balloonB.position,
+            balloonVelocity: coordinator.playerBState.velocity,
+            physicsCoordinator: coordinator,
+            clouds: clouds,
+            lightningNodes: &lightningNodes,
+            scene: self
+        )
     }
 
     func updateBalloonPosition(playerA: CGFloat, playerB: CGFloat) {
