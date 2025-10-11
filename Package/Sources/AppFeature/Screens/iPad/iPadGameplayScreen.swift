@@ -12,6 +12,7 @@ import SpriteKit
 struct iPadGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject private var sessionManager: P2PSessionManager
+    @EnvironmentObject private var characterManager: CharacterAssignmentManager
     @StateObject private var gameManager = GameManager()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
     @StateObject private var screenModel: iPadGameplayScreenModel
@@ -87,125 +88,100 @@ struct iPadGameplayScreen: View {
                 }
 
                 // UI Overlay
-                VStack {
-                    // 残り時間（3D効果）
-                    HStack {
-                        Spacer()
+                ZStack {
+                    // メインUI
+                    VStack {
+                        // 残り時間（3D効果）
+                        HStack {
+                            Spacer()
 
-                        ZStack {
-                            // グロー効果
-                            Text("のこり \(gameManager.timeRemaining)びょう")
-                                .nikumaruHeadline(size: 28)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "#FFD700"),
-                                            Color(hex: "#FFA500")
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .blur(radius: 8)
-                                .offset(y: 2)
-
-                            // メインテキスト
-                            Text("のこり \(gameManager.timeRemaining)びょう")
-                                .nikumaruHeadline(size: 28)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "#FFFFFF"),
-                                            Color(hex: "#FFF9E5")
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    Capsule()
-                                        .stroke(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color(hex: "#FFD700").opacity(0.6),
-                                                    Color(hex: "#FFA500").opacity(0.6)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 3
-                                        )
-                                )
-                        )
-                        .shadow(color: Color(hex: "#FFD700").opacity(0.4), radius: 12, x: 0, y: 4)
-
-                        Spacer()
-                    }
-                    .padding(.top, 20)
-
-                    Spacer()
-
-                    // プレイヤー情報（Harajukuスタイル）
-                    HStack(spacing: 0) {
-                        FluffyPlayerPanel(
-                            playerName: screenModel.displayName(for: .playerA),
-                            altitude: playerAAltitude,
-                            balloonImage: "red",
-                            gradient: LinearGradient(
-                                colors: [
-                                    Color(hex: "#FF6B9D"),
-                                    Color(hex: "#FF8FB3")
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            glowColor: Color(hex: "#FF6B9D")
-                        )
-                        .frame(width: geometry.size.width / 2)
-
-                        VStack(spacing: 10) {
-                            ForEach(0..<6, id: \.self) { index in
-                                Circle()
-                                    .fill(
+                            ZStack {
+                                // グロー効果
+                                Text("のこり \(gameManager.timeRemaining)びょう")
+                                    .nikumaruHeadline(size: 28)
+                                    .foregroundStyle(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.9),
-                                                Color(hex: "#FFE5B3").opacity(0.7)
+                                                Color(hex: "#FFD700"),
+                                                Color(hex: "#FFA500")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .blur(radius: 8)
+                                    .offset(y: 2)
+
+                                // メインテキスト
+                                Text("のこり \(gameManager.timeRemaining)びょう")
+                                    .nikumaruHeadline(size: 28)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#FFFFFF"),
+                                                Color(hex: "#FFF9E5")
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
-                                    .frame(width: 10, height: 10)
+                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
                             }
-                        }
-                        .padding(.vertical, 24)
-                        .frame(width: 20)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color(hex: "#FFD700").opacity(0.6),
+                                                        Color(hex: "#FFA500").opacity(0.6)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 3
+                                            )
+                                    )
+                            )
+                            .shadow(color: Color(hex: "#FFD700").opacity(0.4), radius: 12, x: 0, y: 4)
 
-                        FluffyPlayerPanel(
-                            playerName: screenModel.displayName(for: .playerB),
-                            altitude: playerBAltitude,
-                            balloonImage: "blue",
-                            gradient: LinearGradient(
-                                colors: [
-                                    Color(hex: "#4A90E2"),
-                                    Color(hex: "#6BBFFF")
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            glowColor: Color(hex: "#4A90E2")
-                        )
-                        .frame(width: geometry.size.width / 2)
+                            Spacer()
+                        }
+                        .padding(.top, 20)
+
+                        Spacer()
                     }
-                    .padding(.bottom, 20)
+
+                    // プレイヤーごとの高度表示（左端に配置）
+                    HStack(spacing: 0) {
+                        // Player A の高度（左端）
+                        VStack {
+                            Spacer()
+                            AltitudeLabel(
+                                altitude: playerAAltitude,
+                                character: characterManager.character(for: "A")
+                            )
+                            .padding(.leading, 20)
+                            .padding(.bottom, 40)
+                        }
+                        .frame(width: geometry.size.width / 2, alignment: .leading)
+
+                        // Player B の高度（左端）
+                        VStack {
+                            Spacer()
+                            AltitudeLabel(
+                                altitude: playerBAltitude,
+                                character: characterManager.character(for: "B")
+                            )
+                            .padding(.leading, 20)
+                            .padding(.bottom, 40)
+                        }
+                        .frame(width: geometry.size.width / 2, alignment: .leading)
+                    }
                 }
             }
         }
@@ -635,6 +611,85 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+}
+
+// MARK: - UI Components
+
+/// 高度ラベル（画面左端に配置）
+struct AltitudeLabel: View {
+    let altitude: Double
+    let character: CharacterInfo
+
+    private var gradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(hex: character.color),
+                Color(hex: character.color).opacity(0.8)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    // 表示用の高度（0mから始まるように4を引く）
+    private var displayAltitude: Int {
+        max(0, Int(altitude) - 4)
+    }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 6) {
+            // 数値
+            ZStack {
+                // 4方向黒枠
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundColor(.black)
+                    .offset(x: -2, y: -2)
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundColor(.black)
+                    .offset(x: 2, y: -2)
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundColor(.black)
+                    .offset(x: -2, y: 2)
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundColor(.black)
+                    .offset(x: 2, y: 2)
+
+                // グロー
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundStyle(gradient)
+                    .blur(radius: 5)
+
+                // メインテキスト
+                Text("\(displayAltitude)")
+                    .nikumaruTitle(size: 56)
+                    .foregroundStyle(gradient)
+            }
+
+            // 「m」を数値の右側に配置
+            ZStack {
+                // 黒枠
+                Text("m")
+                    .nikumaruBody(size: 24)
+                    .foregroundColor(.black)
+                    .offset(x: -1, y: -1)
+                Text("m")
+                    .nikumaruBody(size: 24)
+                    .foregroundColor(.black)
+                    .offset(x: 1, y: 1)
+
+                // メインテキスト
+                Text("m")
+                    .nikumaruBody(size: 24)
+                    .foregroundColor(.white)
+            }
+            .offset(x: 0, y: -6)
+        }
+    }
 }
 
 #Preview {
