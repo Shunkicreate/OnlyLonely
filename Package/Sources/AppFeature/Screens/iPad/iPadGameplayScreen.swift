@@ -135,7 +135,13 @@ struct PlayerInfoPanel: View {
 
 // MARK: - SpriteKit Game Scene
 
-class GameScene: SKScene {
+private enum PhysicsCategory {
+    static let balloonA: UInt32 = 1 << 0
+    static let balloonB: UInt32 = 1 << 1
+    static let ground: UInt32 = 1 << 2
+}
+
+class GameScene: SKScene, SKPhysicsContactDelegate {
     private var balloonA: SKSpriteNode!
     private var balloonB: SKSpriteNode!
     private var clouds: [Int: SKNode] = [:]  // cloudId -> SKNode
@@ -164,6 +170,9 @@ class GameScene: SKScene {
     }
 
     private func setupScene() {
+        physicsWorld.gravity = CGVector(dx: 0, dy: PhysicsConstants.gravity)
+        physicsWorld.contactDelegate = self
+
         // 背景グラデーション
         let background = SKSpriteNode(color: UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0), size: self.size)
         background.position = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -182,12 +191,32 @@ class GameScene: SKScene {
         balloonA = createBalloon(color: .red)
         balloonA.position = CGPoint(x: size.width / 4, y: 100)
         balloonA.zPosition = 10 // 前面に表示
+        balloonA.physicsBody = SKPhysicsBody(circleOfRadius: 30)
+        balloonA.physicsBody?.categoryBitMask = PhysicsCategory.balloonA
+        balloonA.physicsBody?.contactTestBitMask = PhysicsCategory.ground
+        balloonA.physicsBody?.collisionBitMask = PhysicsCategory.ground
+        balloonA.physicsBody?.mass = PhysicsConstants.childMass
+        balloonA.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
+        balloonA.physicsBody?.allowsRotation = false
+        balloonA.physicsBody?.usesPreciseCollisionDetection = true
+        balloonA.physicsBody?.affectedByGravity = true
+        balloonA.physicsBody?.velocity = .zero
         addChild(balloonA)
 
         // Player B の風船（右側・青）
         balloonB = createBalloon(color: .blue)
         balloonB.position = CGPoint(x: size.width * 3 / 4, y: 100)
         balloonB.zPosition = 10 // 前面に表示
+        balloonB.physicsBody = SKPhysicsBody(circleOfRadius: 30)
+        balloonB.physicsBody?.categoryBitMask = PhysicsCategory.balloonB
+        balloonB.physicsBody?.contactTestBitMask = PhysicsCategory.ground
+        balloonB.physicsBody?.collisionBitMask = PhysicsCategory.ground
+        balloonB.physicsBody?.mass = PhysicsConstants.childMass
+        balloonB.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
+        balloonB.physicsBody?.allowsRotation = false
+        balloonB.physicsBody?.usesPreciseCollisionDetection = true
+        balloonB.physicsBody?.affectedByGravity = true
+        balloonB.physicsBody?.velocity = .zero
         addChild(balloonB)
 
         // 物理エンジンに初期位置を設定
@@ -196,17 +225,37 @@ class GameScene: SKScene {
             let centerB = coordinator.laneCenter(for: .playerB) ?? size.width * 3 / 4
             coordinator.playerAState.position = CGPoint(x: centerA, y: 100)
             coordinator.playerBState.position = CGPoint(x: centerB, y: 100)
+            if let bodyA = balloonA.physicsBody {
+                coordinator.register(balloonBody: bodyA, for: .playerA)
+            }
+            if let bodyB = balloonB.physicsBody {
+                coordinator.register(balloonBody: bodyB, for: .playerB)
+            }
         }
 
         // 地面
         let groundLeft = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width / 2, height: 50))
         groundLeft.position = CGPoint(x: size.width / 4, y: 25)
         groundLeft.zPosition = 0
+        groundLeft.physicsBody = SKPhysicsBody(rectangleOf: groundLeft.size)
+        groundLeft.physicsBody?.isDynamic = false
+        groundLeft.physicsBody?.categoryBitMask = PhysicsCategory.ground
+        groundLeft.physicsBody?.contactTestBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        groundLeft.physicsBody?.collisionBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        groundLeft.physicsBody?.restitution = 0
+        groundLeft.physicsBody?.friction = 1.0
         addChild(groundLeft)
 
         let groundRight = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width / 2, height: 50))
         groundRight.position = CGPoint(x: size.width * 3 / 4, y: 25)
         groundRight.zPosition = 0
+        groundRight.physicsBody = SKPhysicsBody(rectangleOf: groundRight.size)
+        groundRight.physicsBody?.isDynamic = false
+        groundRight.physicsBody?.categoryBitMask = PhysicsCategory.ground
+        groundRight.physicsBody?.contactTestBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        groundRight.physicsBody?.collisionBitMask = PhysicsCategory.balloonA | PhysicsCategory.balloonB
+        groundRight.physicsBody?.restitution = 0
+        groundRight.physicsBody?.friction = 1.0
         addChild(groundRight)
     }
 
@@ -239,12 +288,13 @@ class GameScene: SKScene {
         // 物理演算を更新
         physicsCoordinator?.update(currentTime: currentTime)
 
-        // 風船の位置を同期
-        if let stateA = physicsCoordinator?.playerAState {
-            balloonA.position = stateA.position
-        }
-        if let stateB = physicsCoordinator?.playerBState {
-            balloonB.position = stateB.position
+        if physicsCoordinator?.usesSpriteKitPhysics != true {
+            if let stateA = physicsCoordinator?.playerAState {
+                balloonA.position = stateA.position
+            }
+            if let stateB = physicsCoordinator?.playerBState {
+                balloonB.position = stateB.position
+            }
         }
 
         // 雲との衝突チェック
@@ -271,6 +321,25 @@ class GameScene: SKScene {
             lightningNodes: &lightningNodes,
             scene: self
         )
+    }
+
+    func didBegin(_ contact: SKPhysicsContact) {
+        handleContact(contact.bodyA, contact.bodyB)
+    }
+
+    private func handleContact(_ bodyA: SKPhysicsBody, _ bodyB: SKPhysicsBody) {
+        let categories = (bodyA.categoryBitMask, bodyB.categoryBitMask)
+
+        switch categories {
+        case (PhysicsCategory.balloonA, PhysicsCategory.ground),
+             (PhysicsCategory.ground, PhysicsCategory.balloonA):
+            physicsCoordinator?.handleGroundContact(for: .playerA)
+        case (PhysicsCategory.balloonB, PhysicsCategory.ground),
+             (PhysicsCategory.ground, PhysicsCategory.balloonB):
+            physicsCoordinator?.handleGroundContact(for: .playerB)
+        default:
+            break
+        }
     }
 
 }
