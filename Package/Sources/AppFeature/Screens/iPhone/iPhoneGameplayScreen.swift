@@ -15,7 +15,6 @@ struct iPhoneGameplayScreen: View {
 
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
-    @State private var windForce: Float = 0
 
     var body: some View {
         ZStack {
@@ -59,17 +58,17 @@ struct iPhoneGameplayScreen: View {
                 VStack {
                     Text("🎈")
                         .font(.system(size: 80))
-                        .scaleEffect(1.0 + CGFloat(windForce) * 0.3)
-                        .animation(.easeInOut(duration: 0.3), value: windForce)
+                        .scaleEffect(1.0 + CGFloat(micLevelManager.windForce) * 0.3)
+                        .animation(.easeInOut(duration: 0.3), value: micLevelManager.windForce)
 
                     Text("✨✨")
                         .font(.system(size: 24))
-                        .opacity(Double(windForce))
+                        .opacity(Double(micLevelManager.windForce))
                 }
 
                 // 音圧レベルメーター
                 VStack(spacing: 8) {
-                    Text("音圧レベル")
+                    Text("風力レベル")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
@@ -88,8 +87,8 @@ struct iPhoneGameplayScreen: View {
                                         endPoint: .trailing
                                     )
                                 )
-                                .frame(width: geometry.size.width * CGFloat(windForce))
-                                .animation(.easeOut(duration: 0.1), value: windForce)
+                                .frame(width: geometry.size.width * CGFloat(micLevelManager.windForce))
+                                .animation(.easeOut(duration: 0.1), value: micLevelManager.windForce)
                         }
                     }
                     .frame(height: 30)
@@ -136,33 +135,10 @@ struct iPhoneGameplayScreen: View {
             }
         }
 
-        // 音圧更新（30Hz）
+        // 高度更新（30Hz）
         Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
-            updateWindForce()
-        }
-    }
-
-    private func updateWindForce() {
-        // マイクレベルから風力を計算
-        if let peakLevel = micLevelManager.peakHoldLevel {
-            // 最小閾値を設定（小さい音を拾わないようにする）
-            let threshold: Float = -20.0 // -20dB以下は無視
-
-            guard peakLevel > threshold else {
-                windForce = 0
-                return
-            }
-
-            // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
-            let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
-            // さらに0.7倍して感度を下げる
-            let sensitivity = 0.7
-            windForce = max(0, min(1.0, normalized * Float(sensitivity)))
-
             // 高度を更新（簡易シミュレーション）
-            currentAltitude += Double(windForce) * 2.0
-        } else {
-            windForce = 0
+            currentAltitude += Double(micLevelManager.windForce) * 2.0
         }
     }
 }
