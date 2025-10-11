@@ -237,18 +237,32 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
 
     private func addBackground() {
         let backgroundHeight = size.height
-        let background = SKSpriteNode(
-            color: UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0),
-            size: CGSize(width: size.width, height: backgroundHeight)
-        )
+        let background = SKSpriteNode(color: .clear, size: CGSize(width: size.width, height: backgroundHeight))
         background.anchorPoint = CGPoint(x: 0.5, y: 0)
         background.position = CGPoint(x: size.width / 2, y: 0)
         background.zPosition = -5
         addChild(background)
+
+        let skyTop = SKSpriteNode(
+            color: UIColor(red: 0.7, green: 0.85, blue: 1.0, alpha: 1.0),
+            size: CGSize(width: size.width, height: backgroundHeight)
+        )
+        skyTop.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        skyTop.position = CGPoint(x: size.width / 2, y: backgroundHeight)
+        skyTop.zPosition = -6
+        addChild(skyTop)
     }
 
     private func addGround() {
         let groundHeight: CGFloat = 60
+
+        let soilHeight = groundHeight + 120
+        let soil = SKSpriteNode(color: UIColor(red: 0.55, green: 0.37, blue: 0.2, alpha: 1.0), size: CGSize(width: size.width, height: soilHeight))
+        soil.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        soil.position = CGPoint(x: size.width / 2, y: PhysicsConstants.groundBaseline - groundHeight / 2)
+        soil.zPosition = -1
+        addChild(soil)
+
         let ground = SKSpriteNode(color: .green.withAlphaComponent(0.3), size: CGSize(width: size.width, height: groundHeight))
         ground.position = CGPoint(
             x: size.width / 2,
