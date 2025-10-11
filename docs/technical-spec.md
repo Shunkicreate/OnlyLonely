@@ -57,6 +57,8 @@
 }
 ```
 
+**Note**: `force` は息の強さを表し、風船を持った子供を上昇させます。
+
 #### iPad → iPhone
 
 ```json
@@ -158,7 +160,7 @@
     },
     {
       "id": 3,
-      "type": "plum",
+      "type": "pine",
       "position": { "x": 150, "y": 450 },
       "size": { "width": 150, "height": 70 },
       "lightningInterval": 3.0
@@ -215,8 +217,7 @@ func handleLightningHit() {
 ### 風船再生成
 
 - 雷に当たったら、風船が割れる演出
-- 落下距離: TBD（例: -50m）
-- 再生成時間: TBD（例: 1 秒）
+- 落下距離と再生成時間は [ゲームパラメータ：ダメージ設定](./game-parameters.md#ダメージ設定) を参照
 - 再生成中は入力を無効化（オプション）
 
 ---
