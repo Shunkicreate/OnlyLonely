@@ -141,8 +141,8 @@ struct TitleScreen: View {
             startTwinkling()
         }
 
-        // 6秒後、風船を下に戻してふわふわさせる
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+        // 4.8秒後、風船を下に戻してふわふわさせる
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.8) {
             resetBalloonsToFloat()
         }
     }
@@ -313,6 +313,7 @@ struct FloatingBalloon: View {
                     .scaledToFit()
                     .frame(width: data.size, height: data.size)
             }
+            .offset(y: 15)  // 風船を下に移動して線と繋がるように
 
             // 紐（風船の下から画像の上まで）
             Path { path in
@@ -330,7 +331,7 @@ struct FloatingBalloon: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: data.size * 1.2, height: data.size * 1.2)
-                .offset(y: -10)
+                .offset(y: -25)  // 線と画像が大きく重なって繋がって見えるように
         }
         .position(
             x: screenWidth * data.xPosition + swayX,
