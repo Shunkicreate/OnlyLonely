@@ -14,7 +14,6 @@ struct iPhoneGameplayScreen: View {
     @StateObject private var micLevelManager = MicrophoneLevelManager()
 
     @State private var timeRemaining: Int = 60
-    @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
 
     var body: some View {
@@ -49,10 +48,6 @@ struct iPhoneGameplayScreen: View {
                     Text("Player A")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-
-                    Text("現在の高度: \(Int(currentAltitude))m")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(.yellow)
                 }
 
                 // 風船
@@ -158,9 +153,6 @@ struct iPhoneGameplayScreen: View {
             // さらに0.7倍して感度を下げる
             let sensitivity = 0.7
             windForce = max(0, min(1.0, normalized * Float(sensitivity)))
-
-            // 高度を更新（簡易シミュレーション）
-            currentAltitude += Double(windForce) * 2.0
         } else {
             windForce = 0
         }
