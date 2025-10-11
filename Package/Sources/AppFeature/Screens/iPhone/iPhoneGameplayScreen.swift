@@ -159,8 +159,7 @@ struct iPhoneGameplayScreen: View {
 
         // 高度更新（30Hz）
         altitudeTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
-            // 高度を更新（簡易シミュレーション）
-            currentAltitude += Double(micLevelManager.windForce) * 2.0
+            screenModel.sendWindForce()
         }
     }
 
