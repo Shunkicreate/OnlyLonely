@@ -47,9 +47,6 @@ struct ConnectionWaitingScreen: View {
                         connectedDevicesSection
                     }
 
-                    // デバッグボタン
-                    debugButton
-
                     Spacer()
                         .frame(height: 60)
                 }
@@ -243,24 +240,6 @@ struct ConnectionWaitingScreen: View {
                         .fluffyBorder(color: HarajukuColors.pastelMint, width: 2)
                 )
                 .shadow(color: HarajukuColors.pastelMint.opacity(0.4), radius: 10, x: 0, y: 4)
-        }
-    }
-
-    // MARK: - Debug Button
-
-    private var debugButton: some View {
-        Button {
-            coordinator.navigate(to: .iPadResult)
-        } label: {
-            Text("けっかがめんへちょくせついどう (DEBUG)")
-                .nikumaruBody(size: 16)
-                .foregroundColor(.white)
-                .padding(.horizontal, 30)
-                .padding(.vertical, 12)
-                .background(
-                    Capsule()
-                        .fill(Color.orange.opacity(0.8))
-                )
         }
     }
 

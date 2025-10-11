@@ -250,6 +250,8 @@ struct ConnectionScreen: View {
         ) {
             connectionModel.cancel()
         }
+        .disabled(connectionModel.phase != .connecting)
+        .opacity(connectionModel.phase != .connecting ? 0.5 : 1.0)
     }
 
     private func startAnimations() {
