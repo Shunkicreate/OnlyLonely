@@ -334,6 +334,8 @@ struct RainbowText: View {
                 )
                 .offset(x: 0, y: -1)
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
         .shadow(color: HarajukuColors.pastelPink.opacity(0.6), radius: 15, x: 0, y: 4)
         .shadow(color: HarajukuColors.pastelPurple.opacity(0.6), radius: 20, x: 0, y: 8)
     }
