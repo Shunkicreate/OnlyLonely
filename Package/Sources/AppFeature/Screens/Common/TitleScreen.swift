@@ -198,14 +198,11 @@ struct TitleScreen: View {
 
                     // タップしてはじめる（キラキラ）
                     TapToStartView()
-                        .onTapGesture {
-                            handleStart()
-                        }
                         .padding(.horizontal, 16)
 
                     Spacer()
                         .frame(height: 20)
-                    
+
                     // クレジットリンク（小さめ）
                     Button {
                         coordinator.navigate(to: .credits)
@@ -224,10 +221,14 @@ struct TitleScreen: View {
                                 .fill(.white.opacity(0.1))
                         )
                     }
-                    
+
                     Spacer()
                         .frame(height: 40)
                 }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                handleStart()
             }
         }
         .onAppear {
