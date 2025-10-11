@@ -9,6 +9,7 @@
 import SwiftUI
 import AVFoundation
 import UIKit
+import Combine
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
@@ -21,13 +22,11 @@ struct iPhoneGameplayScreen: View {
     @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
     @State private var gameTimer: Timer?
-    @State private var altitudeTimer: Timer?
+    @State private var sendWindForceTimer: Timer?
+    @State private var gameplayInitialized = false
 
-    private let playerId: String
-
-    init(playerId: String = "A") {
+    init() {
         _screenModel = StateObject(wrappedValue: iPhoneGameplayScreenModel())
-        self.playerId = playerId
     }
 
     var body: some View {
@@ -122,15 +121,17 @@ struct iPhoneGameplayScreen: View {
             }
         }
         .onAppear {
-            screenModel.configure(sessionManager: sessionManager, playerId: playerId)
-            screenModel.bindInputs(microphone: micLevelManager, motionManager: motionManager)
-            startGame()
+            setupGameplayIfNeeded()
         }
         .onDisappear {
             micLevelManager.stopMonitoring()
             motionManager.stopDeviceMotionUpdates()
             stopTimers()
             screenModel.cancelBindings()
+            gameplayInitialized = false
+        }
+        .onReceive(sessionManager.$localPeerId.compactMap { $0 }.removeDuplicates()) { newId in
+            setupGameplayIfNeeded(with: newId)
         }
         .navigationBarBackButtonHidden()
     }
@@ -149,8 +150,8 @@ struct iPhoneGameplayScreen: View {
                 timer.invalidate()
                 gameTimer = nil
                 // ゲーム終了
-                altitudeTimer?.invalidate()
-                altitudeTimer = nil
+                sendWindForceTimer?.invalidate()
+                sendWindForceTimer = nil
                 Task { @MainActor in
                     coordinator.navigate(to: .iPhoneResult)
                 }
@@ -158,7 +159,7 @@ struct iPhoneGameplayScreen: View {
         }
 
         // 高度更新（30Hz）
-        altitudeTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
+        sendWindForceTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
             screenModel.sendWindForce()
         }
     }
@@ -175,12 +176,24 @@ struct iPhoneGameplayScreen: View {
     private func stopTimers() {
         gameTimer?.invalidate()
         gameTimer = nil
-        altitudeTimer?.invalidate()
-        altitudeTimer = nil
+        sendWindForceTimer?.invalidate()
+        sendWindForceTimer = nil
     }
 
     private var playerDisplayName: String {
         let trimmed = connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? UIDevice.current.name : trimmed
+    }
+
+    private func setupGameplayIfNeeded(with candidateId: String? = nil) {
+        guard !gameplayInitialized else { return }
+
+        let resolvedId = candidateId ?? sessionManager.resolveLocalPeerId()
+        guard let resolvedId else { return }
+
+        screenModel.configure(sessionManager: sessionManager, playerId: resolvedId)
+        screenModel.bindInputs(microphone: micLevelManager, motionManager: motionManager)
+        startGame()
+        gameplayInitialized = true
     }
 }

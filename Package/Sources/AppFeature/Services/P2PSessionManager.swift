@@ -30,6 +30,7 @@ final class P2PSessionManager: ObservableObject {
     @Published private(set) var transceiver: MultipeerTransceiver?
     @Published private(set) var availablePeers: [Peer] = []
     @Published private(set) var connectedPeers: [Peer] = []
+    @Published private(set) var localPeerId: String?
 
     private let navigationCommandSubject = PassthroughSubject<DeviceNavigationCommand, Never>()
     private let windForceSubject = PassthroughSubject<PlayerWindForceMessage, Never>()
@@ -39,6 +40,7 @@ final class P2PSessionManager: ObservableObject {
         reset()
 
         let transceiver = MultipeerTransceiver(configuration: configuration)
+        localPeerId = transceiver.localPeerId
         bind(transceiver)
         transceiver.resume()
     }
@@ -48,6 +50,7 @@ final class P2PSessionManager: ObservableObject {
         transceiver = nil
         availablePeers = []
         connectedPeers = []
+        localPeerId = nil
     }
 
     var navigationCommandPublisher: AnyPublisher<DeviceNavigationCommand, Never> {
@@ -132,5 +135,18 @@ final class P2PSessionManager: ObservableObject {
         let targets = peers ?? connectedPeers
         guard !targets.isEmpty else { return }
         transceiver.send(message, to: targets)
+    }
+
+    func resolveLocalPeerId() -> String? {
+        if let localPeerId {
+            return localPeerId
+        }
+
+        if let id = transceiver?.localPeerId {
+            localPeerId = id
+            return id
+        }
+
+        return nil
     }
 }
