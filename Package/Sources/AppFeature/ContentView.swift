@@ -75,8 +75,6 @@ public struct ContentView: View {
         // iPhone
         case .connection:
             ConnectionScreen()
-        case .playerNameInput:
-            PlayerNameInputScreen()
         case .waiting:
             WaitingScreen()
         case .countdown:

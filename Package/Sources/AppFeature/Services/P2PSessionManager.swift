@@ -5,6 +5,7 @@
 //  Created by Codex on 2025/10/12.
 //
 
+import Combine
 import Foundation
 import MultipeerKit
 
@@ -32,6 +33,7 @@ final class P2PSessionManager: ObservableObject {
     @Published private(set) var connectedPeers: [Peer] = []
     @Published private(set) var localPeerID: String?
 
+    private let navigationCommandSubject = PassthroughSubject<DeviceNavigationCommand, Never>()
     private var configuration: MultipeerConfiguration?
 
     func configure(role: Role, configuration: MultipeerConfiguration) {
@@ -61,6 +63,10 @@ final class P2PSessionManager: ObservableObject {
         availablePeers = []
         connectedPeers = []
         localPeerID = nil
+    }
+
+    var navigationCommandPublisher: AnyPublisher<DeviceNavigationCommand, Never> {
+        navigationCommandSubject.eraseToAnyPublisher()
     }
 
     private func bind(_ transceiver: MultipeerTransceiver) {
@@ -93,6 +99,12 @@ final class P2PSessionManager: ObservableObject {
             availablePeers = self.transceiver?.availablePeers ?? []
             refreshConnectedPeers()
         }
+
+        transceiver.receive(DeviceNavigationCommand.self) { [weak self] command, _ in
+            Task { @MainActor [weak self] in
+                self?.navigationCommandSubject.send(command)
+            }
+        }
     }
 
     private func refreshConnectedPeers(using peers: [Peer]? = nil) {
@@ -112,5 +124,12 @@ final class P2PSessionManager: ObservableObject {
         }
 
         transceiver.invite(peer, with: nil, timeout: timeout, completion: completion)
+    }
+
+    func sendNavigationCommand(_ command: DeviceNavigationCommand, to peers: [Peer]? = nil) {
+        guard let transceiver else { return }
+        let targets = peers ?? connectedPeers
+        guard !targets.isEmpty else { return }
+        transceiver.send(command, to: targets)
     }
 }

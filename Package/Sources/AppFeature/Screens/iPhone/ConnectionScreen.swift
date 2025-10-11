@@ -5,11 +5,13 @@
 //  Created by Codex on 2025/10/16.
 //
 
+import Combine
 import SwiftUI
 
 struct ConnectionScreen: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @EnvironmentObject private var connectionModel: ConnectionScreenModel
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var showInvitationAlert = false
 
     var body: some View {
@@ -40,13 +42,6 @@ struct ConnectionScreen: View {
                 .buttonStyle(.bordered)
             }
 
-            if connectionModel.phase == .connected {
-                Button("次へ進む") {
-                    coordinator.navigate(to: .playerNameInput)
-                }
-                .buttonStyle(.borderedProminent)
-            }
-
             Spacer()
         }
         .padding()
@@ -67,6 +62,12 @@ struct ConnectionScreen: View {
             }
         } message: { peerName in
             Text("\(peerName) からの接続依頼です。許可しますか？")
+        }
+        .onReceive(sessionManager.navigationCommandPublisher) { command in
+            guard command.action == .showCountdown else { return }
+            if coordinator.currentRoute != .countdown {
+                coordinator.navigate(to: .countdown)
+            }
         }
     }
 }

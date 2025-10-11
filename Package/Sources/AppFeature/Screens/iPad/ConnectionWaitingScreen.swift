@@ -55,6 +55,16 @@ struct ConnectionWaitingScreen: View {
                     }
                 }
             }
+
+            if hostModel.canProceedToNextStep {
+                Section {
+                    Button("次に進む") {
+                        hostModel.advanceConnectedDevicesToCountdown()
+                        coordinator.navigate(to: .iPadGameplay)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

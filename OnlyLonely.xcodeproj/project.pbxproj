@@ -285,7 +285,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OnlyLonely/Info.plist;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "$(PRODUCT_NAME)";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "近くのデバイスと直接通信してゲームをプレイするためにローカルネットワークを利用します。";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "マイクレベルを計測するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -318,7 +318,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OnlyLonely/Info.plist;
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "$(PRODUCT_NAME)";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "近くのデバイスと直接通信してゲームをプレイするためにローカルネットワークを利用します。";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "マイクレベルを計測するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

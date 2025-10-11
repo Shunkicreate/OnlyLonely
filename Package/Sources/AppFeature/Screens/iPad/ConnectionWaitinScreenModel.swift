@@ -28,6 +28,10 @@ final class ConnectionWaitinScreenModel: ObservableObject {
         observeSessionManager()
     }
 
+    var canProceedToNextStep: Bool {
+        connectedDevices.count >= 2
+    }
+
     func startHosting() {
         guard !isHosting else { return }
 
@@ -107,5 +111,12 @@ final class ConnectionWaitinScreenModel: ObservableObject {
         } else {
             statusMessage = "接続中のプレイヤー: \(count)"
         }
+    }
+
+    func advanceConnectedDevicesToCountdown() {
+        guard canProceedToNextStep else { return }
+        let peers = connectedDevices.map(\.peer)
+        let command = DeviceNavigationCommand(action: .showCountdown)
+        sessionManager.sendNavigationCommand(command, to: peers)
     }
 }
