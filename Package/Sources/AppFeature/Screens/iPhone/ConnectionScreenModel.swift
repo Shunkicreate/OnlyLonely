@@ -37,7 +37,7 @@ final class ConnectionScreenModel: NSObject, ObservableObject {
 
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
-        peerID = MCPeerID(displayName: UIDevice.current.name)
+        peerID = MCPeerID(displayName: "oreore" + UUID().uuidString.prefix(3))
         session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .none)
         advertiser = MCNearbyServiceAdvertiser(
             peer: peerID,

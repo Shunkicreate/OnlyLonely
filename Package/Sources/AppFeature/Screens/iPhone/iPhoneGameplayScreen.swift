@@ -11,6 +11,7 @@ import AVFoundation
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @StateObject private var screenModel: iPhoneGameplayScreenModel
     @StateObject private var micLevelManager = MicrophoneLevelManager()
     @StateObject private var motionManager = MotionManager()
 
@@ -18,6 +19,10 @@ struct iPhoneGameplayScreen: View {
     @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
     @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
+
+    init(sessionManager: P2PSessionManager) {
+        _screenModel = StateObject(wrappedValue: iPhoneGameplayScreenModel(sessionManager: sessionManager))
+    }
 
     var body: some View {
         ZStack {
@@ -114,10 +119,14 @@ struct iPhoneGameplayScreen: View {
         }
         .onAppear {
             startGame()
+            screenModel.prepareSessionIfNeeded()
         }
         .onDisappear {
             micLevelManager.stopMonitoring()
             motionManager.stopDeviceMotionUpdates()
+        }
+        .onChange(of: micLevelManager.windForce) { _, newValue in
+            screenModel.sendWindForce(newValue)
         }
         .navigationBarBackButtonHidden()
     }
@@ -217,6 +226,7 @@ struct iPhoneGameplayScreen: View {
 }
 
 #Preview {
-    iPhoneGameplayScreen()
+    let sessionManager = P2PSessionManager()
+    iPhoneGameplayScreen(sessionManager: sessionManager)
         .environmentObject(AppCoordinator())
 }

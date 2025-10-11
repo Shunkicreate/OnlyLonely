@@ -65,7 +65,7 @@ public struct ContentView: View {
         case .connectionWaiting:
             ConnectionWaitingScreen(sessionManager: sessionManager, coordinator: coordinator)
         case .iPadGameplay:
-            iPadGameplayScreen()
+            iPadGameplayScreen(sessionManager: sessionManager)
         case .iPadResult:
             iPadResultScreen()
 
@@ -79,7 +79,7 @@ public struct ContentView: View {
         case .countdown:
             CountdownScreen()
         case .iPhoneGameplay:
-            iPhoneGameplayScreen()
+            iPhoneGameplayScreen(sessionManager: sessionManager)
         case .iPhoneResult:
             iPhoneResultScreen()
         }
