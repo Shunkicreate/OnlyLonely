@@ -125,16 +125,6 @@ struct ConnectionScreen: View {
                 }
 
                 Spacer()
-
-                // 戻るボタン
-                Button {
-                    coordinator.navigateBack()
-                } label: {
-                    Text("戻る")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.bottom, 40)
             }
         }
     }

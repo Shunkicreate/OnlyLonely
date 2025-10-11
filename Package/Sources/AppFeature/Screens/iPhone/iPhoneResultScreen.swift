@@ -135,6 +135,7 @@ struct iPhoneResultScreen: View {
         .onAppear {
             showAnimation = true
         }
+        .navigationBarBackButtonHidden()
     }
 }
 
