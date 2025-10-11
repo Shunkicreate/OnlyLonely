@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PlayerNameInputScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var playerName: String = ""
     @State private var isFloating = false
     @State private var showContent = false
@@ -82,6 +83,14 @@ struct PlayerNameInputScreen: View {
                         .font(HarajukuTypography.caption(size: 12))
                         .fontWeight(.semibold)
                         .foregroundColor(HarajukuColors.textSecondary)
+                        .overlay(alignment: .trailing) {
+                            if sessionManager.connectedPeers.isEmpty {
+                                Text("⏳ せつぞくをまってるよ")
+                                    .font(HarajukuTypography.caption(size: 10))
+                                    .foregroundColor(HarajukuColors.textSecondary.opacity(0.8))
+                                    .padding(.top, 4)
+                            }
+                        }
                 }
                 .padding(.horizontal, HarajukuSpacing.xl)
                 .opacity(showContent ? 1 : 0)
@@ -98,6 +107,7 @@ struct PlayerNameInputScreen: View {
                     ) {
                         joinGame()
                     }
+                    .disabled(sessionManager.connectedPeers.isEmpty)
                     .opacity(showContent ? 1 : 0)
 
                     Text(playerName.isEmpty ? "なまえがからっぽだと、じどうでつけるよ" : "'\(playerName)' でさんかするよ！")
@@ -139,6 +149,7 @@ struct PlayerNameInputScreen: View {
     }
 
     private func joinGame() {
+        guard !sessionManager.connectedPeers.isEmpty else { return }
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
@@ -170,6 +181,8 @@ private struct PlayerBalloonView: View {
 }
 
 #Preview {
-    PlayerNameInputScreen()
+    let sessionManager = P2PSessionManager()
+    return PlayerNameInputScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
 }

@@ -10,11 +10,7 @@ import SwiftUI
 
 struct ConnectionWaitingScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
-    @StateObject private var webSocketService = WebSocketService()
-    @State private var playerAState: PlayerState = .disconnected
-    @State private var playerBState: PlayerState = .disconnected
-    @State private var serverIP: String = "192.168.1.100"
-    @State private var serverPort: Int = 8080
+    @EnvironmentObject private var connectionModel: ConnectionWaitinScreenModel
 
     var body: some View {
         ZStack {
@@ -36,9 +32,35 @@ struct ConnectionWaitingScreen: View {
 
                 // 接続情報
                 VStack(spacing: 8) {
-                    Text("接続情報: \(serverIP):\(serverPort)")
-                        .font(.system(size: 18, design: .monospaced))
+                    Text("ホスト端末: \(connectionModel.hostDisplayName)")
+                        .font(.system(size: 18, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
+
+                    if connectionModel.isBrowsing {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            Text("近くのプレイヤーを探索中")
+                                .font(.system(size: 16, design: .rounded))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    } else {
+                        Text("探索を停止中")
+                            .font(.system(size: 16, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+
+                    if !connectionModel.connectedPeerNames.isEmpty {
+                        Text("接続済み: \(connectionModel.connectedPeerNames.joined(separator: ", "))")
+                            .font(.system(size: 16, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+
+                    if let error = connectionModel.errorMessage {
+                        Text(error)
+                            .font(.system(size: 14, design: .rounded))
+                            .foregroundColor(.red.opacity(0.8))
+                    }
                 }
                 .padding(.vertical, 20)
 
@@ -46,12 +68,12 @@ struct ConnectionWaitingScreen: View {
                 VStack(spacing: 16) {
                     PlayerStatusCard(
                         playerName: "Player A",
-                        state: playerAState
+                        state: connectionModel.playerState(for: .playerA)
                     )
 
                     PlayerStatusCard(
                         playerName: "Player B",
-                        state: playerBState
+                        state: connectionModel.playerState(for: .playerB)
                     )
                 }
                 .padding(.horizontal, 40)
@@ -84,7 +106,7 @@ struct ConnectionWaitingScreen: View {
 
                 // キャンセルボタン
                 Button {
-                    webSocketService.stopServer()
+                    connectionModel.stopHosting()
                     coordinator.navigateToRoot()
                 } label: {
                     Text("キャンセル")
@@ -101,42 +123,19 @@ struct ConnectionWaitingScreen: View {
             }
         }
         .onAppear {
-            startServer()
+            connectionModel.startHosting()
         }
-        .onChange(of: playerAState) { _, _ in
-            checkReadyToStart()
-        }
-        .onChange(of: playerBState) { _, _ in
-            checkReadyToStart()
+        .onChange(of: connectionModel.isSessionReady) { ready in
+            handleReadinessChange(isReady: ready)
         }
         .navigationBarBackButtonHidden()
     }
 
-    private func startServer() {
-        Task {
-            do {
-                try await webSocketService.startServer(port: serverPort)
-                // Get local IP address
-                serverIP = getLocalIPAddress() ?? "192.168.1.100"
-            } catch {
-                print("Failed to start server: \(error)")
-            }
+    private func handleReadinessChange(isReady: Bool) {
+        guard isReady else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            coordinator.navigate(to: .iPadGameplay)
         }
-    }
-
-    private func checkReadyToStart() {
-        if playerAState == .ready && playerBState == .ready {
-            // 両プレイヤー準備完了
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                coordinator.navigate(to: .iPadGameplay)
-            }
-        }
-    }
-
-    private func getLocalIPAddress() -> String? {
-        // 実装: ローカルIPアドレスを取得
-        // Network.framework を使用して実装
-        return "192.168.1.100" // プレースホルダー
     }
 }
 
@@ -196,6 +195,10 @@ struct PlayerStatusCard: View {
 }
 
 #Preview {
-    ConnectionWaitingScreen()
+    let sessionManager = P2PSessionManager()
+    let model = ConnectionWaitinScreenModel(sessionManager: sessionManager)
+    return ConnectionWaitingScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
+        .environmentObject(model)
 }

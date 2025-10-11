@@ -8,11 +8,23 @@
 import SwiftUI
 
 public struct ContentView: View {
-    @StateObject private var coordinator = AppCoordinator()
-    @StateObject private var micPermissionManager = MicrophonePermissionManager()
+    @StateObject private var coordinator: AppCoordinator
+    @StateObject private var micPermissionManager: MicrophonePermissionManager
+    @StateObject private var sessionManager: P2PSessionManager
+    @StateObject private var hostConnectionModel: ConnectionWaitinScreenModel
+    @StateObject private var guestConnectionModel: ConnectionScreenModel
     @State private var showDebug = false
 
-    public init() {}
+    public init() {
+        let coordinator = AppCoordinator()
+        let micPermissionManager = MicrophonePermissionManager()
+        let sessionManager = P2PSessionManager()
+        _coordinator = StateObject(wrappedValue: coordinator)
+        _micPermissionManager = StateObject(wrappedValue: micPermissionManager)
+        _sessionManager = StateObject(wrappedValue: sessionManager)
+        _hostConnectionModel = StateObject(wrappedValue: ConnectionWaitinScreenModel(sessionManager: sessionManager))
+        _guestConnectionModel = StateObject(wrappedValue: ConnectionScreenModel(sessionManager: sessionManager))
+    }
 
     public var body: some View {
         NavigationStack(path: $coordinator.path) {
@@ -22,6 +34,9 @@ public struct ContentView: View {
                 }
         }
         .environmentObject(coordinator)
+        .environmentObject(sessionManager)
+        .environmentObject(hostConnectionModel)
+        .environmentObject(guestConnectionModel)
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()

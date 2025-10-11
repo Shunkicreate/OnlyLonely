@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HarajukuPlayerNameInputScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var playerName: String = ""
     @State private var isBouncing = false
     @State private var showContent = false
@@ -104,9 +105,10 @@ struct HarajukuPlayerNameInputScreen: View {
                         title: "そらへ とびたつ！",
                         emoji: "🎈",
                         gradient: HarajukuColors.rainbowGradient
-                    ) {
+                   ) {
                         joinGame()
                     }
+                    .disabled(sessionManager.connectedPeers.isEmpty)
                     .opacity(showContent ? 1 : 0)
 
                     // メッセージ
@@ -115,6 +117,14 @@ struct HarajukuPlayerNameInputScreen: View {
                             Text("💭 からのままでも だいじょうぶ！")
                                 .font(HarajukuTypography.caption(size: 12))
                                 .foregroundColor(HarajukuColors.textSecondary)
+                                .overlay(alignment: .trailing) {
+                                    if sessionManager.connectedPeers.isEmpty {
+                                        Text("⏳ せつぞくをまってるよ")
+                                            .font(HarajukuTypography.caption(size: 10))
+                                            .foregroundColor(HarajukuColors.textSecondary.opacity(0.8))
+                                            .padding(.top, 4)
+                                    }
+                                }
                         } else {
                             HStack(spacing: 6) {
                                 Text("✨")
@@ -154,6 +164,7 @@ struct HarajukuPlayerNameInputScreen: View {
     }
 
     private func joinGame() {
+        guard !sessionManager.connectedPeers.isEmpty else { return }
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
@@ -169,6 +180,8 @@ struct HarajukuPlayerNameInputScreen: View {
 }
 
 #Preview {
-    HarajukuPlayerNameInputScreen()
+    let sessionManager = P2PSessionManager()
+    return HarajukuPlayerNameInputScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
 }
