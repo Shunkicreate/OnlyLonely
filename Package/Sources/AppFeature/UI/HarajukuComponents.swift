@@ -80,6 +80,79 @@ struct FluffyButton: View {
     }
 }
 
+/// ふわふわボタン（画像アイコン版）
+struct FluffyButtonWithImage: View {
+    let title: String
+    let imageName: String
+    let gradient: LinearGradient
+    let shadowColor: Color
+    let action: () -> Void
+    @State private var isPressed = false
+    @State private var isWiggling = false
+
+    init(
+        title: String,
+        imageName: String,
+        gradient: LinearGradient = HarajukuColors.pinkPurpleGradient,
+        shadowColor: Color = HarajukuColors.pastelPink,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.imageName = imageName
+        self.gradient = gradient
+        self.shadowColor = shadowColor
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: {
+            action()
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+        }) {
+            HStack(spacing: 12) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(isWiggling ? -15 : 15))
+                    .animation(HarajukuAnimation.wiggle(), value: isWiggling)
+
+                Text(title)
+                    .font(HarajukuTypography.subtitle(size: 20))
+                    .fontWeight(.bold)
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 16)
+            .background(
+                Capsule()
+                    .fill(gradient)
+            )
+            .harajukuShadow(color: shadowColor)
+            .scaleEffect(isPressed ? 0.9 : 1.0)
+            .rotationEffect(.degrees(isPressed ? -3 : 0))
+        }
+        .buttonStyle(PlainButtonStyle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    withAnimation(HarajukuAnimation.jump) {
+                        isPressed = true
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(HarajukuAnimation.jump) {
+                        isPressed = false
+                    }
+                }
+        )
+        .onAppear {
+            isWiggling = true
+        }
+    }
+}
+
 /// ふわふわアウトラインボタン
 struct FluffyOutlineButton: View {
     let title: String

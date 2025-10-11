@@ -22,100 +22,8 @@ struct ConnectionScreen: View {
 
     var body: some View {
         ZStack {
-            // カラフル虹色背景
-            RainbowBackground()
-                .ignoresSafeArea()
-
-            // ふわふわ雲
-            FluffyCloudBackground()
-                .ignoresSafeArea()
-                .opacity(0.4)
-
-            ScrollView {
-                VStack(spacing: HarajukuSpacing.xl) {
-                    Spacer()
-                        .frame(height: 40)
-
-                    // タイトルセクション
-                    VStack(spacing: HarajukuSpacing.md) {
-                        // きらきら装飾
-                        HStack(spacing: 12) {
-                            Image("yellow")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .rotationEffect(.degrees(sparkleRotation))
-
-                            RainbowText(text: "iPadにつなぐよ", size: 32)
-
-                            Image("yellow")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .rotationEffect(.degrees(-sparkleRotation))
-                        }
-                        .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
-
-                        Text("おなじWi-Fiでつながろう！")
-                            .nikumaruBody(size: 14)
-                            .foregroundColor(HarajukuColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    // 接続状態インジケーター
-                    ConnectionStatusIndicator(phase: connectionModel.phase, isPulsing: $isPulsing, rotationAngle: $rotationAngle)
-                        .frame(height: 140)
-                        .padding(.vertical, HarajukuSpacing.lg)
-
-                    // 接続先表示
-                    if let host = connectionModel.hostName {
-                        VStack(spacing: 8) {
-                            Text("せつぞくさき")
-                                .nikumaruCaption(size: 12)
-                                .foregroundColor(HarajukuColors.textSecondary)
-
-                            Text(host)
-                                .nikumaruBody(size: 16)
-                                .foregroundColor(HarajukuColors.textPrimary)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(
-                                    Capsule()
-                                        .fill(.ultraThinMaterial)
-                                        .fluffyBorder(color: HarajukuColors.pastelBlue, width: 2)
-                                )
-                        }
-                    }
-
-                    // ボタンエリア
-                    VStack(spacing: HarajukuSpacing.lg) {
-                        // 接続開始ボタン
-                        FluffyButton(
-                            title: "せつぞくする",
-                            emoji: "🎈",
-                            gradient: HarajukuColors.pinkPurpleGradient,
-                            shadowColor: HarajukuColors.pastelPink
-                        ) {
-                            connectionModel.connect()
-                        }
-                        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
-                        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
-
-                        // キャンセルボタン
-                        FluffyOutlineButton(
-                            title: "キャンセル",
-                            emoji: "✨",
-                            color: HarajukuColors.pastelPurple
-                        ) {
-                            connectionModel.cancel()
-                        }
-                    }
-                    .padding(.horizontal, HarajukuSpacing.xl)
-
-                    Spacer()
-                        .frame(height: 60)
-                }
-            }
+            backgroundView
+            contentView
         }
         .navigationBarBackButtonHidden()
         .onAppear {
@@ -137,6 +45,170 @@ struct ConnectionScreen: View {
             }
         } message: { peerName in
             Text("\(peerName) からの招待を受け入れますか？")
+        }
+    }
+
+    // MARK: - Background
+
+    private var backgroundView: some View {
+        ZStack {
+            RainbowBackground()
+                .ignoresSafeArea()
+
+            FluffyCloudBackground()
+                .ignoresSafeArea()
+                .opacity(0.4)
+        }
+    }
+
+    // MARK: - Content
+
+    private var contentView: some View {
+        ScrollView {
+            VStack(spacing: HarajukuSpacing.xl) {
+                Spacer()
+                    .frame(height: 40)
+
+                titleSection
+                statusIndicatorSection
+                hostNameSection
+                errorSection
+                buttonsSection
+
+                Spacer()
+                    .frame(height: 60)
+            }
+        }
+    }
+
+    // MARK: - Title Section
+
+    private var titleSection: some View {
+        VStack(spacing: HarajukuSpacing.md) {
+            HStack(spacing: 12) {
+                Image("yellow")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(sparkleRotation))
+
+                RainbowText(text: "iPadにつなぐよ", size: 32)
+
+                Image("yellow")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(-sparkleRotation))
+            }
+            .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
+
+            Text("おなじWi-Fiでつながろう！")
+                .nikumaruBody(size: 14)
+                .foregroundColor(HarajukuColors.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    // MARK: - Status Indicator
+
+    private var statusIndicatorSection: some View {
+        ConnectionStatusIndicator(
+            phase: connectionModel.phase,
+            isPulsing: $isPulsing,
+            rotationAngle: $rotationAngle
+        )
+        .frame(height: 140)
+        .padding(.vertical, HarajukuSpacing.lg)
+    }
+
+    // MARK: - Host Name Section
+
+    @ViewBuilder
+    private var hostNameSection: some View {
+        if let host = connectionModel.hostName {
+            VStack(spacing: 8) {
+                Text("せつぞくさき")
+                    .nikumaruCaption(size: 12)
+                    .foregroundColor(HarajukuColors.textSecondary)
+
+                Text(host)
+                    .nikumaruBody(size: 16)
+                    .foregroundColor(HarajukuColors.textPrimary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(
+                        Capsule()
+                            .fill(.ultraThinMaterial)
+                            .fluffyBorder(color: HarajukuColors.pastelBlue, width: 2)
+                    )
+            }
+        }
+    }
+
+    // MARK: - Error Section
+
+    @ViewBuilder
+    private var errorSection: some View {
+        if case .failed(let message) = connectionModel.phase {
+            VStack(spacing: 12) {
+                Image("red")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80)
+                    .shadow(color: Color(hex: "#FF6B9D").opacity(0.6), radius: 15)
+
+                Text("せつぞくできなかったよ...")
+                    .nikumaruBody(size: 18)
+                    .foregroundColor(Color(hex: "#FF6B9D"))
+
+                Text(message)
+                    .nikumaruCaption(size: 14)
+                    .foregroundColor(HarajukuColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 30)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                    .fluffyBorder(color: Color(hex: "#FF6B9D"), width: 2)
+            )
+            .padding(.horizontal, HarajukuSpacing.xl)
+        }
+    }
+
+    // MARK: - Buttons Section
+
+    private var buttonsSection: some View {
+        VStack(spacing: HarajukuSpacing.lg) {
+            connectButton
+            cancelButton
+        }
+        .padding(.horizontal, HarajukuSpacing.xl)
+    }
+
+    private var connectButton: some View {
+        FluffyButtonWithImage(
+            title: "せつぞくする",
+            imageName: "blue",
+            gradient: HarajukuColors.pinkPurpleGradient,
+            shadowColor: HarajukuColors.pastelPink
+        ) {
+            connectionModel.connect()
+        }
+        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
+        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
+    }
+
+    private var cancelButton: some View {
+        FluffyButtonWithImage(
+            title: "キャンセル",
+            imageName: "green",
+            gradient: HarajukuColors.blueMintGradient,
+            shadowColor: HarajukuColors.pastelMint
+        ) {
+            connectionModel.cancel()
         }
     }
 
@@ -184,8 +256,8 @@ struct ConnectionStatusIndicator: View {
             // 背景グロウ
             Circle()
                 .fill(statusColor.opacity(0.3))
-                .frame(width: 140, height: 140)
-                .blur(radius: 20)
+                .frame(width: 200, height: 200)
+                .blur(radius: 25)
                 .scaleEffect(isPulsing ? 1.2 : 1.0)
 
             // メインサークル
@@ -197,23 +269,49 @@ struct ConnectionStatusIndicator: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 100, height: 100)
+                .frame(width: 150, height: 150)
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.white.opacity(0.4), lineWidth: 3)
                 )
-                .shadow(color: statusColor.opacity(0.6), radius: 15)
+                .shadow(color: statusColor.opacity(0.6), radius: 20)
 
-            // アイコン
-            VStack(spacing: 8) {
+            // アイコンとテキスト
+            VStack(spacing: 12) {
                 Image(systemName: statusIcon)
-                    .font(.system(size: 36, weight: .bold))
+                    .font(.system(size: 48, weight: .bold))
                     .foregroundColor(.white)
                     .rotationEffect(.degrees(rotationAngle))
+                    .shadow(color: .black.opacity(0.3), radius: 2)
 
-                Text(statusText)
-                    .nikumaruCaption(size: 12)
-                    .foregroundColor(.white)
+                // 黒縁取り付きテキスト
+                ZStack {
+                    // 黒い縁取り（4方向）
+                    Text(statusText)
+                        .nikumaruBody(size: 16)
+                        .foregroundColor(.black)
+                        .offset(x: -1, y: -1)
+
+                    Text(statusText)
+                        .nikumaruBody(size: 16)
+                        .foregroundColor(.black)
+                        .offset(x: 1, y: -1)
+
+                    Text(statusText)
+                        .nikumaruBody(size: 16)
+                        .foregroundColor(.black)
+                        .offset(x: -1, y: 1)
+
+                    Text(statusText)
+                        .nikumaruBody(size: 16)
+                        .foregroundColor(.black)
+                        .offset(x: 1, y: 1)
+
+                    // メインテキスト（白）
+                    Text(statusText)
+                        .nikumaruBody(size: 16)
+                        .foregroundColor(.white)
+                }
             }
         }
     }
