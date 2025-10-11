@@ -10,6 +10,7 @@ import SwiftUI
 
 struct iPadResultScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var playerAAltitude: Double = 450
     @State private var playerBAltitude: Double = 380
     
@@ -25,7 +26,16 @@ struct iPadResultScreen: View {
     @State private var displayedAltitudeB: Double = 0
     @State private var petalOffsets: [(x: CGFloat, y: CGFloat, rotation: Double)] = Array(repeating: (0, 0, 0), count: 40)
     @State private var petalOpacities: [Double] = Array(repeating: 1.0, count: 40)
-    
+
+    // プレイヤー名を取得（接続順に基づく）
+    var playerAName: String {
+        sessionManager.connectedPeers.first?.name ?? "ぷれいやーA"
+    }
+
+    var playerBName: String {
+        sessionManager.connectedPeers.dropFirst().first?.name ?? "ぷれいやーB"
+    }
+
     var winner: PlayerSlot? {
         if playerAAltitude > playerBAltitude {
             return .playerA
@@ -69,16 +79,17 @@ struct iPadResultScreen: View {
                     VStack(spacing: 12) {
                         if let winner = winner {
                             // 勝者表示（3D多層エフェクト）
+                            let winnerText = winner == .playerA ? "\(playerAName)のかち！" : "\(playerBName)のかち！"
                             ZStack {
                                 // Layer 1: 影（深み）
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundColor(.black.opacity(0.5))
                                     .offset(x: 0, y: 8)
                                     .blur(radius: 10)
 
                                 // Layer 2: グロー（輝き）
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundStyle(
                                         LinearGradient(
@@ -97,28 +108,28 @@ struct iPadResultScreen: View {
                                     .blur(radius: 8)
 
                                 // Layer 3: 4方向ストローク（白い縁取り）
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundColor(.white)
                                     .offset(x: -2, y: -2)
 
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundColor(.white)
                                     .offset(x: 2, y: -2)
 
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundColor(.white)
                                     .offset(x: -2, y: 2)
 
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundColor(.white)
                                     .offset(x: 2, y: 2)
 
                                 // Layer 4: メインテキスト（グラデーション）
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundStyle(
                                         LinearGradient(
@@ -137,7 +148,7 @@ struct iPadResultScreen: View {
                                     )
 
                                 // Layer 5: ハイライト（上部の輝き）
-                                Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
+                                Text(winnerText)
                                     .nikumaruTitle(size: 54)
                                     .foregroundStyle(
                                         LinearGradient(
@@ -242,12 +253,14 @@ struct iPadResultScreen: View {
                     VStack(spacing: 20) {
                         FluffyScoreCard(
                             playerSlot: .playerA,
+                            playerName: playerAName,
                             altitude: displayedAltitudeA,
                             isWinner: winner == .playerA
                         )
-                        
+
                         FluffyScoreCard(
                             playerSlot: .playerB,
+                            playerName: playerBName,
                             altitude: displayedAltitudeB,
                             isWinner: winner == .playerB
                         )
@@ -758,19 +771,16 @@ struct SparkleImage: View {
 
 struct FluffyScoreCard: View {
     let playerSlot: PlayerSlot
+    let playerName: String
     let altitude: Double
     let isWinner: Bool
-    
+
     @State private var pulseScale: CGFloat = 1.0
-    
-    var playerName: String {
-        playerSlot == .playerA ? "ぷれいやーA" : "ぷれいやーB"
-    }
-    
+
     var playerColor: Color {
         playerSlot == .playerA ? Color(hex: "#FF6B9D") : Color(hex: "#4A90E2")
     }
-    
+
     var balloonImage: String {
         playerSlot == .playerA ? "red" : "blue"
     }
@@ -933,4 +943,5 @@ struct FluffyResultButton: View {
 #Preview {
     iPadResultScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(P2PSessionManager())
 }
