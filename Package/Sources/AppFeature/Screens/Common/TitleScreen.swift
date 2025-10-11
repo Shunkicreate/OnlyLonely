@@ -232,8 +232,8 @@ struct TitleScreen: View {
         }
         .onAppear {
             startAnimation()
-            // BGM再生開始（まだ再生されていない場合のみ）
-            if !bgmManager.isPlaying {
+            // BGM再生開始（iPadのみ、まだ再生されていない場合のみ）
+            if DeviceType.current == .iPad && !bgmManager.isPlaying {
                 bgmManager.play()
                 bgmManager.fadeIn(duration: 2.0) // フェードインで開始
             }
