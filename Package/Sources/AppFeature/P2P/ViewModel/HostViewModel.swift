@@ -13,7 +13,7 @@ import Combine
 class HostViewModel: NSObject, ObservableObject {
     private let advertiser: MCNearbyServiceAdvertiser
     private let browser: MCNearbyServiceBrowser
-    private let serviceType = "nearby-devices"
+    private let serviceType = "onlylonelyp2p"
     
     @Published var sessionState: MCSessionState = .notConnected
     @Published var peers: [PeerDevice] = []

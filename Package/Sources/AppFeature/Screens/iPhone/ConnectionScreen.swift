@@ -9,12 +9,17 @@
 import SwiftUI
 
 struct ConnectionScreen: View {
-    @EnvironmentObject var coordinator: AppCoordinator
-    @EnvironmentObject private var connectionModel: ConnectionScreenModel
+    @StateObject private var coordinator: AppCoordinator
+    @StateObject private var connectionModel: ConnectionScreenModel
 
     @State private var isPulsing = false
     @State private var rotationAngle: Double = 0
     @State private var sparkleRotation: Double = 0
+
+    init(sessionManager: P2PSessionManager, coordinator appCoordinator: AppCoordinator) {
+        _coordinator = StateObject(wrappedValue: appCoordinator)
+        _connectionModel = StateObject(wrappedValue: ConnectionScreenModel(sessionManager: sessionManager))
+    }
 
     var body: some View {
         ZStack {
@@ -156,9 +161,9 @@ struct ConnectionScreen: View {
             let feedback = UINotificationFeedbackGenerator()
             feedback.notificationOccurred(.success)
 
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-//                coordinator.navigate(to: .playerNameInput)
-//            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                coordinator.navigate(to: .playerNameInput)
+            }
         }
         .navigationBarBackButtonHidden()
         .alert(
@@ -245,7 +250,7 @@ struct ConnectionScreen: View {
             return
         }
 
-        withAnimation(HarajukuAnimation.bounce(duration: 0.5)) {
+        withAnimation(HarajukuAnimation.jump) {
             connectionModel.connect()
         }
 
@@ -327,12 +332,11 @@ private struct ConnectionIndicator: View {
                     .scaleEffect(state == .connected ? 1.2 : 1.0)
             }
             .scaleEffect(state == .connected ? 1.1 : 1.0)
-            .animation(HarajukuAnimation.bounce(duration: 0.6), value: state)
+            .animation(.spring(response: 0.45, dampingFraction: 0.75), value: state)
         }
     }
 
     private var iconEmoji: String {
-        print("👹 \(state)")
         switch state {
         case .idle:
             return "📡"
@@ -361,9 +365,8 @@ private struct ConnectionIndicator: View {
 
 #Preview {
     let sessionManager = P2PSessionManager()
-    let model = ConnectionScreenModel(sessionManager: sessionManager)
-    return ConnectionScreen()
-        .environmentObject(AppCoordinator())
+    let coordinator = AppCoordinator()
+    return ConnectionScreen(sessionManager: sessionManager, coordinator: coordinator)
+        .environmentObject(coordinator)
         .environmentObject(sessionManager)
-        .environmentObject(model)
 }

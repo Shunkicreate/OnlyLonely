@@ -9,8 +9,13 @@
 import SwiftUI
 
 struct ConnectionWaitingScreen: View {
-    @EnvironmentObject var coordinator: AppCoordinator
-    @EnvironmentObject private var connectionModel: ConnectionWaitinScreenModel
+    @StateObject private var coordinator: AppCoordinator
+    @StateObject private var connectionModel: ConnectionWaitinScreenModel
+
+    init(sessionManager: P2PSessionManager, coordinator appCoordinator: AppCoordinator) {
+        _coordinator = StateObject(wrappedValue: appCoordinator)
+        _connectionModel = StateObject(wrappedValue: ConnectionWaitinScreenModel(sessionManager: sessionManager))
+    }
 
     var body: some View {
         ZStack {
@@ -141,9 +146,9 @@ struct ConnectionWaitingScreen: View {
 
     private func handleReadinessChange(isReady: Bool) {
         guard isReady else { return }
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//            coordinator.navigate(to: .iPadGameplay)
-//        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            coordinator.navigate(to: .iPadGameplay)
+        }
     }
 }
 
@@ -322,9 +327,8 @@ private struct WaitingGuestRow: View {
 
 #Preview {
     let sessionManager = P2PSessionManager()
-    let model = ConnectionWaitinScreenModel(sessionManager: sessionManager)
-    return ConnectionWaitingScreen()
-        .environmentObject(AppCoordinator())
+    let coordinator = AppCoordinator()
+    return ConnectionWaitingScreen(sessionManager: sessionManager, coordinator: coordinator)
+        .environmentObject(coordinator)
         .environmentObject(sessionManager)
-        .environmentObject(model)
 }

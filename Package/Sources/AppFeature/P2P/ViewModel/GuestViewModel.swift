@@ -12,7 +12,7 @@ import Combine
 
 class GuestViewModel: NSObject, ObservableObject {
     private let advertiser: MCNearbyServiceAdvertiser
-    private let serviceType = "nearby-devices"
+    private let serviceType = "onlylonelyp2p"
     
     @Published var isAdvertised: Bool = false {
         didSet {

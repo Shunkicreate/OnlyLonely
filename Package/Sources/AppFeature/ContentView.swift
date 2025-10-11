@@ -11,8 +11,6 @@ public struct ContentView: View {
     @StateObject private var coordinator: AppCoordinator
     @StateObject private var micPermissionManager: MicrophonePermissionManager
     @StateObject private var sessionManager: P2PSessionManager
-    @StateObject private var hostConnectionModel: ConnectionWaitinScreenModel
-    @StateObject private var guestConnectionModel: ConnectionScreenModel
     @State private var showDebug = false
 
     public init() {
@@ -22,8 +20,6 @@ public struct ContentView: View {
         _coordinator = StateObject(wrappedValue: coordinator)
         _micPermissionManager = StateObject(wrappedValue: micPermissionManager)
         _sessionManager = StateObject(wrappedValue: sessionManager)
-        _hostConnectionModel = StateObject(wrappedValue: ConnectionWaitinScreenModel(sessionManager: sessionManager))
-        _guestConnectionModel = StateObject(wrappedValue: ConnectionScreenModel(sessionManager: sessionManager))
     }
 
     public var body: some View {
@@ -35,8 +31,6 @@ public struct ContentView: View {
         }
         .environmentObject(coordinator)
         .environmentObject(sessionManager)
-        .environmentObject(hostConnectionModel)
-        .environmentObject(guestConnectionModel)
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()
@@ -69,7 +63,7 @@ public struct ContentView: View {
 
         // iPad
         case .connectionWaiting:
-            ConnectionWaitingScreen()
+            ConnectionWaitingScreen(sessionManager: sessionManager, coordinator: coordinator)
         case .iPadGameplay:
             iPadGameplayScreen()
         case .iPadResult:
@@ -77,7 +71,7 @@ public struct ContentView: View {
 
         // iPhone
         case .connection:
-            ConnectionScreen()
+            ConnectionScreen(sessionManager: sessionManager, coordinator: coordinator)
         case .playerNameInput:
             PlayerNameInputScreen()
         case .waiting:

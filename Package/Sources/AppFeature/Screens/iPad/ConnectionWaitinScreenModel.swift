@@ -31,7 +31,7 @@ final class ConnectionWaitinScreenModel: NSObject, ObservableObject {
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
         hostPeerID = MCPeerID(displayName: UIDevice.current.name)
-        session = MCSession(peer: hostPeerID, securityIdentity: nil, encryptionPreference: .required)
+        session = MCSession(peer: hostPeerID, securityIdentity: nil, encryptionPreference: .none)
         browser = MCNearbyServiceBrowser(peer: hostPeerID, serviceType: serviceType)
         super.init()
 
@@ -175,17 +175,17 @@ extension ConnectionWaitinScreenModel: MCNearbyServiceBrowserDelegate {
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        Task { @MainActor in
-            discoveredGuests.removeAll(where: { $0.peerId == peerID })
-            handlePeerDisconnected(peerID)
-        }
+//        Task { @MainActor in
+//            discoveredGuests.removeAll(where: { $0.peerId == peerID })
+//            handlePeerDisconnected(peerID)
+//        }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        Task { @MainActor in
-            errorMessage = error.localizedDescription
-            isBrowsing = false
-        }
+//        Task { @MainActor in
+//            errorMessage = error.localizedDescription
+//            isBrowsing = false
+//        }
     }
 }
 
