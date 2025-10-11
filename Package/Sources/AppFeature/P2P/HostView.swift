@@ -9,12 +9,12 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct HostView: View {
-    @StateObject private var gameState = GameState()
+    @StateObject private var gameState = P2PGameState()
     @StateObject private var viewModel: HostViewModel
     @State private var startGameActive = false
 
     init() {
-        let state = GameState()
+        let state = P2PGameState()
         _gameState = StateObject(wrappedValue: state)
         _viewModel = StateObject(wrappedValue: HostViewModel(gameState: state))
     }

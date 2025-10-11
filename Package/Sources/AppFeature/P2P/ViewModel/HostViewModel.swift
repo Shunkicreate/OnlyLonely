@@ -20,11 +20,11 @@ class HostViewModel: NSObject, ObservableObject {
     var selectedPeers: [PeerDevice] = []
     var joinedPeers: [PeerDevice] = []
     
-    let gameState: GameState
+    let gameState: P2PGameState
     let messageReceiver = PassthroughSubject<P2PMessage, Never>()
     var subscriptions = Set<AnyCancellable>()
     
-    init(gameState: GameState) {
+    init(gameState: P2PGameState) {
         let peer = MCPeerID(displayName: UIDevice.current.name)
         self.gameState = gameState
         self.gameState.setProperties(_session: MCSession(peer: peer), _ballState: BallState(position: BallPosition(x: 0, y: 0)))

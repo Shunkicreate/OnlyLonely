@@ -23,11 +23,11 @@ class GuestViewModel: NSObject, ObservableObject {
     
     @Published var joinedPeers: [PeerDevice] = []
     
-    var gameState: GameState
+    var gameState: P2PGameState
     let messageReceiver = PassthroughSubject<P2PMessage, Never>()
     var subscriptions = Set<AnyCancellable>()
     
-    init(gameState: GameState) {
+    init(gameState: P2PGameState) {
         let displayNameList = ["Job:魔法使い", "Job:ヒーラー", "Job:アーチャー", "Job:賢者", "アベヒロシ", "ハラダタイゾウデス"]
         let peer = MCPeerID(displayName: displayNameList.randomElement()!)
         self.gameState = gameState

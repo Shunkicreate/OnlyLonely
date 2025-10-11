@@ -16,7 +16,7 @@ enum GameRole {
 }
 
 struct GameView: View {
-    @EnvironmentObject var gameState: GameState
+    @EnvironmentObject var gameState: P2PGameState
     let role: GameRole
     // Circle offset from center in points
     @State private var offset: CGSize = .zero
