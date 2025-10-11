@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# CLAUDE.mdが変更されている場合、AGENTS.mdにコピーする
+
+# CLAUDE.mdがステージングエリアにあるかチェック
+if git diff --cached --name-only | grep -q "CLAUDE.md"; then
+    echo "CLAUDE.md has been modified. Copying to AGENTS.md..."
+
+    # CLAUDE.mdをAGENTS.mdにコピー
+    cp CLAUDE.md AGENTS.md
+
+    # AGENTS.mdをステージングに追加
+    git add AGENTS.md
+
+    echo "AGENTS.md has been updated and staged."
+fi
+
+exit 0
