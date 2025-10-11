@@ -43,6 +43,22 @@ public struct ContentView: View {
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()
+
+            // Set up reset callback for when returning to title
+            coordinator.onReturnToTitle = { [weak sessionManager, weak hostConnectionModel, weak guestConnectionModel] in
+                print("🔄 [ContentView] Resetting app state...")
+
+                // Reset P2P session manager
+                sessionManager?.reset()
+
+                // Reset iPad host model (stops hosting and clears devices)
+                hostConnectionModel?.stopHosting()
+
+                // Reset iPhone guest model (cancels connection and resets state)
+                guestConnectionModel?.cancel()
+
+                print("✅ [ContentView] App state reset complete")
+            }
         }
     }
 

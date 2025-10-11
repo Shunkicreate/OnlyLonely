@@ -15,7 +15,7 @@ final class ConnectionWaitinScreenModel: ObservableObject {
     @Published private(set) var isHosting: Bool = false
     @Published private(set) var availableDevices: [PeerDevice] = []
     @Published private(set) var connectedDevices: [PeerDevice] = []
-    @Published private(set) var statusMessage: String = "待機中"
+    @Published private(set) var statusMessage: String = "たいきちゅう"
     @Published private(set) var lastErrorMessage: String?
     @Published private(set) var invitingPeerID: String?
 
@@ -49,7 +49,7 @@ final class ConnectionWaitinScreenModel: ObservableObject {
 
         sessionManager.configure(role: .host, configuration: configuration)
         isHosting = true
-        statusMessage = "プレイヤーを探索中..."
+        statusMessage = "ぷれいやーをさがしているよ..."
         lastErrorMessage = nil
     }
 
@@ -60,14 +60,14 @@ final class ConnectionWaitinScreenModel: ObservableObject {
         availableDevices = []
         connectedDevices = []
         invitingPeerID = nil
-        statusMessage = "待機中"
+        statusMessage = "たいきちゅう"
         lastErrorMessage = nil
     }
 
     func invite(_ device: PeerDevice) {
         guard isHosting else { return }
         invitingPeerID = device.id
-        statusMessage = "\(device.name) に招待を送信中..."
+        statusMessage = "\(device.name) にしょうたいをおくっているよ..."
         lastErrorMessage = nil
 
         sessionManager.invite(device.peer, timeout: 30) { [weak self] result in
@@ -79,10 +79,10 @@ final class ConnectionWaitinScreenModel: ObservableObject {
 
                 switch result {
                 case .success(let peer):
-                    self.statusMessage = "\(peer.name) が接続しました"
+                    self.statusMessage = "\(peer.name) がせつぞくしたよ"
                 case .failure(let error):
                     self.lastErrorMessage = error.localizedDescription
-                    self.statusMessage = "招待に失敗しました"
+                    self.statusMessage = "しょうたいにしっぱいしちゃった"
                 }
             }
         }
@@ -107,9 +107,9 @@ final class ConnectionWaitinScreenModel: ObservableObject {
 
     private func updateStatusForConnections(count: Int) {
         if count == 0 {
-            statusMessage = isHosting ? "プレイヤーを探索中..." : "待機中"
+            statusMessage = isHosting ? "ぷれいやーをさがしているよ..." : "たいきちゅう"
         } else {
-            statusMessage = "接続中のプレイヤー: \(count)"
+            statusMessage = "せつぞくちゅうのぷれいやー: \(count)"
         }
     }
 
