@@ -48,7 +48,6 @@ struct ConnectionWaitingScreen: View {
                         availableDevicesSection
                     }
 
-
                     Spacer()
                         .frame(height: 60)
                 }
