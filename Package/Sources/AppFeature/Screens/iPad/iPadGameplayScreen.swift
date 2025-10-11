@@ -477,6 +477,7 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
         addBackground()
         addGround()
         addBalloon()
+        addClouds()
     }
 
     private func addBackground() {
@@ -541,6 +542,17 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
         addChild(balloonNode)
         balloon = balloonNode
         physicsCoordinator?.register(balloonBody: body, for: lane)
+    }
+
+    private func addClouds() {
+        // レーン用の雲を追加
+        clouds = CloudLoader.loadCloudsForLane(
+            sceneSize: size,
+            cloudCount: 8,  // 各レーンに8個の雲を配置
+            lane: lane,
+            physicsCoordinator: physicsCoordinator,
+            scene: self
+        )
     }
 
     private func updateCameraPosition() {
