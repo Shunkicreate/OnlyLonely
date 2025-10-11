@@ -72,7 +72,7 @@
 | ---------------- | ----------------- | -------------------------------- |
 | **更新周期**     | 30Hz (33ms 間隔)  | 息の強さの送信頻度               |
 | **通信遅延目標** | < 50ms            | ネットワーク遅延の目標値         |
-| **serviceType** | nearby-devices   | MultipeerConnectivity のサービス名 |
+| **serviceType** | onlylonelyp2p    | MultipeerKit が使用する Bonjour サービス名 |
 
 ---
 

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HarajukuPlayerNameInputScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var sessionManager: P2PSessionManager
     @State private var playerName: String = ""
     @State private var isBouncing = false
     @State private var showContent = false
@@ -104,10 +105,10 @@ struct HarajukuPlayerNameInputScreen: View {
                         title: "そらへ とびたつ！",
                         emoji: "🎈",
                         gradient: HarajukuColors.rainbowGradient
-                    ) {
+                   ) {
                         joinGame()
                     }
-                    .disabled(!isValidInput)
+                    .disabled(sessionManager.connectedPeers.isEmpty || !isValidInput)
                     .opacity(showContent ? (isValidInput ? 1.0 : 0.5) : 0)
 
                     // メッセージ
@@ -116,6 +117,14 @@ struct HarajukuPlayerNameInputScreen: View {
                             Text("💭 なまえを いれてね")
                                 .font(HarajukuTypography.caption(size: 12))
                                 .foregroundColor(HarajukuColors.textSecondary)
+                                .overlay(alignment: .trailing) {
+                                    if sessionManager.connectedPeers.isEmpty {
+                                        Text("⏳ せつぞくをまってるよ")
+                                            .font(HarajukuTypography.caption(size: 10))
+                                            .foregroundColor(HarajukuColors.textSecondary.opacity(0.8))
+                                            .padding(.top, 4)
+                                    }
+                                }
                         } else {
                             HStack(spacing: 6) {
                                 Text("✨")
@@ -159,9 +168,7 @@ struct HarajukuPlayerNameInputScreen: View {
     }
 
     private func joinGame() {
-        // バリデーションチェック
-        guard isValidInput else { return }
-
+        guard !sessionManager.connectedPeers.isEmpty || isValidInput else { return }
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
@@ -172,9 +179,6 @@ struct HarajukuPlayerNameInputScreen: View {
 
         print("✅ Player joined: \(name)")
 
-        // WebSocket でプレイヤー参加メッセージを送信（後で実装）
-        // webSocketService.send(.playerJoin(playerName: name, playerId: UUID().uuidString))
-
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             coordinator.navigate(to: .waiting)
         }
@@ -182,6 +186,8 @@ struct HarajukuPlayerNameInputScreen: View {
 }
 
 #Preview {
-    HarajukuPlayerNameInputScreen()
+    let sessionManager = P2PSessionManager()
+    return HarajukuPlayerNameInputScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(sessionManager)
 }

@@ -6,7 +6,7 @@ iPhone のみ
 
 ## 役割・目的
 
-- iPad の MultipeerConnectivity ホストに接続（招待承諾）
+- iPad の MultipeerKit ホストに接続（招待承諾）
   - 近傍のホスト一覧から接続先を選択（自動検出）
 - 接続成功後、**プレイヤー名を iPad へ送信**して参加
 - 接続成功後、待機画面へ遷移
@@ -92,9 +92,9 @@ iPhone のみ
 
 ## 通信
 
-### P2P 接続（MultipeerConnectivity）
+### P2P 接続（MultipeerKit）
 
-- `MCNearbyServiceAdvertiser` を開始し、ホストからの招待を承諾
+- `MultipeerTransceiver` を起動し、ホストからの招待をセキュリティハンドラで判定・承諾する
 
 ### 送信メッセージ
 

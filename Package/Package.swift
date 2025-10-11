@@ -12,9 +12,13 @@ let package = Package(
     products: [
         .library(name: "AppFeature", targets: ["AppFeature"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/insidegui/MultipeerKit.git", from: "0.4.0")
+    ],
     targets: [
         .target(
             name: "AppFeature",
+            dependencies: ["MultipeerKit"],
             swiftSettings: [
               .swiftLanguageMode(.v5),
             ]

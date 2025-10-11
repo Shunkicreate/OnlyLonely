@@ -6,7 +6,7 @@ iPad のみ
 
 ## 役割・目的
 
-- MultipeerConnectivity のホストとして待受し、iPhone からの接続を待つ
+- MultipeerKit のホストとして待受し、iPhone からの接続を待つ
 - 接続状況をリアルタイムで表示
 - 両プレイヤーが接続＆キャリブレーション完了後、自動的にゲーム画面へ遷移
 
@@ -76,10 +76,10 @@ iPad のみ
 
 ## 通信
 
-### P2P ホスト起動（MultipeerConnectivity）
+### P2P ホスト起動（MultipeerKit）
 
-- `MCNearbyServiceAdvertiser` と `MCNearbyServiceBrowser` を起動
-- `serviceType`: `nearby-devices`（仮称）
+- `MultipeerTransceiver` をホストモードで起動し、周辺端末を発見・招待
+- `serviceType`: `onlylonelyp2p`
 
 ### 受信メッセージ
 
@@ -134,7 +134,7 @@ iPad のみ
 ### 使用技術
 
 - SwiftUI で画面実装
-- MultipeerConnectivity で P2P 接続
+- MultipeerKit で P2P 接続（内部で MultipeerConnectivity を利用）
 
 ### 状態管理
 
@@ -151,7 +151,7 @@ iPad のみ
 ### ネットワーク
 
 - 近接 P2P（Bluetooth/Wi‑Fi）を前提
-- Bonjour は MultipeerConnectivity に内包
+- Bonjour は MultipeerKit に内包
 
 ## デザインメモ
 

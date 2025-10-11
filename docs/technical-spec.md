@@ -30,7 +30,7 @@
 | -------------- | -------------------------------------------- |
 | 言語           | Swift 5.9                                    |
 | フレームワーク | SwiftUI / SpriteKit / AVFoundation / Network |
-| 通信方式       | MultipeerConnectivity (P2P)                   |
+| 通信方式       | MultipeerKit（MultipeerConnectivity ベースの P2P） |
 | 音声入力       | AVAudioEngine + RMS 音圧計算                 |
 | 物理演算       | SpriteKit PhysicsBody                        |
 | デバイス構成   | iPad（サーバー）＋ iPhone ×2（クライアント） |
@@ -42,8 +42,8 @@
 
 ### 通信方式
 
-- MultipeerConnectivity によるローカル P2P 通信
-- iPad がホスト（Advertiser + Browser）、iPhone がゲスト（Advertiser）
+- MultipeerKit によるローカル P2P 通信（内部的に MultipeerConnectivity を利用）
+- iPad がホスト（手動招待で iPhone を参加させる）、iPhone がゲスト（ホストからの招待を待受）
 
 ### 通信フォーマット（JSON）
 
@@ -346,7 +346,7 @@ func handleLightningHit() {
 ## 開発者向けメモ
 
 - マイク音圧は `AVAudioEngine` + RMS 計算で取得
-- 通信は `MultipeerConnectivity` を使用
+- 通信は `MultipeerKit`（内部で MultipeerConnectivity を利用）を使用
 - キャリブレーション画面で感度調整必須
 - 音声データは送らず、音圧値のみ送信
 - SpriteKit の `SKEmitterNode` で風・粒子演出
