@@ -59,40 +59,36 @@ OnlyLonely/
 ## 技術スタック
 
 - **言語**: Swift 5.9
-- **フレームワーク**: SwiftUI / SpriteKit / AVFoundation / Network
-- **通信方式**: WebSocket (URLSessionWebSocketTask)
+- **フレームワーク**: SwiftUI / SpriteKit / AVFoundation
+- **通信方式**: MultipeerConnectivity (P2P接続)
 - **音声入力**: AVAudioEngine + RMS 音圧計算
 - **物理演算**: SpriteKit PhysicsBody
 - **最小デプロイメントターゲット**: iOS 18.0
 - **開発ツール**: Xcode 16.2
+- **デザインシステム**: 原宿系ふわふわデザイン（Nikumaruフォント、パステルカラー）
 
 ## 主要コンポーネント
 
 ### AppCoordinator
 画面遷移を一元管理する Coordinator パターン実装
 
-### WebSocketService
-iPad-iPhone 間の通信管理
-- iPad: WebSocket サーバー
-- iPhone: WebSocket クライアント
-- メッセージ形式: JSON
+**重要な機能**:
+- `navigateToRoot()`: タイトル画面に戻る際、自動的にP2Pセッションと接続状態をリセット
+- `onReturnToTitle` コールバック: アプリ状態のクリーンアップを実行
 
-**通信例**:
-```json
-// iPhone → iPad（息の強さ）
-{
-  "type": "wind",
-  "playerId": "A",
-  "force": 0.72
-}
+### P2PSessionManager
+iPad-iPhone 間のP2P通信管理（MultipeerKit使用）
+- iPad: ホスト（サーバー）役
+- iPhone: ゲスト（クライアント）役
+- 同一LAN内で自動検出・接続
 
-// iPad → iPhone（風船の高度）
-{
-  "type": "state",
-  "playerId": "A",
-  "altitude": 250.3
-}
-```
+**主要機能**:
+- デバイスの自動検出 (`availablePeers`)
+- 招待の送受信 (`invite()`)
+- 接続管理 (`connectedPeers`)
+- ナビゲーションコマンドの送信（iPad→iPhone）
+- 風力データの送信（iPhone→iPad）
+- 状態リセット (`reset()`)
 
 ### GameManager
 ゲームロジック管理
@@ -190,28 +186,86 @@ open OnlyLonely.xcodeproj
 - `Codable` を使用して JSON シリアライゼーション対応
 - 構造体を優先（値型の利点を活かす）
 
+## 最近の主要な更新
+
+### 2025-10-12: UI改善とバグ修正
+1. **接続待機画面のデザイン改善** (ConnectionWaitingScreen)
+   - デバイスカードの幅を600pxに制限し、中央配置
+   - フォントサイズを拡大（24pt）して視認性向上
+   - セクションタイトルにグラスモーフィズム背景とふわふわボーダー追加
+   - 「しょうたいちゅう...」状態に黄色インジケーターとバッジを追加
+   - 接続中はカードのボーダー色が黄色に変化
+
+2. **ステータステキストの改善** (ConnectionWaitinScreenModel)
+   - 全てのステータスメッセージをひらがなに統一
+   - ステータステキストに4方向黒枠（ストローク）を追加して視認性向上
+   - 更新されたテキスト:
+     - "待機中" → "たいきちゅう"
+     - "プレイヤーを探索中..." → "ぷれいやーをさがしているよ..."
+     - 招待・接続メッセージもすべてひらがな化
+
+3. **タイトル画面への戻りバグ修正** (AppCoordinator, ContentView)
+   - `navigateToRoot()` 時に自動的にP2Pセッションと接続状態をリセット
+   - `onReturnToTitle` コールバックを実装
+   - 状態リセット内容:
+     - P2PSessionManager の停止
+     - iPad側ホストモデルのリセット
+     - iPhone側ゲストモデルのリセット
+
 ## タスク完了時のチェックリスト
 
 ### コード変更時
 1. ビルド確認（エラー・警告の解消）
-2. コードレビュー（命名規則、ベストプラクティス）
+2. コードレビュー（命名規則、デザインシステム準拠）
 3. 動作確認
    - シミュレータ: 画面遷移、UI レイアウト
-   - 実機: MotionManager、マイク音圧検出
+   - 実機: MotionManager、マイク音圧検出、P2P接続
 4. ドキュメント更新（必要に応じて）
+5. **デザインチェック**: ひらがな表記、Nikumaruフォント、パステルカラー使用
 
 ### コミット前
 1. `git status` で変更内容を確認
 2. `git diff` で差分を確認
 3. 不要なファイルが含まれていないか確認
 4. 適切なコミットメッセージを記述
+5. CLAUDE.md の更新（大きな変更の場合）
+
+## デザインシステム
+
+### 原宿系ふわふわタイム（Harajuku Fluffy Time）
+
+**カラーパレット**:
+- パステルピンク (`#FFC0CB`)
+- パステルブルー (`#B0E0E6`)
+- パステルイエロー (`#FFFACD`)
+- パステルミント (`#98FF98`)
+- パステルパープル (`#DDA0DD`)
+- パステルオレンジ (`#FFE5B4`)
+
+**フォント**:
+- Nikumaru（にくまるフォント）- かわいい丸文字
+- サイズ: タイトル 48-64pt、見出し 20-26pt、本文 16-18pt
+
+**UIコンポーネント**:
+- `RainbowText`: 虹色グラデーションテキスト
+- `FluffyButton`: ふわふわ3D風ボタン
+- `FluffyTextField`: パステルカラーの入力欄
+- `RainbowBackground`: 虹色グラデーション背景
+- `FluffyCloudBackground`: ふわふわ雲アニメーション
+- `.fluffyBorder()`: ふわふわボーダーエフェクト
+
+**テキストルール**:
+- **全てひらがな表記** (例: "せつぞく" "ぷれいやー" "あいぱっど")
+- 黒枠（ストローク）で視認性向上
+- 影とグローで立体感を演出
 
 ## 開発メモ
 
 - プロジェクトは `PBXFileSystemSynchronizedRootGroup` を使用しているため、`OnlyLonely/` フォルダ内の新しいファイルは自動的にプロジェクトに追加されます
 - プレビュー機能が有効化されています（`ENABLE_PREVIEWS = YES`）
-- **実機テスト必須**: MotionManager、マイク機能はシミュレータでは動作しません
-- **LAN通信**: WebSocket は同一ネットワーク内での通信を想定
+- **実機テスト必須**: MotionManager、マイク機能、P2P接続はシミュレータでは動作しません
+- **LAN通信**: MultipeerConnectivity は同一ネットワーク内での通信を想定
+- **状態管理**: タイトル画面に戻る際は自動的にP2Pセッションと接続状態がリセットされる
 
 ## 関連ドキュメント
 
