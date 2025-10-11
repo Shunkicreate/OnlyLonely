@@ -170,6 +170,8 @@ class GameScene: SKScene {
         background.zPosition = -1
         addChild(background)
 
+        physicsCoordinator?.configureHorizontalBounds(sceneSize: size)
+
         // 中央の分割線
         let divider = SKSpriteNode(color: .white.withAlphaComponent(0.3), size: CGSize(width: 2, height: size.height))
         divider.position = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -190,8 +192,10 @@ class GameScene: SKScene {
 
         // 物理エンジンに初期位置を設定
         if let coordinator = physicsCoordinator {
-            coordinator.playerAState.position = CGPoint(x: size.width / 4, y: 100)
-            coordinator.playerBState.position = CGPoint(x: size.width * 3 / 4, y: 100)
+            let centerA = coordinator.laneCenter(for: .playerA) ?? size.width / 4
+            let centerB = coordinator.laneCenter(for: .playerB) ?? size.width * 3 / 4
+            coordinator.playerAState.position = CGPoint(x: centerA, y: 100)
+            coordinator.playerBState.position = CGPoint(x: centerB, y: 100)
         }
 
         // 地面
@@ -240,7 +244,7 @@ class GameScene: SKScene {
             balloonA.position = stateA.position
         }
         if let stateB = physicsCoordinator?.playerBState {
-            balloonB.position = CGPoint(x: size.width * 3 / 4, y: stateB.position.y)
+            balloonB.position = stateB.position
         }
 
         // 雲との衝突チェック

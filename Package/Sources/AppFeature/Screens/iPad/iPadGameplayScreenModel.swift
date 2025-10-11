@@ -54,6 +54,7 @@ final class iPadGameplayScreenModel: ObservableObject {
         physicsCoordinator?.receiveWindInput(
             playerId: message.playerId,
             force: message.force,
+            roll: message.roll,
             timestamp: message.timestamp.timeIntervalSince1970
         )
         refreshPlayerNames()

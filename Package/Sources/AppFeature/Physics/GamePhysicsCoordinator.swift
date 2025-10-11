@@ -24,8 +24,11 @@ class GamePhysicsCoordinator: ObservableObject {
     // MARK: - Internal State
 
     private var lastUpdateTime: TimeInterval = 0
-    private var inputBuffer: [(player: PlayerSlot, force: Float, timestamp: TimeInterval)] = []
     private var playerAssignments: [String: PlayerSlot] = [:]
+    private var latestForceInputs: [PlayerSlot: Float] = [:]
+    private var latestRollInputs: [PlayerSlot: Double] = [:]
+    private var laneCenters: [PlayerSlot: CGFloat] = [:]
+    private var laneHalfWidth: CGFloat = 0
 
     // MARK: - Initialization
 
@@ -51,22 +54,28 @@ class GamePhysicsCoordinator: ObservableObject {
         balloonPhysics.update(state: &playerAState, deltaTime: deltaTime)
         balloonPhysics.update(state: &playerBState, deltaTime: deltaTime)
 
+        // 左右移動を適用
+        applyHorizontalMovement(deltaTime: deltaTime)
+
         // 雲との衝突チェック
         handleCloudCollisions()
     }
 
     /// iPhoneからの風力入力を受信（30Hzで呼ばれる）
-    func receiveWindInput(playerId: String, force: Float, timestamp: TimeInterval = Date().timeIntervalSince1970) {
+    func receiveWindInput(
+        playerId: String,
+        force: Float,
+        roll: Double,
+        timestamp: TimeInterval = Date().timeIntervalSince1970
+    ) {
         guard let player = resolveSlot(for: playerId) else { return }
 
         let scaledForce = force * PhysicsConstants.windForceSensitivity
         let clampedForce = max(0, min(PhysicsConstants.maxWindForce, scaledForce))
-        inputBuffer.append((player, clampedForce, timestamp))
+        latestForceInputs[player] = clampedForce
 
-        // バッファサイズ制限
-        if inputBuffer.count > 10 {
-            inputBuffer.removeFirst()
-        }
+        let normalizedRoll = normalizeRoll(roll)
+        latestRollInputs[player] = normalizedRoll
     }
 
     /// 雲データを読み込み
@@ -82,16 +91,12 @@ class GamePhysicsCoordinator: ObservableObject {
     // MARK: - Private Methods
 
     private func applyInterpolatedInput() {
-        // 30Hz入力を60fps描画に補間
-        // TODO: より高度な補間アルゴリズム実装
+        if let force = latestForceInputs[.playerA] {
+            balloonPhysics.applyWindForce(force, to: &playerAState)
+        }
 
-        guard let latest = inputBuffer.last else { return }
-
-        switch latest.player {
-        case .playerA:
-            balloonPhysics.applyWindForce(latest.force, to: &playerAState)
-        case .playerB:
-            balloonPhysics.applyWindForce(latest.force, to: &playerBState)
+        if let force = latestForceInputs[.playerB] {
+            balloonPhysics.applyWindForce(force, to: &playerBState)
         }
     }
 
@@ -113,6 +118,51 @@ class GamePhysicsCoordinator: ObservableObject {
 
     func playerId(for slot: PlayerSlot) -> String? {
         return playerAssignments.first { $0.value == slot }?.key
+    }
+
+    func laneCenter(for slot: PlayerSlot) -> CGFloat? {
+        laneCenters[slot]
+    }
+
+    func configureHorizontalBounds(sceneSize: CGSize) {
+        let centerA = sceneSize.width / 4
+        let centerB = sceneSize.width * 3 / 4
+        laneCenters[.playerA] = centerA
+        laneCenters[.playerB] = centerB
+
+        let halfLane = max(0, (sceneSize.width / 4) - PhysicsConstants.laneHorizontalPadding)
+        laneHalfWidth = halfLane
+
+        playerAState.position.x = centerA
+        playerBState.position.x = centerB
+
+        latestRollInputs[.playerA] = 0
+        latestRollInputs[.playerB] = 0
+    }
+
+    private func applyHorizontalMovement(deltaTime: TimeInterval) {
+        guard !laneCenters.isEmpty else { return }
+        let dt = CGFloat(deltaTime)
+
+        if let center = laneCenters[.playerA] {
+            let normalized = CGFloat(latestRollInputs[.playerA] ?? 0)
+            playerAState.velocity.dx = normalized * PhysicsConstants.horizontalSpeed
+            playerAState.position.x += playerAState.velocity.dx * dt
+            let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+            playerAState.position.x = clamp(playerAState.position.x, to: range)
+        }
+
+        if let center = laneCenters[.playerB] {
+            let normalized = CGFloat(latestRollInputs[.playerB] ?? 0)
+            playerBState.velocity.dx = normalized * PhysicsConstants.horizontalSpeed
+            playerBState.position.x += playerBState.velocity.dx * dt
+            let range = (center - laneHalfWidth)...(center + laneHalfWidth)
+            playerBState.position.x = clamp(playerBState.position.x, to: range)
+        }
+    }
+
+    private func clamp(_ value: CGFloat, to range: ClosedRange<CGFloat>) -> CGFloat {
+        min(max(value, range.lowerBound), range.upperBound)
     }
 
     private func resolveSlot(for playerId: String) -> PlayerSlot? {
@@ -160,8 +210,10 @@ class GamePhysicsCoordinator: ObservableObject {
             switch player {
             case .playerA:
                 playerAState.velocity.dy = -abs(playerAState.velocity.dy) * 0.5
+                playerAState.velocity.dx = 0
             case .playerB:
                 playerBState.velocity.dy = -abs(playerBState.velocity.dy) * 0.5
+                playerBState.velocity.dx = 0
             }
 
         case .lightning:
@@ -169,8 +221,10 @@ class GamePhysicsCoordinator: ObservableObject {
             switch player {
             case .playerA:
                 balloonPhysics.popBalloon(state: &playerAState)
+                playerAState.velocity.dx = 0
             case .playerB:
                 balloonPhysics.popBalloon(state: &playerBState)
+                playerBState.velocity.dx = 0
             }
 
             // 復活タイマー
@@ -180,11 +234,26 @@ class GamePhysicsCoordinator: ObservableObject {
                     switch player {
                     case .playerA:
                         self.balloonPhysics.respawnBalloon(state: &self.playerAState)
+                        if let center = self.laneCenters[.playerA] {
+                            self.playerAState.position.x = center
+                        }
                     case .playerB:
                         self.balloonPhysics.respawnBalloon(state: &self.playerBState)
+                        if let center = self.laneCenters[.playerB] {
+                            self.playerBState.position.x = center
+                        }
                     }
                 }
             }
         }
+    }
+
+    // MARK: - Helpers
+
+    private func normalizeRoll(_ roll: Double) -> Double {
+        let maxDegrees = PhysicsConstants.maxTiltDegrees
+        guard maxDegrees > 0 else { return 0 }
+        let clamped = max(-maxDegrees, min(maxDegrees, roll))
+        return clamped / maxDegrees
     }
 }
