@@ -69,40 +69,6 @@ struct TitleScreen: View {
                                         .foregroundStyle(.white.opacity(0.3))
                                         .offset(x: 0, y: -2)
                                 )
-
-                            // アンダーライン装飾
-                            HStack(spacing: 12) {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "#FF6B9D"), Color(hex: "#A29BFE")],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: 8, height: 8)
-
-                                Rectangle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "#FF6B9D"), Color(hex: "#A29BFE")],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: 60, height: 3)
-                                    .cornerRadius(1.5)
-
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "#A29BFE"), Color(hex: "#FF6B9D")],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: 8, height: 8)
-                            }
                         }
 
                         // サブタイトル
