@@ -24,6 +24,10 @@ class GamePhysicsCoordinator: ObservableObject {
 
     // MARK: - Internal State
 
+    private struct CloudConfigPayload: Codable {
+        let clouds: [CloudData]
+    }
+
     private var lastUpdateTime: TimeInterval = 0
     private var playerAssignments: [String: PlayerSlot] = [:]
     private var latestForceInputs: [PlayerSlot: Float] = [:]
@@ -31,6 +35,7 @@ class GamePhysicsCoordinator: ObservableObject {
     private var laneCenters: [PlayerSlot: CGFloat] = [:]
     private var laneHalfWidths: [PlayerSlot: CGFloat] = [:]
     private var balloonBodies: [PlayerSlot: SKPhysicsBody] = [:]
+    private var cloudDataStore: [CloudData] = []
 
     // MARK: - Initialization
 
@@ -186,6 +191,12 @@ class GamePhysicsCoordinator: ObservableObject {
         }
     }
 
+    func registerCloudData(_ data: [CloudData], for lane: PlayerSlot) {
+        cloudDataStore.removeAll { cloudLane(for: $0.id) == lane }
+        cloudDataStore.append(contentsOf: data)
+        refreshCloudSystem()
+    }
+
     func handleGroundContact(for slot: PlayerSlot) {
         guard let body = balloonBodies[slot] else { return }
         var velocity = body.velocity
@@ -278,6 +289,30 @@ class GamePhysicsCoordinator: ObservableObject {
             playerBState.velocity = body.velocity
             let relativeY = node.position.y - PhysicsConstants.groundBaseline
             playerBState.altitude = max(0, relativeY / 10.0)
+        }
+    }
+
+    private func refreshCloudSystem() {
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(CloudConfigPayload(clouds: cloudDataStore))
+            if let jsonString = String(data: data, encoding: .utf8) {
+                try cloudSystem.loadClouds(from: jsonString)
+            }
+        } catch {
+            print("❌ Failed to refresh cloud system: \(error)")
+        }
+    }
+
+    private func cloudLane(for cloudId: Int) -> PlayerSlot? {
+        if cloudId >= 2000 {
+            return .playerB
+        } else if cloudId >= 1000 {
+            return .playerA
+        } else if cloudId >= 100 {
+            return .playerB
+        } else {
+            return .playerA
         }
     }
 
