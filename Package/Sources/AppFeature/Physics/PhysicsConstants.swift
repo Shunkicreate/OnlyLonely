@@ -12,7 +12,7 @@ struct PhysicsConstants {
     // MARK: - 基本物理パラメータ
 
     /// 重力加速度 (m/s²)
-    static let gravity: CGFloat = -1.0
+    static let gravity: CGFloat = -1.6
 
     /// 子供の質量 (kg)
     static let childMass: CGFloat = 10.0
@@ -37,7 +37,7 @@ struct PhysicsConstants {
 
     /// 風力の上限（感度適用後）
     static func windForce(force: Float) -> Float {
-        return force * 30.0
+        return force * 40.0
     }
 
     /// 地面ラインのY座標（SpriteKit空間）
