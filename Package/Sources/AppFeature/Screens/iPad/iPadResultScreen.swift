@@ -23,6 +23,8 @@ struct iPadResultScreen: View {
     @State private var displayedAltitudeA: Double = 0
     @State private var displayedAltitudeB: Double = 0
     @State private var fireworksOpacity: Double = 0
+    @State private var petalOffsets: [(x: CGFloat, y: CGFloat, rotation: Double)] = Array(repeating: (0, 0, 0), count: 40)
+    @State private var petalOpacities: [Double] = Array(repeating: 1.0, count: 40)
     
     var winner: PlayerSlot? {
         if playerAAltitude > playerBAltitude {
@@ -53,7 +55,10 @@ struct iPadResultScreen: View {
                 ConfettiView()
                     .ignoresSafeArea()
                     .opacity(confettiOpacity)
-                
+
+                // 花びら（全ての結果で表示）
+                petalView
+
                 // お祝いの風船（全色）が空に飛んでいく → 戻ってきてふわふわ
                 AllColorBalloonsView(
                     screenHeight: geometry.size.height,
@@ -192,6 +197,9 @@ struct iPadResultScreen: View {
     
     // アニメーション開始
     private func startAnimations() {
+        // 花びらアニメーション開始
+        startPetalAnimation()
+
         // タイトルの登場アニメーション
         withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.3)) {
             titleScale = 1.0
@@ -245,19 +253,105 @@ struct iPadResultScreen: View {
         let duration = 1.5
         let steps = 60
         let interval = duration / Double(steps)
-        
+
         var currentStep = 0
         Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { timer in
             currentStep += 1
             let progress = Double(currentStep) / Double(steps)
-            
+
             displayedAltitudeA = playerAAltitude * progress
             displayedAltitudeB = playerBAltitude * progress
-            
+
             if currentStep >= steps {
                 timer.invalidate()
                 displayedAltitudeA = playerAAltitude
                 displayedAltitudeB = playerBAltitude
+            }
+        }
+    }
+
+    // MARK: - Petal View
+
+    private var petalView: some View {
+        GeometryReader { geometry in
+            ZStack {
+                ForEach(0..<petalCount, id: \.self) { index in
+                    PetalShape()
+                        .fill(petalColor(index: index))
+                        .frame(width: petalSize(index: index),
+                               height: petalSize(index: index) * 1.5)
+                        .rotationEffect(.degrees(petalOffsets[index].rotation))
+                        .position(
+                            x: petalOffsets[index].x,
+                            y: petalOffsets[index].y
+                        )
+                        .opacity(petalOpacities[index])
+                        .shadow(color: petalColor(index: index).opacity(0.4), radius: 4)
+                }
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private var petalCount: Int {
+        winner != nil ? 40 : 20
+    }
+
+    private func petalSize(index: Int) -> CGFloat {
+        let sizes: [CGFloat] = [15, 18, 22, 25]
+        return sizes[index % sizes.count]
+    }
+
+    private func petalColor(index: Int) -> Color {
+        let colors: [Color] = [
+            HarajukuColors.pastelPink,
+            HarajukuColors.pastelPinkLight,
+            Color(hex: "#FFB3D9"),
+            Color(hex: "#FFC0E5"),
+            HarajukuColors.pastelPurpleLight,
+            Color.white.opacity(0.8)
+        ]
+        return colors[index % colors.count]
+    }
+
+    private func startPetalAnimation() {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+
+        for index in 0..<petalCount {
+            animatePetal(index: index, screenWidth: screenWidth, screenHeight: screenHeight)
+        }
+    }
+
+    private func animatePetal(index: Int, screenWidth: CGFloat, screenHeight: CGFloat) {
+        // 初期位置（画面上部のランダムな位置）
+        let startX = CGFloat.random(in: 0...screenWidth)
+        let startY: CGFloat = -100
+        let endY = screenHeight + 100
+        let endX = startX + CGFloat.random(in: -200...200)
+
+        let delay = Double(index) * 0.15
+        let duration = Double.random(in: 5.0...8.0)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            // 初期位置設定
+            petalOffsets[index] = (startX, startY, 0)
+            petalOpacities[index] = 1.0
+
+            // 落下アニメーション
+            withAnimation(.easeInOut(duration: duration)) {
+                petalOffsets[index] = (endX, endY, Double.random(in: 360...720))
+            }
+
+            // 徐々に透明に
+            withAnimation(.easeIn(duration: duration * 0.7).delay(duration * 0.3)) {
+                petalOpacities[index] = 0.0
+            }
+
+            // アニメーション完了後、再度開始（無限ループ）
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.1) {
+                animatePetal(index: index, screenWidth: screenWidth, screenHeight: screenHeight)
             }
         }
     }
@@ -410,7 +504,7 @@ struct CelebrationBalloon: View {
         .scaleEffect(scale)
         .position(
             x: screenWidth * positions[index] + swayX,
-            y: screenHeight * 0.3 + offset + swayY
+            y: screenHeight * 0.15 + offset + swayY  // 0.3 → 0.15に変更（より上部に）
         )
         .rotationEffect(.degrees(rotation))
         .onAppear {
