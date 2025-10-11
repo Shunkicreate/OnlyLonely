@@ -11,6 +11,7 @@ import AVFoundation
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject private var connectionModel: ConnectionScreenModel
     @StateObject private var micLevelManager = MicrophoneLevelManager()
     @StateObject private var motionManager = MotionManager()
 
@@ -49,11 +50,9 @@ struct iPhoneGameplayScreen: View {
                 Spacer()
 
                 // プレイヤー情報
-                VStack(spacing: 12) {
-                    Text("Player A")
-                        .nikumaruHeadline(size: 24)
-                        .foregroundColor(.white)
-                }
+                Text(connectionModel.playerName)
+                    .nikumaruHeadline(size: 24)
+                    .foregroundColor(.white)
 
                 // 風船
                 VStack {
@@ -228,9 +227,4 @@ struct iPhoneGameplayScreen: View {
         altitudeTimer?.invalidate()
         altitudeTimer = nil
     }
-}
-
-#Preview {
-    iPhoneGameplayScreen()
-        .environmentObject(AppCoordinator())
 }

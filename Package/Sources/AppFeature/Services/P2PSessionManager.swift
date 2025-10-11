@@ -32,6 +32,7 @@ final class P2PSessionManager: ObservableObject {
     @Published private(set) var availablePeers: [Peer] = []
     @Published private(set) var connectedPeers: [Peer] = []
     @Published private(set) var localPeerID: String?
+    @Published private(set) var localPeerName: String?
 
     private let navigationCommandSubject = PassthroughSubject<DeviceNavigationCommand, Never>()
     private var configuration: MultipeerConfiguration?
@@ -41,6 +42,7 @@ final class P2PSessionManager: ObservableObject {
 
         self.role = role
         self.configuration = configuration
+        self.localPeerName = configuration.peerName
 
         let transceiver = MultipeerTransceiver(configuration: configuration)
         bind(transceiver)
@@ -63,6 +65,7 @@ final class P2PSessionManager: ObservableObject {
         availablePeers = []
         connectedPeers = []
         localPeerID = nil
+        localPeerName = nil
     }
 
     var navigationCommandPublisher: AnyPublisher<DeviceNavigationCommand, Never> {
