@@ -73,7 +73,7 @@ struct iPadResultScreen: View {
                     VStack(spacing: 12) {
                         if let winner = winner {
                             // 勝者表示
-                            Text(winner == .playerA ? "プレイヤーAのかち！" : "プレイヤーBのかち！")
+                            Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
                                 .nikumaruTitle(size: 54)
                                 .foregroundStyle(
                                     LinearGradient(
@@ -93,7 +93,7 @@ struct iPadResultScreen: View {
                                 .shadow(color: (winner == .playerA ? Color(hex: "#FF6B9D") : Color(hex: "#4A90E2")).opacity(0.6), radius: 15)
                                 .shadow(color: .white.opacity(0.8), radius: 5)
                                 .overlay(
-                                    Text(winner == .playerA ? "プレイヤーAのかち！" : "プレイヤーBのかち！")
+                                    Text(winner == .playerA ? "ぷれいやーAのかち！" : "ぷれいやーBのかち！")
                                         .nikumaruTitle(size: 54)
                                         .foregroundStyle(.white.opacity(0.3))
                                         .offset(x: 0, y: -3)
@@ -646,7 +646,7 @@ struct FluffyScoreCard: View {
     @State private var pulseScale: CGFloat = 1.0
     
     var playerName: String {
-        playerSlot == .playerA ? "プレイヤーA" : "プレイヤーB"
+        playerSlot == .playerA ? "ぷれいやーA" : "ぷれいやーB"
     }
     
     var playerColor: Color {

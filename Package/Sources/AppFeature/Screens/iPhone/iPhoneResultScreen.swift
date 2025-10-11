@@ -340,7 +340,7 @@ struct iPhoneResultScreen: View {
 
             // タイトルに戻る
             FluffyOutlineButton(
-                title: "タイトルにもどる",
+                title: "たいとるにもどる",
                 emoji: "",
                 color: .white
             ) {
