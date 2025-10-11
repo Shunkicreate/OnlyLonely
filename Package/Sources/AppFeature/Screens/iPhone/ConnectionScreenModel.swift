@@ -1,164 +1,113 @@
 //
 //  ConnectionScreenModel.swift
-//  Package
+//  OnlyLonely
 //
-//  Created by shunsuke tamura on 2025/10/11.
+//  Created by Codex on 2025/10/16.
 //
 
 import Combine
 import Foundation
-import MultipeerConnectivity
+import MultipeerKit
+import UIKit
 
 @MainActor
-final class ConnectionScreenModel: NSObject, ObservableObject {
-    enum ConnectionPhase: Equatable {
+final class ConnectionScreenModel: ObservableObject {
+    enum Phase: Equatable {
         case idle
         case connecting
         case connected
-        case failed
+        case failed(String)
+
+        var statusText: String {
+            switch self {
+            case .idle:
+                return "未接続です"
+            case .connecting:
+                return "接続中..."
+            case .connected:
+                return "接続完了"
+            case .failed(let message):
+                return "接続に失敗しました: \(message)"
+            }
+        }
     }
 
-    @Published private(set) var phase: ConnectionPhase = .idle
-    @Published private(set) var errorMessage: String?
-    @Published private(set) var hostDisplayName: String?
-    @Published private(set) var invitationReceived: Bool = false
-    @Published private(set) var isReadyToProceed: Bool = false
-    @Published private(set) var isAdvertising: Bool = false
+    @Published private(set) var phase: Phase = .idle
+    @Published private(set) var hostName: String?
 
     private let serviceType = "onlylonelyp2p"
-    private let peerID: MCPeerID
-    private let session: MCSession
-    private let advertiser: MCNearbyServiceAdvertiser
     private let sessionManager: P2PSessionManager
-
-    private var wantsConnection = false
+    private var cancellables = Set<AnyCancellable>()
+    private var isAttemptingConnection = false
 
     init(sessionManager: P2PSessionManager) {
         self.sessionManager = sessionManager
-        peerID = MCPeerID(displayName: UIDevice.current.name)
-        session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
-        advertiser = MCNearbyServiceAdvertiser(
-            peer: peerID,
-            discoveryInfo: ["role": "guest"],
-            serviceType: serviceType
-        )
-
-        super.init()
-
-        session.delegate = self
-        advertiser.delegate = self
+        observeSessionManager()
     }
 
     func connect() {
-        guard phase != .connecting else { return }
+        guard phase != .connecting, phase != .connected else { return }
 
-        wantsConnection = true
-        errorMessage = nil
+        hostName = nil
+        isAttemptingConnection = true
         phase = .connecting
-        isReadyToProceed = false
-        sessionManager.configure(role: .guest, peerID: peerID, session: session)
-        sessionManager.updateConnectedPeers([])
-        startAdvertising()
+
+        let configuration = guestConfiguration()
+        sessionManager.configure(role: .guest, configuration: configuration)
     }
 
-    func stop() {
-        wantsConnection = false
-        stopAdvertising()
-        session.disconnect()
+    func cancel() {
+        isAttemptingConnection = false
+        hostName = nil
         phase = .idle
-        errorMessage = nil
-        hostDisplayName = nil
-        invitationReceived = false
-        isReadyToProceed = false
         sessionManager.reset()
     }
 
-    private func startAdvertising() {
-        guard !isAdvertising else { return }
-        advertiser.startAdvertisingPeer()
-        isAdvertising = true
-    }
-
-    private func stopAdvertising() {
-        guard isAdvertising else { return }
-        advertiser.stopAdvertisingPeer()
-        isAdvertising = false
-    }
-
-    private func handleFailure(message: String?) {
-        errorMessage = message
-        phase = .failed
-        isReadyToProceed = false
-        hostDisplayName = nil
-        invitationReceived = false
-        wantsConnection = false
-        sessionManager.reset()
-    }
-}
-
-extension ConnectionScreenModel: MCNearbyServiceAdvertiserDelegate {
-    nonisolated func advertiser(
-        _ advertiser: MCNearbyServiceAdvertiser,
-        didReceiveInvitationFromPeer peerID: MCPeerID,
-        withContext context: Data?,
-        invitationHandler: @escaping (Bool, MCSession?) -> Void
-    ) {
-        Task { @MainActor in
-            guard wantsConnection else {
-                invitationHandler(false, nil)
-                return
-            }
-
-            hostDisplayName = peerID.displayName
-            invitationReceived = true
-            invitationHandler(true, session)
-        }
-    }
-
-    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        Task { @MainActor in
-            handleFailure(message: error.localizedDescription)
-        }
-    }
-}
-
-extension ConnectionScreenModel: MCSessionDelegate {
-    nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        Task { @MainActor in
-            switch state {
-            case .notConnected:
-                stopAdvertising()
-                if phase == .connected {
-                    handleFailure(message: "接続が切断されました")
-                } else if wantsConnection {
-                    handleFailure(message: "iPadと接続できませんでした")
-                } else {
-                    handleFailure(message: nil)
+    private func guestConfiguration() -> MultipeerConfiguration {
+        let security = MultipeerConfiguration.Security(
+            identity: nil,
+            encryptionPreference: .required,
+            invitationHandler: { [weak self] peer, _, completion in
+                guard let self else {
+                    completion(false)
+                    return
                 }
-            case .connecting:
-                phase = .connecting
-            case .connected:
-                stopAdvertising()
-                errorMessage = nil
-                phase = .connected
-                isReadyToProceed = true
-                wantsConnection = false
-                sessionManager.updateConnectedPeers(session.connectedPeers)
-            @unknown default:
-                break
+
+                let shouldAccept = isAttemptingConnection
+                if shouldAccept {
+                    hostName = peer.name
+                }
+                completion(shouldAccept)
             }
-        }
+        )
+
+        return MultipeerConfiguration(
+            serviceType: serviceType,
+            peerName: UIDevice.current.name,
+            defaults: .standard,
+            security: security,
+            invitation: .none
+        )
     }
 
-    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) { }
+    private func observeSessionManager() {
+        sessionManager.$connectedPeers
+            .receive(on: RunLoop.main)
+            .sink { [weak self] peers in
+                self?.handleConnectedPeers(peers)
+            }
+            .store(in: &cancellables)
+    }
 
-    nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) { }
-
-    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) { }
-
-    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) { }
-
-    nonisolated func session(_ session: MCSession, didReceiveCertificate certificate: [Any]?, fromPeer peerID: MCPeerID, certificateHandler: @escaping (Bool) -> Void) {
-        certificateHandler(true)
+    private func handleConnectedPeers(_ peers: [Peer]) {
+        if let first = peers.first {
+            hostName = first.name
+            isAttemptingConnection = false
+            phase = .connected
+        } else if case .connected = phase {
+            phase = .failed("接続が切断されました")
+            isAttemptingConnection = false
+            hostName = nil
+        }
     }
 }

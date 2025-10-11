@@ -1,0 +1,15 @@
+{
+  "originHash" : "58adeab21234f0b8366e27ea1ebef7a8201f0d441331073b30f3afab86d00d12",
+  "pins" : [
+    {
+      "identity" : "multipeerkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/insidegui/MultipeerKit.git",
+      "state" : {
+        "revision" : "ee013fd04f20166ea40ff456a67058c040289c1c",
+        "version" : "0.4.0"
+      }
+    }
+  ],
+  "version" : 3
+}

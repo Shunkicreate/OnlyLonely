@@ -55,9 +55,6 @@ public struct ContentView: View {
             }
             .padding(16)
         }
-        .sheet(isPresented: $showDebug) {
-            DebugScreen()
-        }
     }
 
     @ViewBuilder

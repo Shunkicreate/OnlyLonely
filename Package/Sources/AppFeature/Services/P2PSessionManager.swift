@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import MultipeerConnectivity
+import MultipeerKit
 
 @MainActor
 final class P2PSessionManager: ObservableObject {
@@ -15,27 +15,69 @@ final class P2PSessionManager: ObservableObject {
         case guest
     }
 
-    @Published private(set) var session: MCSession?
     @Published private(set) var role: Role?
-    @Published private(set) var localPeerID: MCPeerID?
-    @Published private(set) var connectedPeers: [MCPeerID] = []
+    @Published private(set) var transceiver: MultipeerTransceiver?
+    @Published private(set) var availablePeers: [Peer] = []
+    @Published private(set) var connectedPeers: [Peer] = []
+    @Published private(set) var localPeerID: String?
 
-    func configure(role: Role, peerID: MCPeerID, session: MCSession) {
+    private var configuration: MultipeerConfiguration?
+
+    func configure(role: Role, configuration: MultipeerConfiguration) {
+        reset()
+
         self.role = role
-        self.localPeerID = peerID
-        self.session = session
-        self.connectedPeers = session.connectedPeers
+        self.configuration = configuration
+
+        let transceiver = MultipeerTransceiver(configuration: configuration)
+        bind(transceiver)
+        transceiver.resume()
     }
 
-    func updateConnectedPeers(_ peers: [MCPeerID]) {
-        connectedPeers = peers
+    func resume() {
+        transceiver?.resume()
+    }
+
+    func stop() {
+        transceiver?.stop()
     }
 
     func reset() {
-        session?.disconnect()
-        session = nil
+        transceiver?.stop()
+        transceiver = nil
         role = nil
-        localPeerID = nil
+        configuration = nil
+        availablePeers = []
         connectedPeers = []
+        localPeerID = nil
+    }
+
+    private func bind(_ transceiver: MultipeerTransceiver) {
+        self.transceiver = transceiver
+        localPeerID = transceiver.localPeerId
+
+        transceiver.availablePeersDidChange = { [weak self] peers in
+            guard let self else { return }
+            availablePeers = peers
+            refreshConnectedPeers(using: peers)
+        }
+
+        transceiver.peerConnected = { [weak self] _ in
+            self?.refreshConnectedPeers()
+        }
+
+        transceiver.peerDisconnected = { [weak self] _ in
+            self?.refreshConnectedPeers()
+        }
+    }
+
+    private func refreshConnectedPeers(using peers: [Peer]? = nil) {
+        if let peers {
+            connectedPeers = peers.filter { $0.isConnected }
+        } else if let transceiver {
+            connectedPeers = transceiver.availablePeers.filter { $0.isConnected }
+        } else {
+            connectedPeers = []
+        }
     }
 }
