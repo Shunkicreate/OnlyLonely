@@ -1,0 +1,53 @@
+//
+//  GuestView.swift
+//  OnlyLonely
+//
+//  Created by shunsuke tamura on 2025/10/11.
+//
+
+import SwiftUI
+import MultipeerConnectivity
+
+struct GuestView: View {
+    @StateObject private var gameState = GameState()
+    @StateObject private var viewModel: GuestViewModel
+
+    init() {
+        let state = GameState()
+        _gameState = StateObject(wrappedValue: state)
+        _viewModel = StateObject(wrappedValue: GuestViewModel(gameState: state))
+    }
+
+    var body: some View {
+        List {
+            Section("Advertising") {
+                Toggle("Visible to Host", isOn: $viewModel.isAdvertised)
+                if let req = viewModel.permissionRequest {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Invitation from: \(req.peerId.displayName)")
+                        HStack {
+                            Button("Decline") { req.onRequest(false) }
+                            Button("Accept") { req.onRequest(true) }
+                                .buttonStyle(.borderedProminent)
+                        }
+                    }
+                }
+            }
+
+            Section("Joined Hosts") {
+                if viewModel.joinedPeers.isEmpty {
+                    Text("Waiting for invitation...").foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.joinedPeers) { peer in
+                        Text(peer.peerId.displayName)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Guest")
+    }
+}
+
+#Preview {
+    NavigationStack { GuestView() }
+}
