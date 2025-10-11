@@ -48,8 +48,6 @@ struct ConnectionWaitingScreen: View {
                         availableDevicesSection
                     }
 
-                    // デバッグボタン
-                    debugButton
 
                     Spacer()
                         .frame(height: 60)
