@@ -525,9 +525,10 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
 
     private func addBalloon() {
         let balloonNode = createBalloon(for: lane)
-        balloonNode.position = CGPoint(x: size.width / 2, y: PhysicsConstants.groundBaseline)
+        balloonNode.position = CGPoint(x: size.width / 2, y: PhysicsConstants.groundBaseline + 50)
         balloonNode.zPosition = 10
-        let body = SKPhysicsBody(circleOfRadius: 30)
+        // 物理ボディは風船部分のサイズに合わせる（コンテナ全体ではなく）
+        let body = SKPhysicsBody(circleOfRadius: 40)
         body.categoryBitMask = lane == .playerA ? PhysicsCategory.balloonA : PhysicsCategory.balloonB
         body.contactTestBitMask = PhysicsCategory.ground
         body.collisionBitMask = PhysicsCategory.ground
@@ -552,31 +553,60 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
     private func createBalloon(for lane: PlayerSlot) -> SKSpriteNode {
         let imageName: String
         let glowColor: UIColor
+        let balloonColor: UIColor
 
         switch lane {
         case .playerA:
             imageName = "red"
             glowColor = UIColor(red: 1.0, green: 0.42, blue: 0.62, alpha: 1.0)
+            balloonColor = UIColor(red: 1.0, green: 0.42, blue: 0.62, alpha: 1.0)
         case .playerB:
             imageName = "blue"
             glowColor = UIColor(red: 0.29, green: 0.56, blue: 0.87, alpha: 1.0)
+            balloonColor = UIColor(red: 0.29, green: 0.56, blue: 0.87, alpha: 1.0)
         }
 
-        let texture = SKTexture(imageNamed: imageName)
-        let balloon = SKSpriteNode(texture: texture, size: CGSize(width: 60, height: 60))
-        balloon.name = "balloon"
+        // コンテナノード（全体を1つのノードとして扱う）
+        let container = SKSpriteNode(color: .clear, size: CGSize(width: 100, height: 180))
+        container.name = "balloon"
 
-        let glowCircle = SKShapeNode(circleOfRadius: 35)
-        glowCircle.fillColor = glowColor.withAlphaComponent(0.35)
-        glowCircle.strokeColor = .clear
-        glowCircle.zPosition = -1
-        balloon.addChild(glowCircle)
+        // 風船本体（円形グラデーション風）
+        let balloonCircle = SKShapeNode(circleOfRadius: 30)
+        balloonCircle.fillColor = balloonColor.withAlphaComponent(0.8)
+        balloonCircle.strokeColor = .clear
+        balloonCircle.position = CGPoint(x: 0, y: 60)
+        balloonCircle.zPosition = 0
+        container.addChild(balloonCircle)
 
-        let scaleUp = SKAction.scale(to: 1.15, duration: 0.8)
-        let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
-        glowCircle.run(SKAction.repeatForever(SKAction.sequence([scaleUp, scaleDown])))
+        // ハイライト
+        let highlight = SKShapeNode(circleOfRadius: 12)
+        highlight.fillColor = .white.withAlphaComponent(0.6)
+        highlight.strokeColor = .clear
+        highlight.position = CGPoint(x: -8, y: 68)
+        highlight.zPosition = 1
+        container.addChild(highlight)
 
-        return balloon
+        // 紐（曲線）
+        let stringPath = CGMutablePath()
+        stringPath.move(to: CGPoint(x: 0, y: 30))
+        stringPath.addQuadCurve(
+            to: CGPoint(x: 0, y: -10),
+            control: CGPoint(x: 5, y: 10)
+        )
+        let stringNode = SKShapeNode(path: stringPath)
+        stringNode.strokeColor = balloonColor.withAlphaComponent(0.7)
+        stringNode.lineWidth = 3
+        stringNode.zPosition = 0
+        container.addChild(stringNode)
+
+        // キャラクター画像（下部）
+        let characterTexture = SKTexture(imageNamed: imageName)
+        let characterImage = SKSpriteNode(texture: characterTexture, size: CGSize(width: 72, height: 72))
+        characterImage.position = CGPoint(x: 0, y: -25)
+        characterImage.zPosition = 3
+        container.addChild(characterImage)
+
+        return container
     }
 
     override func update(_ currentTime: TimeInterval) {
