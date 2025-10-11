@@ -27,7 +27,7 @@ struct PhysicsConstants {
     static var maxTiltDegrees: Double = 30.0
 
     /// 左右の傾きを速度へ変換するスケール（ポイント/秒）
-    static var horizontalSpeed: CGFloat = 220.0
+    static var horizontalSpeed: CGFloat = 50.0
 
     /// 左右レーンの端からの余白
     static var laneHorizontalPadding: CGFloat = 80.0
