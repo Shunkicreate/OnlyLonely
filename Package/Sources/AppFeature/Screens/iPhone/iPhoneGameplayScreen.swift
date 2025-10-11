@@ -19,11 +19,10 @@ struct iPhoneGameplayScreen: View {
     @StateObject private var motionManager = MotionManager()
     @StateObject private var screenModel: iPhoneGameplayScreenModel
 
-    @State private var timeRemaining: Int = 60
     @State private var currentAltitude: Double = 0
-    @State private var gameTimer: Timer?
     @State private var sendWindForceTimer: Timer?
     @State private var gameplayInitialized = false
+    @State private var hasHandledGameFinished = false
 
     init() {
         _screenModel = StateObject(wrappedValue: iPhoneGameplayScreenModel())
@@ -43,17 +42,6 @@ struct iPhoneGameplayScreen: View {
             .ignoresSafeArea()
 
             VStack(spacing: 20) {
-                // 残り時間
-                Text("残り時間: \(timeRemaining)秒")
-                    .nikumaruBody(size: 20)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.3))
-                    )
-                    .padding(.top, 20)
-
                 Spacer()
 
                 // プレイヤー情報
@@ -130,6 +118,10 @@ struct iPhoneGameplayScreen: View {
             screenModel.cancelBindings()
             gameplayInitialized = false
         }
+        .onReceive(sessionManager.gameEventPublisher) { event in
+            guard event.type == .gameFinished else { return }
+            handleRemoteGameFinished()
+        }
         .onReceive(sessionManager.$localPeerId.compactMap { $0 }.removeDuplicates()) { newId in
             setupGameplayIfNeeded(with: newId)
         }
@@ -137,26 +129,11 @@ struct iPhoneGameplayScreen: View {
     }
 
     private func startGame() {
+        hasHandledGameFinished = false
         // マイク監視開始
         micLevelManager.startMonitoring()
         motionManager.startDeviceMotionUpdates()
         stopTimers()
-
-        // タイマー開始
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                timer.invalidate()
-                gameTimer = nil
-                // ゲーム終了
-                sendWindForceTimer?.invalidate()
-                sendWindForceTimer = nil
-                Task { @MainActor in
-                    coordinator.navigate(to: .iPhoneResult)
-                }
-            }
-        }
 
         // 高度更新（30Hz）
         sendWindForceTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
@@ -174,8 +151,6 @@ struct iPhoneGameplayScreen: View {
     }
 
     private func stopTimers() {
-        gameTimer?.invalidate()
-        gameTimer = nil
         sendWindForceTimer?.invalidate()
         sendWindForceTimer = nil
     }
@@ -195,5 +170,17 @@ struct iPhoneGameplayScreen: View {
         screenModel.bindInputs(microphone: micLevelManager, motionManager: motionManager)
         startGame()
         gameplayInitialized = true
+    }
+
+    private func handleRemoteGameFinished() {
+        guard !hasHandledGameFinished else { return }
+        hasHandledGameFinished = true
+        stopTimers()
+        micLevelManager.stopMonitoring()
+        motionManager.stopDeviceMotionUpdates()
+        screenModel.cancelBindings()
+        Task { @MainActor in
+            coordinator.navigate(to: .iPhoneResult)
+        }
     }
 }

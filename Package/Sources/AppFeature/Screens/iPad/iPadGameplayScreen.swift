@@ -18,6 +18,7 @@ struct iPadGameplayScreen: View {
 
     @State private var playerAAltitude: Double = 0
     @State private var playerBAltitude: Double = 0
+    @State private var hasBroadcastGameFinished = false
 
     init() {
         _screenModel = StateObject(wrappedValue: iPadGameplayScreenModel())
@@ -81,6 +82,7 @@ struct iPadGameplayScreen: View {
         }
         .onAppear {
             screenModel.configure(sessionManager: sessionManager, physicsCoordinator: physicsCoordinator)
+            hasBroadcastGameFinished = false
             gameManager.startGame()
             // TODO: 雲データ読み込み
             // try? physicsCoordinator.loadCloudData(json: "...")
@@ -90,6 +92,11 @@ struct iPadGameplayScreen: View {
         }
         .onChange(of: gameManager.gamePhase) { _, newPhase in
             if newPhase == .finished {
+                if !hasBroadcastGameFinished {
+                    hasBroadcastGameFinished = true
+                    let event = GameEventMessage(type: .gameFinished, timestamp: Date())
+                    sessionManager.sendGameEvent(event)
+                }
                 coordinator.navigate(to: .iPadResult)
             }
         }

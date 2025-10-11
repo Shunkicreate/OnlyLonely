@@ -12,6 +12,7 @@ enum AppRoute: Hashable {
 
     // iPad
     case connectionWaiting
+    case iPadCountdown
     case iPadGameplay
     case iPadResult
 
@@ -28,6 +29,9 @@ class AppCoordinator: ObservableObject {
     @Published var path: [AppRoute] = []
     @Published var currentRoute: AppRoute = .title
 
+    // Callback for resetting app state when returning to title
+    var onReturnToTitle: (() -> Void)?
+
     func navigate(to route: AppRoute) {
         path.append(route)
         currentRoute = route
@@ -41,8 +45,16 @@ class AppCoordinator: ObservableObject {
     }
 
     func navigateToRoot() {
+        print("🏠 [AppCoordinator] Navigating to root, resetting state...")
+
+        // Reset navigation state
         path.removeAll()
         currentRoute = .title
+
+        // Call reset callback to clean up app state
+        onReturnToTitle?()
+
+        print("✅ [AppCoordinator] Navigation to root complete")
     }
 
     func replace(with route: AppRoute) {

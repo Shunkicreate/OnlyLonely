@@ -65,3 +65,4 @@ DerivedData/
 .DS_Store
 
 .serena
+Package/.index-build/
