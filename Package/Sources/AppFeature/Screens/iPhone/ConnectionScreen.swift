@@ -71,22 +71,6 @@ struct ConnectionScreen: View {
                 }
                 .padding(.horizontal, 40)
 
-                // QR コードスキャンボタン（オプション）
-                Button {
-                    // QR コードスキャン機能（後で実装）
-                } label: {
-                    Text("QR コードで接続")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 30)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.2))
-                        )
-                }
-                .padding(.top, 10)
-
                 // 接続ボタン
                 Button {
                     connect()
@@ -125,8 +109,25 @@ struct ConnectionScreen: View {
                 }
 
                 Spacer()
+
+                // 戻るボタン
+                Button {
+                    coordinator.navigateBack()
+                } label: {
+                    Text("戻る")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 200)
+                        .padding(.vertical, 16)
+                        .background(
+                            Capsule()
+                                .fill(Color.gray.opacity(0.6))
+                        )
+                }
+                .padding(.bottom, 40)
             }
         }
+        .navigationBarBackButtonHidden()
     }
 
     private var statusMessage: String {

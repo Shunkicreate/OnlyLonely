@@ -42,8 +42,6 @@ public struct ContentView: View {
             ConnectionScreen()
         case .playerNameInput:
             PlayerNameInputScreen()
-        case .calibration:
-            CalibrationScreen()
         case .waiting:
             WaitingScreen()
         case .countdown:

@@ -81,6 +81,7 @@ struct iPadGameplayScreen: View {
                 coordinator.navigate(to: .iPadResult)
             }
         }
+        .navigationBarBackButtonHidden()
     }
 
     private func createGameScene(size: CGSize) -> SKScene {
