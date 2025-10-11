@@ -10,6 +10,7 @@ import SwiftUI
 
 struct TitleScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject var bgmManager: BGMManager
     @State private var backgroundPhase: CGFloat = 0
     @State private var balloonOffsets: [CGFloat] = [0, 0, 0, 0, 0]
     @State private var showStars = false
@@ -231,6 +232,11 @@ struct TitleScreen: View {
         }
         .onAppear {
             startAnimation()
+            // BGM再生開始（まだ再生されていない場合のみ）
+            if !bgmManager.isPlaying {
+                bgmManager.play()
+                bgmManager.fadeIn(duration: 2.0) // フェードインで開始
+            }
         }
     }
 
@@ -606,4 +612,5 @@ struct TwinklingStarsView: View {
 #Preview {
     TitleScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(BGMManager.shared)
 }
