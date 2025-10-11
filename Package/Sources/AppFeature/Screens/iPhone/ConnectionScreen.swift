@@ -33,18 +33,18 @@ struct ConnectionScreen: View {
             showInvitationAlert = (newValue != nil)
         }
         .alert(
-            "招待を受信",
+            "しょうたいをうけとったよ",
             isPresented: $showInvitationAlert,
             presenting: connectionModel.invitationPeerName
         ) { _ in
-            Button("受け入れる") {
+            Button("うけいれる") {
                 connectionModel.approveInvitation()
             }
-            Button("拒否する", role: .cancel) {
+            Button("きょひする", role: .cancel) {
                 connectionModel.declineInvitation()
             }
         } message: { peerName in
-            Text("\(peerName) からの招待を受け入れますか？")
+            Text("\(peerName) からのしょうたいをうけいれますか？")
         }
         .onReceive(sessionManager.navigationCommandPublisher) { command in
             guard command.action == .showCountdown else { return }
@@ -99,7 +99,7 @@ struct ConnectionScreen: View {
                     .frame(width: 40, height: 40)
                     .rotationEffect(.degrees(sparkleRotation))
 
-                RainbowText(text: "iPadにつなぐよ", size: 32)
+                RainbowText(text: "あいぱっどにつなぐよ", size: 32)
 
                 Image("yellow")
                     .resizable()
@@ -109,7 +109,7 @@ struct ConnectionScreen: View {
             }
             .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
 
-            Text("おなじWi-Fiでつながろう！")
+            Text("おなじわいふぁいでつながろう！")
                 .nikumaruBody(size: 14)
                 .foregroundColor(HarajukuColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -243,7 +243,7 @@ struct ConnectionScreen: View {
 
     private var cancelButton: some View {
         FluffyButtonWithImage(
-            title: "キャンセル",
+            title: "きゃんせる",
             imageName: "green",
             gradient: HarajukuColors.blueMintGradient,
             shadowColor: HarajukuColors.pastelMint

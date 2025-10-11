@@ -213,7 +213,7 @@ struct TitleScreen: View {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 12, weight: .regular))
-                            Text("クレジット")
+                            Text("くれじっと")
                                 .nikumaruBody(size: 13)
                         }
                         .foregroundStyle(.white.opacity(0.7))
