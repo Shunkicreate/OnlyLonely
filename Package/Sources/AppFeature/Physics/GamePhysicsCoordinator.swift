@@ -309,12 +309,10 @@ class GamePhysicsCoordinator: ObservableObject {
             return .playerB
         } else if cloudId >= 1000 {
             return .playerA
-        } else if cloudId >= 101 {
+        } else if cloudId >= 100 {
             return .playerB
-        } else if cloudId >= 1 {
-            return .playerA
         } else {
-            return nil
+            return .playerA
         }
     }
 
