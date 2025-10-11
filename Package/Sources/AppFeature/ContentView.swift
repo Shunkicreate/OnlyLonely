@@ -74,6 +74,8 @@ public struct ContentView: View {
         // iPad
         case .connectionWaiting:
             ConnectionWaitingScreen()
+        case .iPadCountdown:
+            CountdownScreen()
         case .iPadGameplay:
             iPadGameplayScreen()
         case .iPadResult:
