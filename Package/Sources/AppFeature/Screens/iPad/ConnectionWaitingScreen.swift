@@ -39,15 +39,6 @@ struct ConnectionWaitingScreen: View {
                     Text("接続情報: \(serverIP):\(serverPort)")
                         .font(.system(size: 18, design: .monospaced))
                         .foregroundColor(.white.opacity(0.9))
-
-                    // QR コード表示エリア（後で実装）
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 200, height: 200)
-                        .overlay(
-                            Text("QR コード")
-                                .foregroundColor(.white.opacity(0.5))
-                        )
                 }
                 .padding(.vertical, 20)
 
