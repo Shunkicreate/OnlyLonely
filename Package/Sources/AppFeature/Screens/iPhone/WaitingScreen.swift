@@ -30,7 +30,7 @@ struct WaitingScreen: View {
                 Spacer()
 
                 Text("準備完了!")
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .nikumaruHeadline(size: 36)
                     .foregroundColor(.white)
 
                 // 風船アニメーション
@@ -65,7 +65,7 @@ struct WaitingScreen: View {
                 .padding(.horizontal, 40)
 
                 Text(opponentReady ? "まもなく開始します..." : "相手の準備を待っています...")
-                    .font(.system(size: 18, weight: .medium))
+                    .nikumaruBody(size: 18)
                     .foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
                     .padding(.top, 20)
@@ -99,10 +99,10 @@ struct PlayerStatusRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(label)
-                    .font(.system(size: 14))
+                    .nikumaruCaption(size: 14)
                     .foregroundColor(.white.opacity(0.7))
                 Text(playerName)
-                    .font(.system(size: 18, weight: .semibold))
+                    .nikumaruBody(size: 18)
                     .foregroundColor(.white)
             }
 
@@ -114,14 +114,15 @@ struct PlayerStatusRow: View {
                         .foregroundColor(.green)
                     Text("準備完了")
                         .foregroundColor(.green)
+                        .nikumaruBody(size: 16)
                 } else {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
                     Text("準備中...")
                         .foregroundColor(.yellow)
+                        .nikumaruBody(size: 16)
                 }
             }
-            .font(.system(size: 16, weight: .medium))
         }
         .padding(20)
         .background(

@@ -46,6 +46,10 @@
    - GeometryReaderで画面サイズに応じた動的レイアウト
    - 固定の高さ・幅ではなく、相対的なサイズ指定（.frame(maxWidth: .infinity)など）
    - 小さい画面（iPhone SE）でも大きい画面（iPhone Pro Max）でも快適に使える
+8. **フォント統一**: **すべてのテキストで07にくまるフォントを使用する**
+   - `.nikumaruTitle()`, `.nikumaruBody()` などのView修飾子を使用
+   - システムフォント（`.font(.system())`）は使用禁止
+   - 世界観を統一するため、例外なくNikumaruフォントを指定
 
 ### 避けるべき表現
 
@@ -58,6 +62,7 @@
 - **絵文字の使用**（タイトル、ボタン、装飾などすべて）
 - **固定サイズによるレイアウト崩れ**（特定の画面サイズに依存したデザイン）
 - スクロールできない長いコンテンツ（小さい画面で見切れる）
+- **システムフォントの使用**（`.font(.system())`、`.font(.title)` など）
 
 ✅ **OK例**:
 - パステルカラーの背景に虹色のアクセント
@@ -68,6 +73,7 @@
 - グラデーション・影・アウトラインによる3D効果
 - **ScrollView + 相対サイズ指定によるレスポンシブレイアウト**
 - どの画面サイズでも快適に使える柔軟なデザイン
+- **Nikumaruフォントの使用**（`.nikumaruTitle()`、`.nikumaruBody()` など）
 
 ---
 
@@ -147,20 +153,64 @@ HarajukuColors.candyGradient
 
 ### フォントファミリー
 
+> **🔴 必須ルール**: すべてのテキストで **07にくまるフォント** を使用すること！
+
+#### Nikumaruフォントの使い方
+
 ```swift
-// HarajukuTypography として実装済み
+// 【推奨】View修飾子を使った方法（最も簡単）
+Text("ふわふわたいむ")
+    .nikumaruTitle(size: 48)     // タイトル用
 
-// メインフォント
-.rounded  // .systemFont(design: .rounded)
-// 用途: すべてのテキスト（原則）
+Text("せつぞく")
+    .nikumaruHeadline(size: 32)  // 見出し用
 
-// サブフォント
-.heavy    // .system(weight: .heavy)
-// 用途: 大きな数字、インパクトのあるタイトル
+Text("説明文です")
+    .nikumaruBody(size: 18)      // 本文用
 
-.bold     // .system(weight: .bold)
-// 用途: 強調したいテキスト
+Text("補足テキスト")
+    .nikumaruCaption(size: 14)   // キャプション用
+
+// カスタムサイズ
+Text("テキスト")
+    .nikumaru(size: 24)          // 任意のサイズ
+
+
+// 【代替】Font拡張を使った方法
+Text("ふわふわたいむ")
+    .font(.nikumaru(size: 48))
+
+Text("せつぞく")
+    .font(.appTitle(size: 48))    // 便利メソッド
 ```
+
+#### HarajukuTypography（デザインシステム統合版）
+
+```swift
+// デザインシステムのタイポグラフィも自動的にNikumaruフォントを使用
+Text("タイトル")
+    .font(HarajukuTypography.title(size: 48))
+
+Text("本文")
+    .font(HarajukuTypography.body(size: 16))
+
+Text("キャプション")
+    .font(HarajukuTypography.caption(size: 12))
+```
+
+#### ❌ 使用禁止
+
+```swift
+// これは使わない！
+.font(.system(size: 18, weight: .bold, design: .rounded))
+
+// これも使わない！
+.font(.title)
+.font(.body)
+.font(.headline)
+```
+
+**理由**: システムフォントは原宿スタイルの世界観に合わないため、**必ずNikumaruフォントを指定**すること。
 
 ### フォントサイズと用途
 

@@ -46,12 +46,12 @@ struct iPhoneResultScreen: View {
                 VStack(spacing: 16) {
                     if isDraw {
                         Text("引き分け!")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .nikumaruTitle(size: 48)
                             .foregroundColor(.white)
                     } else if isWinner {
                         VStack(spacing: 8) {
                             Text("勝利!")
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .nikumaruTitle(size: 48)
                                 .foregroundColor(.white)
 
                             Text("🎉")
@@ -66,7 +66,7 @@ struct iPhoneResultScreen: View {
                     } else {
                         VStack(spacing: 8) {
                             Text("敗北...")
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .nikumaruTitle(size: 48)
                                 .foregroundColor(.white)
 
                             Text("🎈")
@@ -91,7 +91,7 @@ struct iPhoneResultScreen: View {
 
                     if !isDraw {
                         Text("差: \(isWinner ? "+" : "")\(Int(playerAltitude - opponentAltitude))m")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .nikumaruBody(size: 18)
                             .foregroundColor(.white.opacity(0.9))
                     }
                 }
@@ -105,7 +105,7 @@ struct iPhoneResultScreen: View {
                         coordinator.replace(with: .connection)
                     } label: {
                         Text("もう一度")
-                            .font(.system(size: 20, weight: .semibold))
+                            .nikumaruBody(size: 20)
                             .foregroundColor(.white)
                             .frame(width: 200)
                             .padding(.vertical, 16)
@@ -119,7 +119,7 @@ struct iPhoneResultScreen: View {
                         coordinator.navigateToRoot()
                     } label: {
                         Text("終了")
-                            .font(.system(size: 20, weight: .semibold))
+                            .nikumaruBody(size: 20)
                             .foregroundColor(.white)
                             .frame(width: 200)
                             .padding(.vertical, 16)
@@ -147,14 +147,14 @@ struct ResultRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .nikumaruBody(size: 18)
                 .foregroundColor(.white)
                 .frame(width: 80, alignment: .leading)
 
             Spacer()
 
             Text("\(Int(altitude))m")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .nikumaruHeadline(size: 24)
                 .foregroundColor(isHighlight ? .yellow : .white)
 
             if isHighlight {

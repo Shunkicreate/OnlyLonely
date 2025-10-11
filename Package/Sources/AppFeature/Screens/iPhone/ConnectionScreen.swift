@@ -60,8 +60,7 @@ struct ConnectionScreen: View {
                     .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
 
                     Text("おなじWi-Fiでつながろう！")
-                        .font(HarajukuTypography.body(size: 14))
-                        .fontWeight(.semibold)
+                        .nikumaruBody(size: 14)
                         .foregroundColor(HarajukuColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -110,14 +109,14 @@ struct ConnectionScreen: View {
                 // バリデーションエラーメッセージ領域（固定高さでレイアウト崩れ防止）
                 VStack(spacing: 4) {
                     Text(ipAddressError ?? " ")
-                        .font(HarajukuTypography.caption(size: 12))
+                        .nikumaruCaption(size: 12)
                         .foregroundColor(Color(hex: "#FF6B9D"))
                         .multilineTextAlignment(.center)
                         .opacity(ipAddressError != nil ? 1 : 0)
                         .frame(minHeight: 16)
 
                     Text(portError ?? " ")
-                        .font(HarajukuTypography.caption(size: 12))
+                        .nikumaruCaption(size: 12)
                         .foregroundColor(Color(hex: "#FF6B9D"))
                         .multilineTextAlignment(.center)
                         .opacity(portError != nil ? 1 : 0)
@@ -144,14 +143,13 @@ struct ConnectionScreen: View {
                         Text(statusEmoji)
                             .font(.system(size: 16))
                         Text(statusMessage)
-                            .font(HarajukuTypography.body(size: 14))
-                            .fontWeight(.semibold)
+                            .nikumaruBody(size: 14)
                             .foregroundColor(statusColor)
                     }
 
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
-                            .font(HarajukuTypography.caption(size: 12))
+                            .nikumaruCaption(size: 12)
                             .foregroundColor(Color(hex: "#FF6B9D").opacity(0.8))
                     }
                 }

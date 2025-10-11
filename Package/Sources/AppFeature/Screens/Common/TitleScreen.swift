@@ -46,55 +46,149 @@ struct TitleScreen: View {
                     VStack(spacing: 24) {
                         // タイトル
                         VStack(spacing: 8) {
-                            Text("ふわふわたいむ")
-                                .font(.system(size: 58, weight: .black, design: .rounded))
+                            ZStack {
+                                // 影（最下層・濃い影）
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(.black.opacity(0.6))
+                                    .offset(x: 0, y: 8)
+                                    .blur(radius: 4)
+
+                                // 影（中間層・カラフルグロウ）
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#FF6B9D"),
+                                                Color(hex: "#A29BFE")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .offset(x: 0, y: 4)
+                                    .blur(radius: 8)
+                                    .opacity(0.7)
+
+                                // ストローク（縁取り）
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(.white)
+                                    .offset(x: -2, y: -2)
+                                    .opacity(0.8)
+
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(.white)
+                                    .offset(x: 2, y: -2)
+                                    .opacity(0.8)
+
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(.white)
+                                    .offset(x: -2, y: 2)
+                                    .opacity(0.8)
+
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(.white)
+                                    .offset(x: 2, y: 2)
+                                    .opacity(0.8)
+
+                                // メインテキスト（グラデーション）
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#FF6B9D"),
+                                                Color(hex: "#C44569"),
+                                                Color(hex: "#A29BFE"),
+                                                Color(hex: "#6C5CE7")
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+
+                                // ハイライト（3D感を強調）
+                                Text("ふわふわたいむ")
+                                    .nikumaruTitle(size: 58)
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                .white.opacity(0.6),
+                                                .white.opacity(0.0)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .center
+                                        )
+                                    )
+                                    .offset(x: 0, y: -1)
+                            }
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .shadow(color: Color(hex: "#FF6B9D").opacity(0.6), radius: 15, x: 0, y: 5)
+                            .shadow(color: Color(hex: "#A29BFE").opacity(0.6), radius: 25, x: 0, y: 10)
+                        }
+
+                        // サブタイトル
+                        ZStack {
+                            // 影（下層）
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
+                                .foregroundStyle(.black.opacity(0.4))
+                                .offset(x: 0, y: 3)
+                                .blur(radius: 3)
+
+                            // グロウ（中間層）
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
+                                .foregroundStyle(Color(hex: "#A29BFE").opacity(0.6))
+                                .offset(x: 0, y: 2)
+                                .blur(radius: 6)
+
+                            // ストローク
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
+                                .foregroundStyle(.white)
+                                .offset(x: -1, y: -1)
+                                .opacity(0.7)
+
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
+                                .foregroundStyle(.white)
+                                .offset(x: 1, y: -1)
+                                .opacity(0.7)
+
+                            // メインテキスト
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            Color(hex: "#FF6B9D"),
-                                            Color(hex: "#C44569"),
-                                            Color(hex: "#A29BFE"),
-                                            Color(hex: "#6C5CE7")
+                                            Color(hex: "#FFFFFF"),
+                                            Color(hex: "#E0E0FF")
                                         ],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
                                 )
-                                .shadow(color: Color(hex: "#FF6B9D").opacity(0.5), radius: 10)
-                                .shadow(color: Color(hex: "#A29BFE").opacity(0.5), radius: 20)
-                                .overlay(
-                                    // 白いアウトライン
-                                    Text("ふわふわたいむ")
-                                        .font(.system(size: 58, weight: .black, design: .rounded))
-                                        .foregroundStyle(.white.opacity(0.3))
-                                        .offset(x: 0, y: -2)
-                                )
-                        }
 
-                        // サブタイトル
-                        Text("息で飛ばす、ふたりの風船")
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [
-                                        Color(hex: "#FFFFFF"),
-                                        Color(hex: "#E0E0FF")
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .shadow(color: Color(hex: "#A29BFE").opacity(0.4), radius: 8)
-                            .shadow(color: .white.opacity(0.3), radius: 4)
-                            .overlay(
-                                // 白いアウトライン
-                                Text("息で飛ばす、ふたりの風船")
-                                    .font(.system(size: 18, weight: .medium, design: .rounded))
-                                    .foregroundStyle(.white.opacity(0.2))
-                                    .offset(x: 0, y: -1)
-                            )
-                            .tracking(2)
+                            // ハイライト
+                            Text("息で飛ばす、ふたりの風船")
+                                .nikumaruBody(size: 18)
+                                .foregroundStyle(.white.opacity(0.4))
+                                .offset(x: 0, y: -0.5)
+                        }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .shadow(color: Color(hex: "#A29BFE").opacity(0.5), radius: 10, x: 0, y: 3)
+                        .shadow(color: .white.opacity(0.4), radius: 5, x: 0, y: 1)
+                        .tracking(2)
                     }
+                    .padding(.horizontal, 16)
 
                     Spacer()
                     Spacer()
@@ -106,6 +200,7 @@ struct TitleScreen: View {
                         .onTapGesture {
                             handleStart()
                         }
+                        .padding(.horizontal, 16)
 
                     Spacer()
                         .frame(height: 80)
@@ -379,13 +474,72 @@ struct FloatingBalloon: View {
 
 struct TapToStartView: View {
     @State private var opacity: Double = 0.5
+    @State private var scale: CGFloat = 1.0
 
     var body: some View {
-        HStack(spacing: 8) {
+        ZStack {
+            // 影（下層）
             Text("タップしてはじめる")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(.black.opacity(0.5))
+                .offset(x: 0, y: 4)
+                .blur(radius: 3)
+
+            // グロウ（カラフル）
+            Text("タップしてはじめる")
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "#FFB3D9"),
+                            Color(hex: "#A29BFE")
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .offset(x: 0, y: 2)
+                .blur(radius: 6)
+                .opacity(0.8)
+
+            // ストローク
+            Text("タップしてはじめる")
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(.white)
+                .offset(x: -1.5, y: -1.5)
+                .opacity(0.6)
+
+            Text("タップしてはじめる")
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(.white)
+                .offset(x: 1.5, y: -1.5)
+                .opacity(0.6)
+
+            // メインテキスト
+            Text("タップしてはじめる")
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            .white,
+                            Color(hex: "#E0E0FF")
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+            // ハイライト
+            Text("タップしてはじめる")
+                .nikumaruHeadline(size: 24)
+                .foregroundStyle(.white.opacity(0.5))
+                .offset(x: 0, y: -1)
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.5)
+        .shadow(color: Color(hex: "#FFB3D9").opacity(0.6), radius: 15, x: 0, y: 4)
+        .shadow(color: Color(hex: "#A29BFE").opacity(0.6), radius: 20, x: 0, y: 6)
+        .scaleEffect(scale)
         .opacity(opacity)
         .onAppear {
             // キラキラ光る
@@ -394,6 +548,7 @@ struct TapToStartView: View {
                     .repeatForever(autoreverses: true)
             ) {
                 opacity = 1.0
+                scale = 1.05
             }
         }
     }

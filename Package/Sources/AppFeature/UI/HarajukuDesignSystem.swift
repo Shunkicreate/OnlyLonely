@@ -130,32 +130,32 @@ struct HarajukuColors {
 struct HarajukuTypography {
     /// 超デカタイトル - ふわふわで目立つ
     static func hugeTitle(size: CGFloat = 64) -> Font {
-        .system(size: size, weight: .heavy, design: .rounded)
+        .nikumaru(size: size)
     }
 
     /// タイトル - 大きく可愛く
     static func title(size: CGFloat = 48) -> Font {
-        .system(size: size, weight: .bold, design: .rounded)
+        .nikumaru(size: size)
     }
 
     /// サブタイトル - ポップに
     static func subtitle(size: CGFloat = 24) -> Font {
-        .system(size: size, weight: .semibold, design: .rounded)
+        .nikumaru(size: size)
     }
 
     /// ボディ - 読みやすく可愛く
     static func body(size: CGFloat = 16) -> Font {
-        .system(size: size, weight: .medium, design: .rounded)
+        .nikumaru(size: size)
     }
 
     /// キャプション - 小さめ
     static func caption(size: CGFloat = 12) -> Font {
-        .system(size: size, weight: .regular, design: .rounded)
+        .nikumaru(size: size)
     }
 
     /// ゲーム内数値 - ポップに
     static func gameValue(size: CGFloat = 36) -> Font {
-        .system(size: size, weight: .black, design: .rounded)
+        .nikumaru(size: size)
     }
 }
 

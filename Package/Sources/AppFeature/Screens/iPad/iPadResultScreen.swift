@@ -69,7 +69,7 @@ struct iPadResultScreen: View {
                         if let winner = winner {
                             // 勝者表示
                             Text(winner == .playerA ? "プレイヤーAのかち！" : "プレイヤーBのかち！")
-                                .font(.system(size: 54, weight: .black, design: .rounded))
+                                .nikumaruTitle(size: 54)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: winner == .playerA ? [
@@ -89,7 +89,7 @@ struct iPadResultScreen: View {
                                 .shadow(color: .white.opacity(0.8), radius: 5)
                                 .overlay(
                                     Text(winner == .playerA ? "プレイヤーAのかち！" : "プレイヤーBのかち！")
-                                        .font(.system(size: 54, weight: .black, design: .rounded))
+                                        .nikumaruTitle(size: 54)
                                         .foregroundStyle(.white.opacity(0.3))
                                         .offset(x: 0, y: -3)
                                 )
@@ -100,7 +100,7 @@ struct iPadResultScreen: View {
                         } else {
                             // 引き分け
                             Text("おなじだね！")
-                                .font(.system(size: 54, weight: .black, design: .rounded))
+                                .nikumaruTitle(size: 54)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
@@ -115,7 +115,7 @@ struct iPadResultScreen: View {
                                 .shadow(color: Color(hex: "#A29BFE").opacity(0.6), radius: 15)
                                 .overlay(
                                     Text("おなじだね！")
-                                        .font(.system(size: 54, weight: .black, design: .rounded))
+                                        .nikumaruTitle(size: 54)
                                         .foregroundStyle(.white.opacity(0.3))
                                         .offset(x: 0, y: -3)
                                 )
@@ -583,7 +583,7 @@ struct FluffyScoreCard: View {
             
             // プレイヤー名
             Text(playerName)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .nikumaruHeadline(size: 28)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [playerColor, playerColor.opacity(0.8)],
@@ -597,7 +597,7 @@ struct FluffyScoreCard: View {
             // 高度表示
             VStack(alignment: .trailing, spacing: 4) {
                 Text("\(Int(altitude))")
-                    .font(.system(size: 42, weight: .black, design: .rounded))
+                    .nikumaruTitle(size: 42)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [playerColor, playerColor.opacity(0.7)],
@@ -607,7 +607,7 @@ struct FluffyScoreCard: View {
                     )
                 
                 Text("メートル")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .nikumaruBody(size: 18)
                     .foregroundColor(playerColor.opacity(0.8))
             }
         }
@@ -683,9 +683,9 @@ struct FluffyResultButton: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 40, height: 40)
-                
+
                 Text(title)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .nikumaruHeadline(size: 28)
                     .foregroundColor(.white)
             }
             .padding(.horizontal, 48)

@@ -37,7 +37,7 @@ struct iPhoneGameplayScreen: View {
             VStack(spacing: 20) {
                 // 残り時間
                 Text("残り時間: \(timeRemaining)秒")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .nikumaruBody(size: 20)
                     .foregroundColor(.white)
                     .padding()
                     .background(
@@ -51,7 +51,7 @@ struct iPhoneGameplayScreen: View {
                 // プレイヤー情報
                 VStack(spacing: 12) {
                     Text("Player A")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .nikumaruHeadline(size: 24)
                         .foregroundColor(.white)
                 }
 
@@ -72,7 +72,7 @@ struct iPhoneGameplayScreen: View {
                 // 音圧レベルメーター
                 VStack(spacing: 8) {
                     Text("風力レベル")
-                        .font(.system(size: 14, weight: .medium))
+                        .nikumaruCaption(size: 14)
                         .foregroundColor(.white.opacity(0.8))
 
                     GeometryReader { geometry in
@@ -104,11 +104,11 @@ struct iPhoneGameplayScreen: View {
                 // 指示テキスト
                 VStack(spacing: 8) {
                     Text("息を吹きかけて")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .nikumaruBody(size: 20)
                         .foregroundColor(.white)
 
                     Text("風船を飛ばそう!")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .nikumaruBody(size: 20)
                         .foregroundColor(.white)
                 }
                 .padding(.bottom, 40)

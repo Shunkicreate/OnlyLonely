@@ -105,13 +105,11 @@ struct CountdownScreen: View {
                 // サブテキスト
                 VStack(spacing: HarajukuSpacing.sm) {
                     Text("いきをすって〜")
-                        .font(HarajukuTypography.body(size: 18))
-                        .fontWeight(.bold)
+                        .nikumaruBody(size: 18)
                         .foregroundColor(HarajukuColors.textPrimary)
 
                     Text("もうすぐはじまるよ！")
-                        .font(HarajukuTypography.caption(size: 14))
-                        .fontWeight(.semibold)
+                        .nikumaruCaption(size: 14)
                         .foregroundColor(HarajukuColors.textSecondary)
                 }
                 .offset(y: 200)
