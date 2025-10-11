@@ -11,12 +11,20 @@ import Foundation
 @MainActor
 final class iPadGameplayScreenModel: ObservableObject {
     private var sessionManager: P2PSessionManager?
+    private weak var physicsCoordinator: GamePhysicsCoordinator?
     private var cancellables = Set<AnyCancellable>()
+    @Published private(set) var playerNames: [PlayerSlot: String] = [:]
 
-    func configure(sessionManager: P2PSessionManager) {
-        guard sessionManager !== self.sessionManager else { return }
+    func configure(sessionManager: P2PSessionManager, physicsCoordinator: GamePhysicsCoordinator) {
+        let sessionChanged = sessionManager !== self.sessionManager
         self.sessionManager = sessionManager
-        subscribe(to: sessionManager)
+        self.physicsCoordinator = physicsCoordinator
+
+        if sessionChanged {
+            subscribe(to: sessionManager)
+        }
+
+        refreshPlayerNames()
     }
 
     func cancelSubscriptions() {
@@ -32,11 +40,54 @@ final class iPadGameplayScreenModel: ObservableObject {
                 self.handleWindForce(message)
             }
             .store(in: &cancellables)
+
+        sessionManager.$connectedPeers
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.refreshPlayerNames()
+            }
+            .store(in: &cancellables)
     }
 
     private func handleWindForce(_ message: PlayerWindForceMessage) {
-        let formattedForce = String(format: "%.3f", message.force)
-        let formattedRoll = String(format: "%.2f", message.roll)
-        print("📥 Wind update <- \(message.playerId): force=\(formattedForce), roll=\(formattedRoll) at \(message.timestamp)")
+        print("📥 Wind update <- \(message.playerId): force=\(message.force), roll=\(message.roll) at \(message.timestamp)")
+        physicsCoordinator?.receiveWindInput(
+            playerId: message.playerId,
+            force: message.force,
+            roll: message.roll,
+            timestamp: message.timestamp.timeIntervalSince1970
+        )
+        refreshPlayerNames()
+    }
+
+    func displayName(for slot: PlayerSlot) -> String {
+        playerNames[slot] ?? defaultName(for: slot)
+    }
+
+    private func refreshPlayerNames() {
+        guard let sessionManager else { return }
+
+        var updated: [PlayerSlot: String] = [:]
+
+        if let slotId = physicsCoordinator?.playerId(for: .playerA) ?? sessionManager.connectedPeers.first?.id,
+           let peer = sessionManager.connectedPeers.first(where: { $0.id == slotId }) {
+            updated[.playerA] = peer.name
+        }
+
+        if let slotId = physicsCoordinator?.playerId(for: .playerB) ?? sessionManager.connectedPeers.dropFirst().first?.id,
+           let peer = sessionManager.connectedPeers.first(where: { $0.id == slotId }) {
+            updated[.playerB] = peer.name
+        }
+
+        playerNames = updated
+    }
+
+    private func defaultName(for slot: PlayerSlot) -> String {
+        switch slot {
+        case .playerA:
+            return "Player A"
+        case .playerB:
+            return "Player B"
+        }
     }
 }

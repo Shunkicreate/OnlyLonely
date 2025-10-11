@@ -12,16 +12,36 @@ struct PhysicsConstants {
     // MARK: - 基本物理パラメータ
 
     /// 重力加速度 (m/s²)
-    static let gravity: CGFloat = -9.8
+    static let gravity: CGFloat = -1.0
 
     /// 子供の質量 (kg)
     static let childMass: CGFloat = 10.0
 
     /// 浮力係数（TBD: 調整が必要）
-    static var liftCoefficient: CGFloat = 50.0
+    static var liftCoefficient: CGFloat = 100.0
 
-    /// 空気抵抗係数（TBD: 調整が必要）
-    static var dragCoefficient: CGFloat = 0.5
+    /// 空気抵抗係数（値を上げると減速が早くなる）
+    static var dragCoefficient: CGFloat = 1.4
+
+    /// 左右傾きの最大角度（度）
+    static var maxTiltDegrees: Double = 30.0
+
+    /// 左右の傾きを速度へ変換するスケール（ポイント/秒）
+    static var horizontalSpeed: CGFloat = 220.0
+
+    /// 左右レーンの端からの余白
+    static var laneHorizontalPadding: CGFloat = 80.0
+
+    /// 風入力の感度（iPhone→iPad）
+    static var windForceSensitivity: Float = 1.6
+
+    /// 風力の上限（感度適用後）
+    static func windForce(force: Float) -> Float {
+        return force * 30.0
+    }
+
+    /// 地面ラインのY座標（SpriteKit空間）
+    static var groundBaseline: CGFloat = 50.0
 
 
     // MARK: - 雲パラメータ
