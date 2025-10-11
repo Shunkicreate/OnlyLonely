@@ -156,11 +156,25 @@ struct ConnectionScreen: View {
             let feedback = UINotificationFeedbackGenerator()
             feedback.notificationOccurred(.success)
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                coordinator.navigate(to: .playerNameInput)
-            }
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+//                coordinator.navigate(to: .playerNameInput)
+//            }
         }
         .navigationBarBackButtonHidden()
+        .alert(
+            "接続リクエスト",
+            isPresented: invitationAlertBinding,
+            presenting: connectionModel.hostDisplayName
+        ) { host in
+            Button("承認する") {
+                connectionModel.acceptInvitation()
+            }
+            Button("今回はやめる", role: .cancel) {
+                connectionModel.declineInvitation()
+            }
+        } message: { host in
+            Text("\(host) から接続リクエストが届きました。\n接続を承認しますか？")
+        }
     }
 
     private var buttonTitle: String {
@@ -240,6 +254,17 @@ struct ConnectionScreen: View {
         let feedback = UIImpactFeedbackGenerator(style: .medium)
         feedback.impactOccurred()
     }
+
+    private var invitationAlertBinding: Binding<Bool> {
+        Binding(
+            get: { connectionModel.invitationReceived },
+            set: { isPresented in
+                if !isPresented {
+                    connectionModel.dismissInvitationPrompt()
+                }
+            }
+        )
+    }
 }
 
 // MARK: - Connection Indicator
@@ -307,6 +332,7 @@ private struct ConnectionIndicator: View {
     }
 
     private var iconEmoji: String {
+        print("👹 \(state)")
         switch state {
         case .idle:
             return "📡"

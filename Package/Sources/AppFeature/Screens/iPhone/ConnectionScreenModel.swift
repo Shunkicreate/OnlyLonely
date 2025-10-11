@@ -25,6 +25,8 @@ final class ConnectionScreenModel: NSObject, ObservableObject {
     @Published private(set) var isReadyToProceed: Bool = false
     @Published private(set) var isAdvertising: Bool = false
 
+    private var pendingInvitationHandler: ((Bool, MCSession?) -> Void)?
+    private var pendingInvitingPeer: MCPeerID?
     private let serviceType = "onlylonelyp2p"
     private let peerID: MCPeerID
     private let session: MCSession
@@ -54,23 +56,14 @@ final class ConnectionScreenModel: NSObject, ObservableObject {
 
         wantsConnection = true
         errorMessage = nil
+        invitationReceived = false
+        pendingInvitationHandler = nil
+        pendingInvitingPeer = nil
         phase = .connecting
         isReadyToProceed = false
         sessionManager.configure(role: .guest, peerID: peerID, session: session)
         sessionManager.updateConnectedPeers([])
         startAdvertising()
-    }
-
-    func stop() {
-        wantsConnection = false
-        stopAdvertising()
-        session.disconnect()
-        phase = .idle
-        errorMessage = nil
-        hostDisplayName = nil
-        invitationReceived = false
-        isReadyToProceed = false
-        sessionManager.reset()
     }
 
     private func startAdvertising() {
@@ -91,8 +84,33 @@ final class ConnectionScreenModel: NSObject, ObservableObject {
         isReadyToProceed = false
         hostDisplayName = nil
         invitationReceived = false
+        pendingInvitationHandler = nil
+        pendingInvitingPeer = nil
         wantsConnection = false
         sessionManager.reset()
+    }
+
+    func acceptInvitation() {
+        guard invitationReceived, let handler = pendingInvitationHandler else { return }
+        invitationReceived = false
+        pendingInvitingPeer = nil
+        pendingInvitationHandler = nil
+        handler(true, session)
+    }
+
+    func declineInvitation() {
+        guard invitationReceived, let handler = pendingInvitationHandler else { return }
+        invitationReceived = false
+        handler(false, nil)
+        pendingInvitationHandler = nil
+        pendingInvitingPeer = nil
+        hostDisplayName = nil
+    }
+
+    func dismissInvitationPrompt() {
+        invitationReceived = false
+        pendingInvitationHandler = nil
+        pendingInvitingPeer = nil
     }
 }
 
@@ -110,8 +128,9 @@ extension ConnectionScreenModel: MCNearbyServiceAdvertiserDelegate {
             }
 
             hostDisplayName = peerID.displayName
+            pendingInvitingPeer = peerID
             invitationReceived = true
-            invitationHandler(true, session)
+            pendingInvitationHandler = invitationHandler
         }
     }
 
@@ -125,9 +144,11 @@ extension ConnectionScreenModel: MCNearbyServiceAdvertiserDelegate {
 extension ConnectionScreenModel: MCSessionDelegate {
     nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         Task { @MainActor in
+            print(">>> state changed to \(state)")
             switch state {
             case .notConnected:
                 stopAdvertising()
+                pendingInvitationHandler = nil
                 if phase == .connected {
                     handleFailure(message: "接続が切断されました")
                 } else if wantsConnection {

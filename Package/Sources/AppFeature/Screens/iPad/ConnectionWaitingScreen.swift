@@ -64,6 +64,14 @@ struct ConnectionWaitingScreen: View {
                 }
                 .padding(.vertical, 20)
 
+                WaitingGuestList(
+                    guests: connectionModel.discoveredGuests,
+                    inviteAction: { guest in
+                        connectionModel.invitePeer(guest)
+                    }
+                )
+                .padding(.horizontal, 40)
+
                 // プレイヤー状態表示
                 VStack(spacing: 16) {
                     PlayerStatusCard(
@@ -133,9 +141,9 @@ struct ConnectionWaitingScreen: View {
 
     private func handleReadinessChange(isReady: Bool) {
         guard isReady else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            coordinator.navigate(to: .iPadGameplay)
-        }
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//            coordinator.navigate(to: .iPadGameplay)
+//        }
     }
 }
 
@@ -190,6 +198,124 @@ struct PlayerStatusCard: View {
         case .ready:
             Text("準備完了")
                 .foregroundColor(.green)
+        }
+    }
+}
+
+private struct WaitingGuestList: View {
+    let guests: [PeerDevice]
+    let inviteAction: (PeerDevice) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("近くのプレイヤー")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+
+            if guests.isEmpty {
+                HStack(spacing: 12) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("接続待機中の iPhone を探しています")
+                        .font(.system(size: 16, design: .rounded))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                )
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(guests) { guest in
+                        WaitingGuestRow(guest: guest) {
+                            inviteAction(guest)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct WaitingGuestRow: View {
+    let guest: PeerDevice
+    let inviteAction: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(guest.displayName)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(statusLabel)
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            Spacer()
+
+            statusIndicator
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.18))
+        )
+    }
+
+    private var statusIndicator: some View {
+        switch guest.status {
+        case .available:
+            return AnyView(
+                Button {
+                    inviteAction()
+                } label: {
+                    Text("接続する")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(red: 0.1, green: 0.3, blue: 0.6))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.white)
+                        )
+                }
+            )
+        case .invited, .awaitingResponse:
+            return AnyView(
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    Text("承認待ち")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+            )
+        case .connected:
+            return AnyView(
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                    Text("接続済み")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+            )
+        }
+    }
+
+    private var statusLabel: String {
+        switch guest.status {
+        case .available:
+            return "タップして接続"
+        case .invited:
+            return "招待を送信中"
+        case .awaitingResponse:
+            return "相手の承認待ち"
+        case .connected:
+            return "接続完了"
         }
     }
 }

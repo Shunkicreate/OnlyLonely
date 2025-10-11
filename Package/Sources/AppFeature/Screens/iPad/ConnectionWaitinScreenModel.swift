@@ -103,11 +103,21 @@ final class ConnectionWaitinScreenModel: NSObject, ObservableObject {
         return nil
     }
 
+    func invitePeer(_ device: PeerDevice) {
+        inviteIfPossible(peerID: device.peerId)
+    }
+
     private func inviteIfPossible(peerID: MCPeerID) {
         guard !invitedPeers.contains(peerID) else { return }
-        guard let slot = assignSlotIfNeeded(for: peerID) else { return }
+        guard let slot = assignSlotIfNeeded(for: peerID) else {
+            errorMessage = "これ以上接続できる枠がありません"
+            return
+        }
 
         invitedPeers.insert(peerID)
+        updateGuest(peerID) { guest in
+            guest.status = .invited
+        }
         browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
         setState(.connected, for: slot)
     }
@@ -130,32 +140,37 @@ final class ConnectionWaitinScreenModel: NSObject, ObservableObject {
         guard let slot = slotByPeer.removeValue(forKey: peerID) else { return }
         invitedPeers.remove(peerID)
         setState(.disconnected, for: slot)
+        updateGuest(peerID) { guest in
+            guest.status = .available
+        }
         connectedPeerNames = session.connectedPeers.map(\.displayName)
         sessionManager.updateConnectedPeers(session.connectedPeers)
-        inviteNextAvailableGuest()
-    }
-
-    private func inviteNextAvailableGuest() {
-        guard let next = discoveredGuests.first(where: { !invitedPeers.contains($0.peerId) }) else {
-            return
-        }
-        inviteIfPossible(peerID: next.peerId)
     }
 
     private func updateConnectedPeerNames() {
         connectedPeerNames = session.connectedPeers.map(\.displayName)
         sessionManager.updateConnectedPeers(session.connectedPeers)
     }
+
+    private func updateGuest(_ peerID: MCPeerID, mutation: (inout PeerDevice) -> Void) {
+        guard let index = discoveredGuests.firstIndex(where: { $0.peerId == peerID }) else { return }
+        var guest = discoveredGuests[index]
+        mutation(&guest)
+        discoveredGuests[index] = guest
+    }
 }
 
 extension ConnectionWaitinScreenModel: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         Task { @MainActor in
-            if !discoveredGuests.contains(where: { $0.peerId == peerID }) {
-                let device = PeerDevice(peerId: peerID)
+            if let index = discoveredGuests.firstIndex(where: { $0.peerId == peerID }) {
+                var device = discoveredGuests[index]
+                device.status = .available
+                discoveredGuests[index] = device
+            } else {
+                let device = PeerDevice(peerId: peerID, status: .available)
                 discoveredGuests.append(device)
             }
-            inviteIfPossible(peerID: peerID)
         }
     }
 
@@ -187,9 +202,15 @@ extension ConnectionWaitinScreenModel: MCSessionDelegate {
       case .connecting:
         setState(.connected, for: slot)
         updateConnectedPeerNames()
+        updateGuest(peerID) { guest in
+            guest.status = .awaitingResponse
+        }
       case .connected:
         setState(.ready, for: slot)
         updateConnectedPeerNames()
+        updateGuest(peerID) { guest in
+            guest.status = .connected
+        }
       @unknown default:
         break
       }
