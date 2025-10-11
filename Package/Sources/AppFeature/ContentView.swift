@@ -14,7 +14,6 @@ public struct ContentView: View {
     @StateObject private var hostConnectionModel: ConnectionWaitinScreenModel
     @StateObject private var guestConnectionModel: ConnectionScreenModel
     @StateObject private var bgmManager: BGMManager
-    @State private var showDebug = false
 
     public init() {
         let coordinator = AppCoordinator()
@@ -44,20 +43,6 @@ public struct ContentView: View {
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()
-        }
-        .overlay(alignment: .bottomTrailing) {
-            Button {
-                showDebug = true
-            } label: {
-                Image(systemName: "ladybug.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(16)
-                    .background(Color.red.opacity(0.9))
-                    .clipShape(Circle())
-                    .shadow(radius: 6)
-            }
-            .padding(16)
         }
     }
 
