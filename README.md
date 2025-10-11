@@ -146,19 +146,25 @@ OnlyLonely は、そんな “ふたりの孤独” をつなぐ風のゲーム�
 音声データは送らず、音圧値のみ送信。
 
 SpriteKit の SKEmitterNode で風・粒子演出。
+```
 
-## Serena のセットアップ
+## Serena
 
-Serena は、LLM を完全なコーディングエージェントに変換するオープンソースの MCP サーバーです。Language Server Protocol (LSP) を活用して IDE 級のセマンティックコード解析・編集機能を提供します。
+Serenaは、LLMを完全なコーディングエージェントに変換するオープンソースのMCPサーバーです。Language Server Protocol (LSP) を活用してIDE級のセマンティックコード解析・編集機能を提供します。
 
-1. uv のインストール
+1. uvのインストール
 
 ```
 asdf plugin add uv
 ```
 
-2. serena のインストール
+2. serenaのインストール
 
 ```
 claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context ide-assistant --project $(pwd)
 ```
+3. serena mcpとプロジェクトの連携
+```
+/mcp__serena__initial_instructions
+```
+
