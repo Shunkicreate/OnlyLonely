@@ -12,6 +12,7 @@ enum AppRoute: Hashable {
 
     // iPad
     case connectionWaiting
+    case iPadCountdown
     case iPadGameplay
     case iPadResult
 

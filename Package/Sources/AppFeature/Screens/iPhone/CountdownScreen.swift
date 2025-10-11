@@ -61,7 +61,6 @@ struct CountdownScreen: View {
                     // "スタート！" テキスト
                     RainbowText(text: "スタート！", size: 64)
                         .scaleEffect(scale)
-                        .rotationEffect(.degrees(rotation * 0.2))
 
                     // 風船が飛び立つ演出
                     HStack(spacing: 40) {
@@ -188,7 +187,6 @@ struct CountdownScreen: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.4)) {
                 scale = 1.6
-                rotation = 360
             }
 
             // 成功フィードバック
@@ -204,9 +202,15 @@ struct CountdownScreen: View {
             }
         }
 
-        // ゲームプレイ画面へ遷移
+        // ゲームプレイ画面へ遷移（デバイスタイプに応じて）
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            coordinator.navigate(to: .iPhoneGameplay)
+            let deviceType = DeviceType.current
+            switch deviceType {
+            case .iPad:
+                coordinator.navigate(to: .iPadGameplay)
+            case .iPhone:
+                coordinator.navigate(to: .iPhoneGameplay)
+            }
         }
     }
 }

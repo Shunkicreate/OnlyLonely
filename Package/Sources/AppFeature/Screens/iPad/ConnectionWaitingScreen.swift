@@ -62,7 +62,7 @@ struct ConnectionWaitingScreen: View {
         .onChange(of: hostModel.connectedDevices.count) { _, count in
             if count >= 2 {
                 hostModel.advanceConnectedDevicesToCountdown()
-                coordinator.navigate(to: .iPadGameplay)
+                coordinator.navigate(to: .iPadCountdown)
             }
         }
         .navigationBarBackButtonHidden()
