@@ -107,12 +107,13 @@ struct HarajukuPlayerNameInputScreen: View {
                     ) {
                         joinGame()
                     }
-                    .opacity(showContent ? 1 : 0)
+                    .disabled(!isValidInput)
+                    .opacity(showContent ? (isValidInput ? 1.0 : 0.5) : 0)
 
                     // メッセージ
                     VStack(spacing: 4) {
                         if playerName.isEmpty {
-                            Text("💭 からのままでも だいじょうぶ！")
+                            Text("💭 なまえを いれてね")
                                 .font(HarajukuTypography.caption(size: 12))
                                 .foregroundColor(HarajukuColors.textSecondary)
                         } else {
@@ -139,6 +140,10 @@ struct HarajukuPlayerNameInputScreen: View {
         .navigationBarBackButtonHidden()
     }
 
+    private var isValidInput: Bool {
+        !playerName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     private func startAnimations() {
         isBouncing = true
         sparkleScale = 1.2
@@ -154,13 +159,21 @@ struct HarajukuPlayerNameInputScreen: View {
     }
 
     private func joinGame() {
+        // バリデーションチェック
+        guard isValidInput else { return }
+
         // 触覚フィードバック
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
 
-        let name = playerName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : playerName
+        // 先頭・末尾の空白を削除（トリミング）
+        let trimmedName = playerName.trimmingCharacters(in: .whitespaces)
+        let name = trimmedName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : trimmedName
+
+        print("✅ Player joined: \(name)")
 
         // WebSocket でプレイヤー参加メッセージを送信（後で実装）
+        // webSocketService.send(.playerJoin(playerName: name, playerId: UUID().uuidString))
 
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             coordinator.navigate(to: .waiting)
