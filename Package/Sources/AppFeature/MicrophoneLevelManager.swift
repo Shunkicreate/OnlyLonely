@@ -10,6 +10,7 @@ import Foundation
 
 final class MicrophoneLevelManager: NSObject, ObservableObject {
     @Published private(set) var peakHoldLevel: Float?
+    @Published private(set) var windForce: Float = 0.0  // 風力（0.0〜1.0）
     @Published private(set) var isMonitoring = false
 
     private let captureSession = AVCaptureSession()
@@ -17,6 +18,10 @@ final class MicrophoneLevelManager: NSObject, ObservableObject {
     private let sessionQueue = DispatchQueue(label: "com.onlylonely.microphone.session", qos: .userInitiated)
     private let sampleBufferQueue = DispatchQueue(label: "com.onlylonely.microphone.samplebuffer", qos: .utility)
     private var isSessionConfigured = false
+
+    // 風力計算のパラメータ
+    private let threshold: Float = -20.0  // -20dB以下は無視
+    private let sensitivity: Float = 0.7  // 感度調整
 
     override init() {
         super.init()
@@ -54,6 +59,7 @@ final class MicrophoneLevelManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 self.isMonitoring = false
                 self.peakHoldLevel = nil
+                self.windForce = 0.0
             }
         }
     }
@@ -108,9 +114,29 @@ extension MicrophoneLevelManager: AVCaptureAudioDataOutputSampleBufferDelegate {
 
         let peak = channels.reduce(Float(0)) { $0 + $1.peakHoldLevel } / Float(channels.count)
 
+        // 風力を計算
+        let calculatedWindForce = calculateWindForce(from: peak)
+
         DispatchQueue.main.async {
             self.peakHoldLevel = peak
+            self.windForce = calculatedWindForce
         }
+    }
+
+    private func calculateWindForce(from peakLevel: Float) -> Float {
+        // 最小閾値チェック（小さい音を拾わないようにする）
+        guard peakLevel > threshold else {
+            return 0.0
+        }
+
+        // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
+        let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
+
+        // 感度調整を適用
+        let force = normalized * sensitivity
+
+        // 0.0〜1.0の範囲にクリップ
+        return max(0, min(1.0, force))
     }
 }
 

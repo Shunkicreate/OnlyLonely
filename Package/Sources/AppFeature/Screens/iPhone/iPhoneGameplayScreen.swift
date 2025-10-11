@@ -14,6 +14,7 @@ struct iPhoneGameplayScreen: View {
     @StateObject private var micLevelManager = MicrophoneLevelManager()
 
     @State private var timeRemaining: Int = 60
+    @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
     @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
 
@@ -55,17 +56,17 @@ struct iPhoneGameplayScreen: View {
                 VStack {
                     Text("🎈")
                         .font(.system(size: 80))
-                        .scaleEffect(1.0 + CGFloat(windForce) * 0.3)
-                        .animation(.easeInOut(duration: 0.3), value: windForce)
+                        .scaleEffect(1.0 + CGFloat(micLevelManager.windForce) * 0.3)
+                        .animation(.easeInOut(duration: 0.3), value: micLevelManager.windForce)
 
                     Text("✨✨")
                         .font(.system(size: 24))
-                        .opacity(Double(windForce))
+                        .opacity(Double(micLevelManager.windForce))
                 }
 
                 // 音圧レベルメーター
                 VStack(spacing: 8) {
-                    Text("音圧レベル")
+                    Text("風力レベル")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
 
@@ -84,8 +85,8 @@ struct iPhoneGameplayScreen: View {
                                         endPoint: .trailing
                                     )
                                 )
-                                .frame(width: geometry.size.width * CGFloat(windForce))
-                                .animation(.easeOut(duration: 0.1), value: windForce)
+                                .frame(width: geometry.size.width * CGFloat(micLevelManager.windForce))
+                                .animation(.easeOut(duration: 0.1), value: micLevelManager.windForce)
                         }
                     }
                     .frame(height: 30)
@@ -134,9 +135,10 @@ struct iPhoneGameplayScreen: View {
             }
         }
 
-        // 音圧更新（30Hz）
+        // 高度更新（30Hz）
         Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
-            updateWindForce()
+            // 高度を更新（簡易シミュレーション）
+            currentAltitude += Double(micLevelManager.windForce) * 2.0
         }
     }
 
