@@ -107,6 +107,8 @@ struct iPadGameplayScreen: View {
             hasBroadcastGameFinished = false
             resultStore.reset()
             gameManager.startGame()
+            // TODO: 雲データ読み込み
+            // try? physicsCoordinator.loadCloudData(json: "...")
         }
         .onDisappear {
             screenModel.cancelSubscriptions()
@@ -216,7 +218,6 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
         }
 
         physicsCoordinator.configureLaneBounds(for: lane, sceneSize: self.size)
-        loadClouds()
         updateCameraPosition()
     }
 
@@ -297,19 +298,6 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
         addChild(balloonNode)
         balloon = balloonNode
         physicsCoordinator?.register(balloonBody: body, for: lane)
-    }
-
-    private func loadClouds() {
-        guard let physicsCoordinator else { return }
-        for node in clouds.values { node.removeFromParent() }
-        clouds.removeAll()
-        clouds = CloudLoader.loadLaneClouds(
-            lane: lane,
-            laneSize: size,
-            cloudsPerLane: 6,
-            physicsCoordinator: physicsCoordinator,
-            scene: self
-        )
     }
 
     private func updateCameraPosition() {
