@@ -250,6 +250,70 @@ let acceleration = liftForce + gravity - resistance
 - 雷鳴（松の雲）
 - 風船が割れる音
 - 風船再生成音
+- キャラクター同士の衝突音（ポンッという軽い音）
+- 障害物衝突時の固有効果音（[サウンド設計書：障害物衝突音](../sound-design.md#9-障害物衝突時のフィードバック音) を参照）
+
+### 衝突時のフィードバック
+
+#### ビジュアルフィードバック
+
+- **キャラクター衝突**: 衝突地点に白い波紋エフェクト、両キャラクターが軽く点滅
+- **障害物衝突**: 障害物ごとに固有のエフェクト（[ビジュアル設計書：衝突エフェクト](../visual-design.md#衝突時のフィードバックエフェクト) を参照）
+- **画面振動**: 大きな衝突（梅の雲、隕石）では画面全体が軽く振動（0.1〜0.2秒）
+- **スローモーション**: 重要な衝突（隕石、雷）では瞬間的にスローモーション演出（0.3倍速、0.2秒間）
+
+#### オーディオフィードバック
+
+- **空間オーディオ**: 衝突位置（左右）に応じてステレオパンニング
+- **音量変化**: 衝突の強度に応じて音量が変化（50%〜100%）
+- **固有効果音**: 各障害物ごとに異なる衝突音を再生
+
+#### 実装メモ
+
+```swift
+// 衝突検出時のフィードバック処理
+func didBegin(_ contact: SKPhysicsContact) {
+    let collision = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
+
+    // ビジュアルフィードバック
+    if collision == (PhysicsCategory.playerA | PhysicsCategory.playerB) {
+        // キャラクター衝突エフェクト
+        showCollisionEffect(at: contact.contactPoint)
+        flashCharacters([playerA, playerB], duration: 0.1)
+    } else if collision & PhysicsCategory.obstacle != 0 {
+        // 障害物衝突エフェクト
+        showObstacleCollisionEffect(at: contact.contactPoint, type: obstacleType)
+
+        // 強い衝突なら画面振動
+        if isStrongCollision(obstacleType) {
+            shakeScreen(duration: 0.2, intensity: 5.0)
+        }
+    }
+
+    // オーディオフィードバック
+    playCollisionSound(for: collision, at: contact.contactPoint)
+}
+
+// 画面振動
+func shakeScreen(duration: TimeInterval, intensity: CGFloat) {
+    let shake = SKAction.sequence([
+        SKAction.moveBy(x: intensity, y: 0, duration: 0.05),
+        SKAction.moveBy(x: -intensity * 2, y: 0, duration: 0.05),
+        SKAction.moveBy(x: intensity, y: 0, duration: 0.05)
+    ])
+    scene?.run(SKAction.repeat(shake, count: Int(duration / 0.15)))
+}
+
+// 空間オーディオでサウンド再生
+func playCollisionSound(for collision: UInt32, at point: CGPoint) {
+    let soundName = getSoundName(for: collision)
+    let action = SKAction.playSoundFileNamed(soundName, waitForCompletion: false)
+
+    // 左右の位置に応じてパンニング
+    let panValue = (point.x - scene.frame.midX) / (scene.frame.width / 2)
+    // AVAudioEngine を使った 3D サウンド実装（詳細は後述）
+}
+```
 
 ## 未定事項
 
@@ -265,3 +329,7 @@ let acceleration = liftForce + gravity - resistance
 - [ ] 一時停止機能の有無
 - [ ] 風船再生成のアニメーション
 - [ ] 宇宙飛行士の表示タイミング
+- [ ] 衝突エフェクトのパーティクルパラメータ
+- [ ] 画面振動の強度と持続時間の調整
+- [ ] スローモーション演出のトリガー条件
+- [ ] 空間オーディオの実装詳細（AVAudioEngine）

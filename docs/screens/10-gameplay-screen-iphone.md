@@ -166,6 +166,107 @@ let clampedForce = max(0.0, min(1.0, normalizedForce))
 ### ハプティクス
 
 - 息を吹いた時の振動フィードバック（オプション）
+- **衝突時の振動フィードバック**（重要）
+
+### 衝突時のフィードバック（iPhone）
+
+プレイヤーが何かと衝突した際、iPhone でもフィードバックを提供してユーザー体験を向上させます。
+
+#### ハプティクスフィードバック
+
+| 衝突タイプ       | ハプティクスパターン | 説明                               |
+| ---------------- | -------------------- | ---------------------------------- |
+| キャラクター衝突 | `.medium` タップ     | 相手プレイヤーとぶつかった時       |
+| 弱い衝突         | `.light` タップ      | 雲（竹）、流れ星など軽い衝突       |
+| 中程度の衝突     | `.medium` タップ     | 電線、カラス、凧揚げ、雲（松）     |
+| 強い衝突         | `.heavy` インパクト  | 雲（梅）、隕石などの大きな衝突     |
+| 雷ヒット         | `.heavy` + 連続振動  | 風船が割れる時の強い振動           |
+
+#### 視覚的フィードバック
+
+- **衝突インジケーター**: 画面上部に小さなアイコンで衝突を通知
+  - 赤い「!」マーク: ダメージを受ける衝突（雷、隕石）
+  - 黄色い「!」マーク: 障害物との衝突
+  - 青い波紋アイコン: キャラクター同士の衝突
+- **画面フラッシュ**: 強い衝突時に画面が軽く白く点滅（0.1秒）
+- **風船の揺れ**: 衝突時に風船プレビュー（表示している場合）が揺れる
+
+#### オーディオフィードバック
+
+- iPad で再生される衝突音に連動（空間オーディオの場合）
+- オプション: iPhone でも衝突音を再生（iPad との同期）
+
+#### テキスト通知（オプション）
+
+- 大きな衝突時に短いメッセージを表示（0.5秒間）
+  - 「カラスに押された！」
+  - 「雲にぶつかった！」
+  - 「相手とぶつかった！」
+  - 「雷に当たった！」
+
+#### 実装メモ
+
+```swift
+import CoreHaptics
+import UIKit
+
+class CollisionFeedbackManager {
+    private var hapticEngine: CHHapticEngine?
+
+    init() {
+        prepareHaptics()
+    }
+
+    func prepareHaptics() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            hapticEngine = try CHHapticEngine()
+            try hapticEngine?.start()
+        } catch {
+            print("Haptic engine error: \(error)")
+        }
+    }
+
+    func playCollisionFeedback(type: CollisionType) {
+        switch type {
+        case .character:
+            triggerImpact(.medium)
+        case .weak:
+            triggerImpact(.light)
+        case .medium:
+            triggerImpact(.medium)
+        case .strong:
+            triggerImpact(.heavy)
+            flashScreen()
+        case .lightning:
+            triggerImpact(.heavy)
+            triggerContinuousHaptic(duration: 0.3)
+            flashScreen()
+        }
+    }
+
+    private func triggerImpact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.impactOccurred()
+    }
+
+    private func flashScreen() {
+        // 画面フラッシュエフェクト
+        let flashView = UIView(frame: UIScreen.main.bounds)
+        flashView.backgroundColor = .white
+        flashView.alpha = 0.5
+        // アニメーションで消す
+    }
+}
+
+enum CollisionType {
+    case character  // キャラクター衝突
+    case weak       // 弱い衝突
+    case medium     // 中程度の衝突
+    case strong     // 強い衝突
+    case lightning  // 雷ヒット
+}
+```
 
 ## 未定事項
 
@@ -176,3 +277,7 @@ let clampedForce = max(0.0, min(1.0, normalizedForce))
 - [ ] ハプティクスフィードバックの有無
 - [ ] フィードバック音の有無
 - [ ] スリープ防止の実装
+- [ ] 衝突インジケーターのデザインと配置
+- [ ] テキスト通知の表示要否
+- [ ] ハプティクスパターンの強度調整
+- [ ] iPad との衝突音同期の実装方法
