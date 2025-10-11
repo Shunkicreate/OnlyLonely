@@ -118,6 +118,7 @@ struct iPadResultScreen: View {
         .onAppear {
             showAnimation = true
         }
+        .navigationBarBackButtonHidden()
     }
 }
 
