@@ -67,6 +67,37 @@ struct ConnectionScreen: View {
                         .frame(height: 140)
                         .padding(.vertical, HarajukuSpacing.lg)
 
+                    // 名前入力フィールド
+                    VStack(spacing: 8) {
+                        Text("なまえをいれてね")
+                            .nikumaruCaption(size: 12)
+                            .foregroundColor(HarajukuColors.textSecondary)
+
+                        FluffyTextField(
+                            placeholder: "なまえをいれてね♪",
+                            text: Binding(
+                                get: { connectionModel.playerName },
+                                set: { newValue in
+                                    // 10文字制限
+                                    if newValue.count <= 10 {
+                                        connectionModel.playerName = newValue
+                                    }
+                                }
+                            ),
+                            emoji: "✨",
+                            gradient: HarajukuColors.skyGradient,
+                            borderColor: HarajukuColors.pastelPink,
+                            keyboardType: .default,
+                            isDisabled: connectionModel.phase == .connecting || connectionModel.phase == .connected
+                        )
+                        .padding(.horizontal, HarajukuSpacing.xl)
+
+                        Text("10文字まで")
+                            .nikumaruCaption(size: 10)
+                            .foregroundColor(HarajukuColors.textSecondary.opacity(0.6))
+                    }
+                    .padding(.vertical, HarajukuSpacing.md)
+
                     // 接続先表示
                     if let host = connectionModel.hostName {
                         VStack(spacing: 8) {
@@ -98,8 +129,8 @@ struct ConnectionScreen: View {
                         ) {
                             connectionModel.connect()
                         }
-                        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected)
-                        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected) ? 0.5 : 1.0)
+                        .disabled(connectionModel.phase == .connecting || connectionModel.phase == .connected || connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity((connectionModel.phase == .connecting || connectionModel.phase == .connected || connectionModel.playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) ? 0.5 : 1.0)
 
                         // キャンセルボタン
                         FluffyOutlineButton(
