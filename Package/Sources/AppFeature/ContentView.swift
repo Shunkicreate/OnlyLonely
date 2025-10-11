@@ -13,17 +13,20 @@ public struct ContentView: View {
     @StateObject private var sessionManager: P2PSessionManager
     @StateObject private var hostConnectionModel: ConnectionWaitinScreenModel
     @StateObject private var guestConnectionModel: ConnectionScreenModel
+    @StateObject private var bgmManager: BGMManager
     @State private var showDebug = false
 
     public init() {
         let coordinator = AppCoordinator()
         let micPermissionManager = MicrophonePermissionManager()
         let sessionManager = P2PSessionManager()
+        let bgmManager = BGMManager.shared
         _coordinator = StateObject(wrappedValue: coordinator)
         _micPermissionManager = StateObject(wrappedValue: micPermissionManager)
         _sessionManager = StateObject(wrappedValue: sessionManager)
         _hostConnectionModel = StateObject(wrappedValue: ConnectionWaitinScreenModel(sessionManager: sessionManager))
         _guestConnectionModel = StateObject(wrappedValue: ConnectionScreenModel(sessionManager: sessionManager))
+        _bgmManager = StateObject(wrappedValue: bgmManager)
     }
 
     public var body: some View {
@@ -37,6 +40,7 @@ public struct ContentView: View {
         .environmentObject(sessionManager)
         .environmentObject(hostConnectionModel)
         .environmentObject(guestConnectionModel)
+        .environmentObject(bgmManager)
         .onAppear {
             // アプリ起動時にマイク権限をリクエスト
             micPermissionManager.requestPermission()

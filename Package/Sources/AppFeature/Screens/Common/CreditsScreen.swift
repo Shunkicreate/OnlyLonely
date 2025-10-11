@@ -229,5 +229,6 @@ struct CreditCard: View {
 #Preview {
     CreditsScreen()
         .environmentObject(AppCoordinator())
+        .environmentObject(BGMManager.shared)
 }
 
