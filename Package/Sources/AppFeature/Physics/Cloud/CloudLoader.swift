@@ -29,77 +29,85 @@ class CloudLoader {
         var allCloudData: [CloudData] = []
         var cloudNodes: [Int: SKNode] = [:]
 
-        // Player A（左側）に重ならないように配置（必ず指定数配置）
-        var cloudCountA = 0
-        var retryCountA = 0
-        let maxRetries = 500  // 最大リトライ回数
-
-        while cloudCountA < cloudsPerPlayer && retryCountA < maxRetries {
+        // Player A（左側）に重ならないように配置
+        for i in 0..<cloudsPerPlayer {
             let randomType = cloudTypes.randomElement() ?? .matsu
-            let randomX = CGFloat.random(in: 80...(halfWidth - 80))
-            let randomY = CGFloat.random(in: 150...(sceneSize.height - 100))
-            let randomWidth = CGFloat.random(in: 50...90)
-            let randomHeight = CGFloat.random(in: 30...50)
+            var cloudData: CloudData?
+            var attempts = 0
+            let maxAttempts = 50  // 最大試行回数
 
-            let candidateData = CloudData(
-                id: cloudCountA + 1,
-                type: randomType,
-                position: CGPoint(x: randomX, y: randomY),
-                size: CGSize(width: randomWidth, height: randomHeight),
-                lightningInterval: randomType == .matsu ? Double.random(in: 2.5...4.0) : nil,
-                speedThreshold: randomType == .take ? CGFloat.random(in: 40...60) : nil
-            )
+            // 重ならない位置を見つけるまで試行
+            while cloudData == nil && attempts < maxAttempts {
+                let randomX = CGFloat.random(in: 50...(halfWidth - 50))
+                let randomY = CGFloat.random(in: 200...(sceneSize.height - 100))
+                let randomWidth = CGFloat.random(in: 80...140)
+                let randomHeight = CGFloat.random(in: 40...70)
 
-            // 既存の雲と重なっていないかチェック
-            if !isOverlapping(candidateData, with: allCloudData) {
-                allCloudData.append(candidateData)
+                let candidateData = CloudData(
+                    id: i + 1,
+                    type: randomType,
+                    position: CGPoint(x: randomX, y: randomY),
+                    size: CGSize(width: randomWidth, height: randomHeight),
+                    lightningInterval: randomType == .matsu ? Double.random(in: 2.5...4.0) : nil,
+                    speedThreshold: randomType == .take ? CGFloat.random(in: 40...60) : nil
+                )
 
-                let cloudNode = createCloudNode(cloudData: candidateData)
-                cloudNode.position = candidateData.position
-                cloudNode.zPosition = 5
-                scene.addChild(cloudNode)
-                cloudNodes[candidateData.id] = cloudNode
-
-                cloudCountA += 1
+                // 既存の雲と重なっていないかチェック
+                if !isOverlapping(candidateData, with: allCloudData) {
+                    cloudData = candidateData
+                }
+                attempts += 1
             }
 
-            retryCountA += 1
+            // 有効な位置が見つかった場合のみ追加
+            if let validCloudData = cloudData {
+                allCloudData.append(validCloudData)
+
+                let cloudNode = createCloudNode(cloudData: validCloudData)
+                cloudNode.position = validCloudData.position
+                cloudNode.zPosition = 5
+                scene.addChild(cloudNode)
+                cloudNodes[validCloudData.id] = cloudNode
+            }
         }
 
-        // Player B（右側）に重ならないように配置（必ず指定数配置）
-        var cloudCountB = 0
-        var retryCountB = 0
-
-        while cloudCountB < cloudsPerPlayer && retryCountB < maxRetries {
+        // Player B（右側）に重ならないように配置
+        for i in 0..<cloudsPerPlayer {
             let randomType = cloudTypes.randomElement() ?? .matsu
-            let randomX = CGFloat.random(in: (halfWidth + 80)...(sceneSize.width - 80))
-            let randomY = CGFloat.random(in: 150...(sceneSize.height - 100))
-            let randomWidth = CGFloat.random(in: 50...90)
-            let randomHeight = CGFloat.random(in: 30...50)
+            var cloudData: CloudData?
+            var attempts = 0
+            let maxAttempts = 50
 
-            let candidateData = CloudData(
-                id: cloudCountB + 101,
-                type: randomType,
-                position: CGPoint(x: randomX, y: randomY),
-                size: CGSize(width: randomWidth, height: randomHeight),
-                lightningInterval: randomType == .matsu ? Double.random(in: 2.5...4.0) : nil,
-                speedThreshold: randomType == .take ? CGFloat.random(in: 40...60) : nil
-            )
+            while cloudData == nil && attempts < maxAttempts {
+                let randomX = CGFloat.random(in: (halfWidth + 50)...(sceneSize.width - 50))
+                let randomY = CGFloat.random(in: 200...(sceneSize.height - 100))
+                let randomWidth = CGFloat.random(in: 80...140)
+                let randomHeight = CGFloat.random(in: 40...70)
 
-            // 既存の雲と重なっていないかチェック
-            if !isOverlapping(candidateData, with: allCloudData) {
-                allCloudData.append(candidateData)
+                let candidateData = CloudData(
+                    id: i + 101,
+                    type: randomType,
+                    position: CGPoint(x: randomX, y: randomY),
+                    size: CGSize(width: randomWidth, height: randomHeight),
+                    lightningInterval: randomType == .matsu ? Double.random(in: 2.5...4.0) : nil,
+                    speedThreshold: randomType == .take ? CGFloat.random(in: 40...60) : nil
+                )
 
-                let cloudNode = createCloudNode(cloudData: candidateData)
-                cloudNode.position = candidateData.position
-                cloudNode.zPosition = 5
-                scene.addChild(cloudNode)
-                cloudNodes[candidateData.id] = cloudNode
-
-                cloudCountB += 1
+                if !isOverlapping(candidateData, with: allCloudData) {
+                    cloudData = candidateData
+                }
+                attempts += 1
             }
 
-            retryCountB += 1
+            if let validCloudData = cloudData {
+                allCloudData.append(validCloudData)
+
+                let cloudNode = createCloudNode(cloudData: validCloudData)
+                cloudNode.position = validCloudData.position
+                cloudNode.zPosition = 5
+                scene.addChild(cloudNode)
+                cloudNodes[validCloudData.id] = cloudNode
+            }
         }
 
         // 雲データを物理エンジンに送信
@@ -135,41 +143,41 @@ class CloudLoader {
     private static func createCloudNode(cloudData: CloudData) -> SKNode {
         let container = SKNode()
 
-        // 雲の種類に応じた画像名（現在は雷雲のみ使用）
-        let imageName: String
+        // 雲の種類に応じた色
+        let cloudColor: UIColor
         switch cloudData.type {
-        case .matsu:  // 松：雷ギミック付き
-            imageName = "kaminari_kumo"
-        case .take, .ume:   // 竹・梅：障害物雲（現在は非表示）
-            // 空のノードを返す（将来の実装用）
-            return container
+        case .matsu:  // 松：雷ギミック付き（グレー）
+            cloudColor = UIColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 0.9)
+        case .take:   // 竹：速度依存（薄いグレー）
+            cloudColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.7)
+        case .ume:    // 梅：完全障害物（濃いグレー）
+            cloudColor = UIColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 1.0)
         }
 
-        // Assets画像を使った雲（アスペクト比を保持）
-        let cloudTexture = SKTexture(imageNamed: imageName)
+        // 楕円形の雲
+        let cloudShape = SKShapeNode(ellipseOf: cloudData.size)
+        cloudShape.fillColor = cloudColor
+        cloudShape.strokeColor = .white.withAlphaComponent(0.5)
+        cloudShape.lineWidth = 2
+        container.addChild(cloudShape)
 
-        // テクスチャの元のアスペクト比を取得
-        let textureSize = cloudTexture.size()
-        let aspectRatio = textureSize.width / textureSize.height
-
-        // cloudData.size.widthを基準に、アスペクト比を保持したサイズを計算
-        let targetWidth = cloudData.size.width
-        let targetHeight = targetWidth / aspectRatio
-
-        let cloudSprite = SKSpriteNode(texture: cloudTexture, size: CGSize(width: targetWidth, height: targetHeight))
-        cloudSprite.position = CGPoint(x: 0, y: 0)
-        container.addChild(cloudSprite)
-
-        // ふわふわと上下に動くアニメーション
-        let randomDuration = Double.random(in: 3.0...5.0)
-        let randomDistance = CGFloat.random(in: 15...25)
-        let moveUp = SKAction.moveBy(x: 0, y: randomDistance, duration: randomDuration)
-        moveUp.timingMode = .easeInEaseOut
-        let moveDown = moveUp.reversed()
-        let sequence = SKAction.sequence([moveUp, moveDown])
-        cloudSprite.run(SKAction.repeatForever(sequence))
+        // 雲の種類を示すラベル
+        let typeLabel = SKLabelNode(text: cloudTypeEmoji(cloudData.type))
+        typeLabel.fontSize = 24
+        typeLabel.verticalAlignmentMode = .center
+        typeLabel.position = CGPoint(x: 0, y: 0)
+        container.addChild(typeLabel)
 
         return container
+    }
+
+    /// 雲の種類に応じた絵文字
+    private static func cloudTypeEmoji(_ type: CloudType) -> String {
+        switch type {
+        case .matsu:  return "⚡"  // 松：雷
+        case .take:   return "💨"  // 竹：風
+        case .ume:    return "🚫"  // 梅：禁止
+        }
     }
 
     /// 雲が既存の雲と重なっているかチェック

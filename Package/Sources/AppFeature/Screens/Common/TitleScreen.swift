@@ -228,31 +228,6 @@ struct TitleScreen: View {
                             )
                         }
 
-                        #if DEBUG
-                        // デバッグ: ゲーム画面へ
-                        Button {
-                            if DeviceType.current == .iPad {
-                                coordinator.navigate(to: .iPadGameplay)
-                            } else {
-                                coordinator.navigate(to: .iPhoneGameplay)
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "gamecontroller.fill")
-                                    .font(.system(size: 12, weight: .regular))
-                                Text("DEBUG")
-                                    .nikumaruBody(size: 13)
-                            }
-                            .foregroundStyle(.orange.opacity(0.9))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .fill(.orange.opacity(0.2))
-                            )
-                        }
-                        #endif
-
                         // クレジットリンク
                         Button {
                             coordinator.navigate(to: .credits)

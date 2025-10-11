@@ -12,7 +12,6 @@ import SpriteKit
 struct iPadGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject private var sessionManager: P2PSessionManager
-    @EnvironmentObject private var characterManager: CharacterAssignmentManager
     @StateObject private var gameManager = GameManager()
     @StateObject private var physicsCoordinator = GamePhysicsCoordinator()
     @StateObject private var screenModel: iPadGameplayScreenModel
@@ -62,120 +61,128 @@ struct iPadGameplayScreen: View {
                 .ignoresSafeArea()
 
                 // UI Overlay
-                ZStack(alignment: .bottom) {
-                    // 風船とキャラクター（物理演算で動く - 画面下部から上昇）
-                    HStack(spacing: 0) {
-                        // Player A の風船+キャラクター（左側）
-                        BalloonCharacterView(
-                            character: characterManager.character(for: "A"),
-                            altitude: playerAAltitude
-                        )
-                        .frame(width: geometry.size.width / 2)
+                VStack {
+                    // 残り時間（3D効果）
+                    HStack {
+                        Spacer()
 
-                        // Player B の風船+キャラクター（右側）
-                        BalloonCharacterView(
-                            character: characterManager.character(for: "B"),
-                            altitude: playerBAltitude
-                        )
-                        .frame(width: geometry.size.width / 2)
-                    }
-                    .padding(.bottom, 20) // 下部から20pxの位置（緑のスタート地点付近）
-
-                    // UI要素（固定配置）
-                    VStack {
-                        // 上部エリア：残り時間 + プレイヤー名
-                        HStack(alignment: .top, spacing: 0) {
-                            // Player A名（左上）
-                            PlayerNameLabel(
-                                playerName: screenModel.displayName(for: .playerA),
-                                character: characterManager.character(for: "A")
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 30)
-
-                            // 残り時間（中央上）
-                            ZStack {
-                                // グロー効果
-                                Text("のこり \(gameManager.timeRemaining)びょう")
-                                    .nikumaruHeadline(size: 28)
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(hex: "#FFD700"),
-                                                Color(hex: "#FFA500")
-                                            ],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
+                        ZStack {
+                            // グロー効果
+                            Text("のこり \(gameManager.timeRemaining)びょう")
+                                .nikumaruHeadline(size: 28)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(hex: "#FFD700"),
+                                            Color(hex: "#FFA500")
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
                                     )
-                                    .blur(radius: 8)
-                                    .offset(y: 2)
+                                )
+                                .blur(radius: 8)
+                                .offset(y: 2)
 
-                                // メインテキスト
-                                Text("のこり \(gameManager.timeRemaining)びょう")
-                                    .nikumaruHeadline(size: 28)
-                                    .foregroundStyle(
+                            // メインテキスト
+                            Text("のこり \(gameManager.timeRemaining)びょう")
+                                .nikumaruHeadline(size: 28)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(hex: "#FFFFFF"),
+                                            Color(hex: "#FFF9E5")
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color(hex: "#FFD700").opacity(0.6),
+                                                    Color(hex: "#FFA500").opacity(0.6)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 3
+                                        )
+                                )
+                        )
+                        .shadow(color: Color(hex: "#FFD700").opacity(0.4), radius: 12, x: 0, y: 4)
+
+                        Spacer()
+                    }
+                    .padding(.top, 20)
+
+                    Spacer()
+
+                    // プレイヤー情報（Harajukuスタイル）
+                    HStack(spacing: 0) {
+                        // Player A
+                        FluffyPlayerPanel(
+                            playerName: screenModel.displayName(for: .playerA),
+                            altitude: playerAAltitude,
+                            balloonImage: "red",
+                            gradient: LinearGradient(
+                                colors: [
+                                    Color(hex: "#FF6B9D"),
+                                    Color(hex: "#FF8FB3")
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            glowColor: Color(hex: "#FF6B9D")
+                        )
+                        .frame(width: geometry.size.width / 2)
+
+                        // Divider（キラキラ）
+                        VStack(spacing: 8) {
+                            ForEach(0..<5, id: \.self) { index in
+                                Circle()
+                                    .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(hex: "#FFFFFF"),
-                                                Color(hex: "#FFF9E5")
+                                                Color(hex: "#FFFFFF").opacity(0.8),
+                                                Color(hex: "#FFE5B3").opacity(0.6)
                                             ],
                                             startPoint: .top,
                                             endPoint: .bottom
                                         )
                                     )
-                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+                                    .frame(width: 8, height: 8)
+                                    .shadow(color: .white.opacity(0.6), radius: 4)
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color(hex: "#FFD700").opacity(0.6),
-                                                        Color(hex: "#FFA500").opacity(0.6)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 3
-                                            )
-                                    )
-                            )
-                            .shadow(color: Color(hex: "#FFD700").opacity(0.4), radius: 12, x: 0, y: 4)
-
-                            // Player B名（右上）
-                            PlayerNameLabel(
-                                playerName: screenModel.displayName(for: .playerB),
-                                character: characterManager.character(for: "B")
-                            )
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.trailing, 30)
                         }
-                        .padding(.top, 20)
+                        .frame(width: 2)
 
-                        Spacer()
-
-                        // 高度表示（下部）
-                        HStack(spacing: 0) {
-                            AltitudeLabel(
-                                altitude: playerAAltitude,
-                                character: characterManager.character(for: "A")
-                            )
-                            .frame(width: geometry.size.width / 2)
-
-                            AltitudeLabel(
-                                altitude: playerBAltitude,
-                                character: characterManager.character(for: "B")
-                            )
-                            .frame(width: geometry.size.width / 2)
-                        }
-                        .padding(.bottom, 20)
+                        // Player B
+                        FluffyPlayerPanel(
+                            playerName: screenModel.displayName(for: .playerB),
+                            altitude: playerBAltitude,
+                            balloonImage: "blue",
+                            gradient: LinearGradient(
+                                colors: [
+                                    Color(hex: "#4A90E2"),
+                                    Color(hex: "#6BBFFF")
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            glowColor: Color(hex: "#4A90E2")
+                        )
+                        .frame(width: geometry.size.width / 2)
                     }
+                    .padding(.bottom, 20)
                 }
             }
         }
@@ -241,215 +248,92 @@ struct iPadGameplayScreen: View {
 
 // MARK: - Harajuku Style Components
 
-/// 風船+キャラクター表示（高度に応じて位置が変わる）
-struct BalloonCharacterView: View {
-    let character: CharacterInfo
+struct FluffyPlayerPanel: View {
+    let playerName: String
     let altitude: Double
+    let balloonImage: String
+    let gradient: LinearGradient
+    let glowColor: Color
 
     @State private var pulseScale: CGFloat = 1.0
-    @State private var floatOffset: CGFloat = 0
-
-    private var glowColor: Color {
-        Color(hex: character.color)
-    }
 
     var body: some View {
-        VStack(spacing: -10) {
-            // 風船（中にキャラクター画像あり）
+        VStack(spacing: 12) {
+            // 風船アイコン（Assets画像 + グロー）
             ZStack {
+                // グロー効果
                 Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                glowColor.opacity(0.9),
-                                glowColor
-                            ],
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: 28
-                        )
-                    )
-                    .frame(width: 55, height: 55)
-                    .overlay(
-                        // ハイライト
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        .white.opacity(0.7),
-                                        .clear
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 22, height: 22)
-                            .offset(x: -11, y: -11)
-                    )
-                    .shadow(color: glowColor.opacity(0.4), radius: 10, x: 0, y: 0)
+                    .fill(glowColor.opacity(0.5))
+                    .frame(width: 80, height: 80)
+                    .blur(radius: 20)
 
-                // 風船の中のキャラクター画像
-                Image(character.imageName)
+                // Assets画像
+                Image(balloonImage)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 55, height: 55)
+                    .frame(width: 60, height: 60)
             }
             .scaleEffect(pulseScale)
 
-            // 紐
-            Path { path in
-                path.move(to: CGPoint(x: 0, y: 0))
-                path.addLine(to: CGPoint(x: 0, y: 25))
+            // プレイヤー名（3D効果）
+            ZStack {
+                // 影
+                Text(playerName)
+                    .nikumaruHeadline(size: 20)
+                    .foregroundColor(.black.opacity(0.3))
+                    .offset(y: 2)
+
+                // メインテキスト
+                Text(playerName)
+                    .nikumaruHeadline(size: 20)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, .white.opacity(0.9)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
             }
-            .stroke(glowColor.opacity(0.7), lineWidth: 2.5)
-            .frame(width: 25, height: 25)
+
+            // 高度表示（3D効果）
+            VStack(spacing: 4) {
+                ZStack {
+                    // グロー
+                    Text("\(Int(altitude))")
+                        .nikumaruTitle(size: 36)
+                        .foregroundStyle(gradient)
+                        .blur(radius: 4)
+
+                    // メインテキスト
+                    Text("\(Int(altitude))")
+                        .nikumaruTitle(size: 36)
+                        .foregroundStyle(gradient)
+                }
+
+                Text("メートル")
+                    .nikumaruCaption(size: 14)
+                    .foregroundColor(.white.opacity(0.8))
+            }
         }
-        .offset(y: floatOffset)
-        // 高度に応じてY位置を調整（画面下部から開始、0mから）
-        .offset(y: -CGFloat(max(0, altitude)) * 2) // 高度が上がるほど上に移動
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(gradient, lineWidth: 2)
+                )
+        )
+        .shadow(color: glowColor.opacity(0.3), radius: 12, x: 0, y: 4)
         .onAppear {
-            // 風船パルスアニメーション
             withAnimation(
                 Animation.easeInOut(duration: 1.5)
                     .repeatForever(autoreverses: true)
             ) {
                 pulseScale = 1.15
             }
-
-            // ふわふわ浮遊アニメーション
-            withAnimation(
-                Animation.easeInOut(duration: 2.0)
-                    .repeatForever(autoreverses: true)
-            ) {
-                floatOffset = -25
-            }
         }
-    }
-}
-
-/// Player名ラベル（画面上部固定）
-struct PlayerNameLabel: View {
-    let playerName: String
-    let character: CharacterInfo
-
-    var body: some View {
-        ZStack {
-            // 4方向黒枠
-            Text(playerName)
-                .nikumaruHeadline(size: 24)
-                .foregroundColor(.black)
-                .offset(x: -1, y: -1)
-            Text(playerName)
-                .nikumaruHeadline(size: 24)
-                .foregroundColor(.black)
-                .offset(x: 1, y: -1)
-            Text(playerName)
-                .nikumaruHeadline(size: 24)
-                .foregroundColor(.black)
-                .offset(x: -1, y: 1)
-            Text(playerName)
-                .nikumaruHeadline(size: 24)
-                .foregroundColor(.black)
-                .offset(x: 1, y: 1)
-
-            // メインテキスト
-            Text(playerName)
-                .nikumaruHeadline(size: 24)
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            Color(hex: character.color).opacity(0.6),
-                            lineWidth: 2
-                        )
-                )
-        )
-        .shadow(color: Color(hex: character.color).opacity(0.3), radius: 6, x: 0, y: 3)
-    }
-}
-
-/// 高度ラベル（画面下部固定）
-struct AltitudeLabel: View {
-    let altitude: Double
-    let character: CharacterInfo
-
-    private var gradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(hex: character.color),
-                Color(hex: character.color).opacity(0.8)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    // 表示用の高度（0mから始まるように4を引く）
-    private var displayAltitude: Int {
-        max(0, Int(altitude) - 4)
-    }
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            // 数値
-            ZStack {
-                // 4方向黒枠
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundColor(.black)
-                    .offset(x: -2, y: -2)
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundColor(.black)
-                    .offset(x: 2, y: -2)
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundColor(.black)
-                    .offset(x: -2, y: 2)
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundColor(.black)
-                    .offset(x: 2, y: 2)
-
-                // グロー
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundStyle(gradient)
-                    .blur(radius: 4)
-
-                // メインテキスト
-                Text("\(displayAltitude)")
-                    .nikumaruTitle(size: 42)
-                    .foregroundStyle(gradient)
-            }
-
-            // 「m」を数値の右側に配置
-            ZStack {
-                // 黒枠
-                Text("m")
-                    .nikumaruBody(size: 18)
-                    .foregroundColor(.black)
-                    .offset(x: -1, y: -1)
-                Text("m")
-                    .nikumaruBody(size: 18)
-                    .foregroundColor(.black)
-                    .offset(x: 1, y: 1)
-
-                // メインテキスト
-                Text("m")
-                    .nikumaruBody(size: 18)
-                    .foregroundColor(.white)
-            }
-            .offset(x: 4, y: -4)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 30)
     }
 }
 
@@ -510,6 +394,8 @@ private enum PhysicsCategory {
 }
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
+    private var balloonA: SKSpriteNode!
+    private var balloonB: SKSpriteNode!
     private var clouds: [Int: SKNode] = [:]  // cloudId -> SKNode
     private var lightningNodes: [Int: SKNode] = [:]  // cloudId -> 雷エフェクト
 
@@ -529,7 +415,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setupScene()
         clouds = CloudLoader.loadRandomClouds(
             sceneSize: size,
-            cloudsPerPlayer: 20,  // 各プレイヤーエリアに20個ずつ、合計40個
+            cloudsPerPlayer: 10,
             physicsCoordinator: physicsCoordinator,
             scene: self
         )
@@ -548,14 +434,50 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         divider.zPosition = 1
         addChild(divider)
 
-        // 物理エンジンに初期位置を設定（groundBaselineから開始して0mからスタート）
+        // Player A の風船（左側・赤）
+        balloonA = createBalloon(color: .red)
+        balloonA.position = CGPoint(x: size.width / 4, y: 100)
+        balloonA.zPosition = 10 // 前面に表示
+        balloonA.physicsBody = SKPhysicsBody(circleOfRadius: 30)
+        balloonA.physicsBody?.categoryBitMask = PhysicsCategory.balloonA
+        balloonA.physicsBody?.contactTestBitMask = PhysicsCategory.ground
+        balloonA.physicsBody?.collisionBitMask = PhysicsCategory.ground
+        balloonA.physicsBody?.mass = PhysicsConstants.childMass
+        balloonA.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
+        balloonA.physicsBody?.allowsRotation = false
+        balloonA.physicsBody?.usesPreciseCollisionDetection = true
+        balloonA.physicsBody?.affectedByGravity = true
+        balloonA.physicsBody?.velocity = .zero
+        addChild(balloonA)
+
+        // Player B の風船（右側・青）
+        balloonB = createBalloon(color: .blue)
+        balloonB.position = CGPoint(x: size.width * 3 / 4, y: 100)
+        balloonB.zPosition = 10 // 前面に表示
+        balloonB.physicsBody = SKPhysicsBody(circleOfRadius: 30)
+        balloonB.physicsBody?.categoryBitMask = PhysicsCategory.balloonB
+        balloonB.physicsBody?.contactTestBitMask = PhysicsCategory.ground
+        balloonB.physicsBody?.collisionBitMask = PhysicsCategory.ground
+        balloonB.physicsBody?.mass = PhysicsConstants.childMass
+        balloonB.physicsBody?.linearDamping = PhysicsConstants.dragCoefficient
+        balloonB.physicsBody?.allowsRotation = false
+        balloonB.physicsBody?.usesPreciseCollisionDetection = true
+        balloonB.physicsBody?.affectedByGravity = true
+        balloonB.physicsBody?.velocity = .zero
+        addChild(balloonB)
+
+        // 物理エンジンに初期位置を設定
         if let coordinator = physicsCoordinator {
             let centerA = coordinator.laneCenter(for: .playerA) ?? size.width / 4
             let centerB = coordinator.laneCenter(for: .playerB) ?? size.width * 3 / 4
-            coordinator.playerAState.position = CGPoint(x: centerA, y: PhysicsConstants.groundBaseline)
-            coordinator.playerBState.position = CGPoint(x: centerB, y: PhysicsConstants.groundBaseline)
-            coordinator.playerAState.altitude = 0
-            coordinator.playerBState.altitude = 0
+            coordinator.playerAState.position = CGPoint(x: centerA, y: 100)
+            coordinator.playerBState.position = CGPoint(x: centerB, y: 100)
+            if let bodyA = balloonA.physicsBody {
+                coordinator.register(balloonBody: bodyA, for: .playerA)
+            }
+            if let bodyB = balloonB.physicsBody {
+                coordinator.register(balloonBody: bodyB, for: .playerB)
+            }
         }
 
         // 地面
@@ -584,6 +506,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(groundRight)
     }
 
+    private func createBalloon(color: UIColor) -> SKSpriteNode {
+        // Assets画像を使った風船
+        let imageName = (color == .red) ? "red" : "blue"
+
+        let balloonTexture = SKTexture(imageNamed: imageName)
+        let balloon = SKSpriteNode(texture: balloonTexture, size: CGSize(width: 60, height: 60))
+        balloon.name = "balloon"
+
+        // グロー効果（円形の光）
+        let glowCircle = SKShapeNode(circleOfRadius: 35)
+        glowCircle.fillColor = color.withAlphaComponent(0.3)
+        glowCircle.strokeColor = .clear
+        glowCircle.zPosition = -1
+        balloon.addChild(glowCircle)
+
+        // パルスアニメーション
+        let scaleUp = SKAction.scale(to: 1.15, duration: 0.8)
+        let scaleDown = SKAction.scale(to: 1.0, duration: 0.8)
+        let pulse = SKAction.sequence([scaleUp, scaleDown])
+        glowCircle.run(SKAction.repeatForever(pulse))
+
+        return balloon
+    }
 
     override func update(_ currentTime: TimeInterval) {
         super.update(currentTime)
@@ -591,16 +536,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // 物理演算を更新
         physicsCoordinator?.update(currentTime: currentTime)
 
+        if physicsCoordinator?.usesSpriteKitPhysics != true {
+            if let stateA = physicsCoordinator?.playerAState {
+                balloonA.position = stateA.position
+            }
+            if let stateB = physicsCoordinator?.playerBState {
+                balloonB.position = stateB.position
+            }
+        }
+
         // 雲との衝突チェック
         guard let coordinator = physicsCoordinator else { return }
 
-        // 雲との衝突チェック（風船ノードはSwiftUIで表示するため、ダミーノードを使用）
-        let dummyBalloon = SKSpriteNode()
-
         CloudCollisionDetector.checkBalloonCloudCollision(
-            balloon: dummyBalloon,
+            balloon: balloonA,
             playerId: "A",
-            balloonPosition: coordinator.playerAState.position,
+            balloonPosition: balloonA.position,
             balloonVelocity: coordinator.playerAState.velocity,
             physicsCoordinator: coordinator,
             clouds: clouds,
@@ -609,9 +560,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         )
 
         CloudCollisionDetector.checkBalloonCloudCollision(
-            balloon: dummyBalloon,
+            balloon: balloonB,
             playerId: "B",
-            balloonPosition: coordinator.playerBState.position,
+            balloonPosition: balloonB.position,
             balloonVelocity: coordinator.playerBState.velocity,
             physicsCoordinator: coordinator,
             clouds: clouds,

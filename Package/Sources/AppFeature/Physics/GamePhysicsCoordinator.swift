@@ -14,14 +14,8 @@ import SpriteKit
 class GamePhysicsCoordinator: ObservableObject {
     // MARK: - Published Properties
 
-    @Published var playerAState = BalloonPhysicsState(
-        position: CGPoint(x: 0, y: PhysicsConstants.groundBaseline),
-        altitude: 0
-    )
-    @Published var playerBState = BalloonPhysicsState(
-        position: CGPoint(x: 0, y: PhysicsConstants.groundBaseline),
-        altitude: 0
-    )
+    @Published var playerAState = BalloonPhysicsState()
+    @Published var playerBState = BalloonPhysicsState()
 
     // MARK: - Dependencies (簡単に差し替え可能)
 
@@ -373,7 +367,7 @@ class GamePhysicsCoordinator: ObservableObject {
                         if let center = self.laneCenters[.playerA] {
                             self.playerAState.position.x = center
                             self.balloonBodies[.playerA]?.node?.position.x = center
-                            self.balloonBodies[.playerA]?.node?.position.y = PhysicsConstants.groundBaseline
+                            self.balloonBodies[.playerA]?.node?.position.y = 100
                             self.balloonBodies[.playerA]?.velocity = .zero
                         }
                     case .playerB:
@@ -381,7 +375,7 @@ class GamePhysicsCoordinator: ObservableObject {
                         if let center = self.laneCenters[.playerB] {
                             self.playerBState.position.x = center
                             self.balloonBodies[.playerB]?.node?.position.x = center
-                            self.balloonBodies[.playerB]?.node?.position.y = PhysicsConstants.groundBaseline
+                            self.balloonBodies[.playerB]?.node?.position.y = 100
                             self.balloonBodies[.playerB]?.velocity = .zero
                         }
                     }
