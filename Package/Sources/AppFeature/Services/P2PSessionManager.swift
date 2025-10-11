@@ -35,6 +35,7 @@ final class P2PSessionManager: ObservableObject {
     @Published private(set) var localPeerName: String?
 
     private let navigationCommandSubject = PassthroughSubject<DeviceNavigationCommand, Never>()
+    private let windForceSubject = PassthroughSubject<PlayerWindForceMessage, Never>()
     private var configuration: MultipeerConfiguration?
 
     func configure(role: Role, configuration: MultipeerConfiguration) {
@@ -70,6 +71,10 @@ final class P2PSessionManager: ObservableObject {
 
     var navigationCommandPublisher: AnyPublisher<DeviceNavigationCommand, Never> {
         navigationCommandSubject.eraseToAnyPublisher()
+    }
+
+    var windForcePublisher: AnyPublisher<PlayerWindForceMessage, Never> {
+        windForceSubject.eraseToAnyPublisher()
     }
 
     private func bind(_ transceiver: MultipeerTransceiver) {
@@ -108,6 +113,12 @@ final class P2PSessionManager: ObservableObject {
                 self?.navigationCommandSubject.send(command)
             }
         }
+
+        transceiver.receive(PlayerWindForceMessage.self) { [weak self] message, _ in
+            Task { @MainActor [weak self] in
+                self?.windForceSubject.send(message)
+            }
+        }
     }
 
     private func refreshConnectedPeers(using peers: [Peer]? = nil) {
@@ -134,5 +145,12 @@ final class P2PSessionManager: ObservableObject {
         let targets = peers ?? connectedPeers
         guard !targets.isEmpty else { return }
         transceiver.send(command, to: targets)
+    }
+
+    func sendWindForce(_ message: PlayerWindForceMessage, to peers: [Peer]? = nil) {
+        guard let transceiver else { return }
+        let targets = peers ?? connectedPeers
+        guard !targets.isEmpty else { return }
+        transceiver.send(message, to: targets)
     }
 }
