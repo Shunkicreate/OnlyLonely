@@ -145,9 +145,19 @@ struct iPhoneGameplayScreen: View {
     private func updateWindForce() {
         // マイクレベルから風力を計算
         if let peakLevel = micLevelManager.peakHoldLevel {
-            // dBを0.0〜1.0に正規化
-            let normalized = (peakLevel + 60) / 60 // -60dB 〜 0dB を 0.0 〜 1.0 に
-            windForce = max(0, min(1.0, normalized))
+            // 最小閾値を設定（小さい音を拾わないようにする）
+            let threshold: Float = -20.0 // -20dB以下は無視
+
+            guard peakLevel > threshold else {
+                windForce = 0
+                return
+            }
+
+            // dBを0.0〜1.0に正規化（感度を下げるため範囲を広げた）
+            let normalized = (peakLevel + 50) / 50 // -50dB 〜 0dB を 0.0 〜 1.0 に
+            // さらに0.7倍して感度を下げる
+            let sensitivity = 0.7
+            windForce = max(0, min(1.0, normalized * Float(sensitivity)))
 
             // 高度を更新（簡易シミュレーション）
             currentAltitude += Double(windForce) * 2.0
