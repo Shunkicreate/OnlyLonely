@@ -16,7 +16,8 @@
         "width": 100,
         "height": 50
       },
-      "comment": "松：通り抜け不可の完全障害物"
+      "lightningInterval": 3.0,
+      "comment": "松：3秒ごとに雷が発生"
     },
     {
       "id": 2,
@@ -43,12 +44,11 @@
         "width": 150,
         "height": 70
       },
-      "lightningInterval": 3.0,
-      "comment": "梅：3秒ごとに雷が発生"
+      "comment": "梅：通り抜け不可の完全障害物"
     },
     {
       "id": 4,
-      "type": "bamboo",
+      "type": "pine",
       "position": {
         "x": 500,
         "y": 600
@@ -57,12 +57,12 @@
         "width": 110,
         "height": 55
       },
-      "speedThreshold": 60,
-      "comment": "竹：速度60以上で通過可能"
+      "lightningInterval": 4.0,
+      "comment": "松：4秒ごとに雷が発生"
     },
     {
       "id": 5,
-      "type": "pine",
+      "type": "plum",
       "position": {
         "x": 300,
         "y": 750
@@ -71,40 +71,40 @@
         "width": 120,
         "height": 60
       },
-      "comment": "松：通り抜け不可"
+      "comment": "梅：通り抜け不可"
     },
     {
       "id": 6,
-      "type": "plum",
+      "type": "bamboo",
       "position": {
         "x": 450,
         "y": 900
       },
       "size": {
-        "width": 140,
-        "height": 65
+        "width": 90,
+        "height": 45
       },
-      "lightningInterval": 4.0,
-      "comment": "梅：4秒ごとに雷が発生"
+      "speedThreshold": 60,
+      "comment": "竹：速度60以上で通過可能"
     }
   ],
   "cloudTypes": {
     "pine": {
-      "description": "通り抜け不可の完全障害物",
-      "color": "#666666",
-      "passable": false
+      "description": "雷ギミック付き（基本難易度）",
+      "color": "#CCCCCC",
+      "passable": true,
+      "hasLightning": true
     },
     "bamboo": {
-      "description": "強い勢いで通過可能",
+      "description": "強い勢いで通過可能（中級難易度）",
       "color": "#999999",
       "passable": true,
       "requiresSpeed": true
     },
     "plum": {
-      "description": "雷ギミック付き",
-      "color": "#555555",
-      "passable": true,
-      "hasLightning": true
+      "description": "通り抜け不可の完全障害物（最高難易度）",
+      "color": "#666666",
+      "passable": false
     }
   },
   "lightningConfig": {

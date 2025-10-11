@@ -145,7 +145,7 @@ let acceleration = liftForce + gravity - resistance
 
 - JSON ファイルから雲の配置を読み込み
 - 雲の種類（松・竹・梅）ごとに異なる物理挙動
-- 雷システム（梅の雲のみ）
+- 雷システム（松の雲のみ）
 
 ### 状態管理
 
@@ -182,7 +182,7 @@ let acceleration = liftForce + gravity - resistance
 - 風の音（音圧に応じてピッチ変化）
 - 高度に応じた環境音の変化
 - 雲衝突音（種類に応じて変化）
-- 雷鳴（梅の雲）
+- 雷鳴（松の雲）
 - 風船が割れる音
 - 風船再生成音
 

@@ -131,9 +131,9 @@
 
 | 種類 | タイプ       | 物理挙動                                          |
 | ---- | ------------ | ------------------------------------------------- |
-| 松   | 完全障害物   | PhysicsBody の `isDynamic = false` で完全ブロック |
+| 松   | ギミック付き | 通り抜けにくさ + 雷エフェクト                     |
 | 竹   | 速度依存障害 | 速度閾値チェック + 条件付き通過                   |
-| 梅   | ギミック付き | 通り抜けにくさ + 雷エフェクト                     |
+| 梅   | 完全障害物   | PhysicsBody の `isDynamic = false` で完全ブロック |
 
 ### 雲データフォーマット（JSON）
 
@@ -171,9 +171,9 @@
 
 ```swift
 enum CloudType: String, Codable {
-    case pine     // 松：通り抜け不可
+    case pine     // 松：雷ギミック付き
     case bamboo   // 竹：強い勢いで通過可能
-    case plum     // 梅：雷ギミック付き
+    case plum     // 梅：通り抜け不可
 }
 
 struct CloudData: Codable {
@@ -182,15 +182,15 @@ struct CloudData: Codable {
     let position: CGPoint
     let size: CGSize
     let speedThreshold: CGFloat?        // 竹のみ
-    let lightningInterval: TimeInterval? // 梅のみ
+    let lightningInterval: TimeInterval? // 松のみ
 }
 ```
 
-### 雷システム（梅の雲）
+### 雷システム（松の雲）
 
 #### 雷の発生
 
-- 梅の雲から `lightningInterval` 秒ごとに雷が発生
+- 松の雲から `lightningInterval` 秒ごとに雷が発生
 - 雷は下方向に降り注ぐアニメーション
 - SKEmitterNode で視覚的に表現
 
