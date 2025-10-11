@@ -27,6 +27,7 @@ iPad がメインディスプレイ、iPhone が風入力端末となり、
 - [⚙️ 技術仕様書](./docs/technical-spec.md) - システム構成、通信仕様、開発ロードマップ
 - [🎨 ビジュアル設計書](./docs/visual-design.md) - 演出仕様、画面レイアウト
 - [🔊 サウンド設計書](./docs/sound-design.md) - サウンドデザイン、効果音
+- [🌟 障害物・ギミック仕様書](./docs/obstacles-and-gimmicks.md) - 障害物とギミックの詳細仕様
 
 ### 画面仕様書
 
