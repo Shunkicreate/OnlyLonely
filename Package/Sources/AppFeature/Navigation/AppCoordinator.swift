@@ -17,7 +17,6 @@ enum AppRoute: Hashable {
     // iPhone
     case connection
     case playerNameInput
-    case calibration
     case waiting
     case countdown
     case iPhoneGameplay

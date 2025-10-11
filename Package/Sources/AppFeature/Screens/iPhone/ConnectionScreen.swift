@@ -109,8 +109,25 @@ struct ConnectionScreen: View {
                 }
 
                 Spacer()
+
+                // 戻るボタン
+                Button {
+                    coordinator.navigateBack()
+                } label: {
+                    Text("戻る")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 200)
+                        .padding(.vertical, 16)
+                        .background(
+                            Capsule()
+                                .fill(Color.gray.opacity(0.6))
+                        )
+                }
+                .padding(.bottom, 40)
             }
         }
+        .navigationBarBackButtonHidden()
     }
 
     private var statusMessage: String {
