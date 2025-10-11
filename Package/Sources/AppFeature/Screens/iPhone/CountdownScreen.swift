@@ -2,7 +2,7 @@
 //  CountdownScreen.swift
 //  OnlyLonely
 //
-//  10. カウントダウン画面（iPhone）
+//  10. カウントダウン画面（iPhone）- 原宿系ふわふわバージョン
 //  iPhone のみ
 //
 
@@ -15,100 +15,106 @@ struct CountdownScreen: View {
     @State private var scale: CGFloat = 0.5
     @State private var rotation: Double = 0
     @State private var glowIntensity: Double = 0.3
+    @State private var sparkleRotation: Double = 0
 
     var body: some View {
         ZStack {
-            // 背景グラデーション（高揚感を表現）
-            AnimatedGradientBackground(colors: [
-                OnlyLonelyColors.darkBlue,
-                OnlyLonelyColors.skyBlue,
-                OnlyLonelyColors.powderBlue
-            ])
-            .ignoresSafeArea()
+            // カラフル虹色背景
+            RainbowBackground()
+                .ignoresSafeArea()
 
-            // パーティクル（激しめ）
-            ParticleView()
+            // ふわふわ雲（動きを強調）
+            FluffyCloudBackground()
                 .ignoresSafeArea()
                 .opacity(0.6)
 
-            // 外側のエネルギーリング
+            // 外側のきらきらリング
             ZStack {
                 ForEach(0..<3, id: \.self) { index in
                     Circle()
                         .stroke(
-                            LinearGradient(
-                                colors: [
-                                    OnlyLonelyColors.lightningGold.opacity(0.6),
-                                    OnlyLonelyColors.playerAPrimary.opacity(0.4)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
+                            HarajukuColors.rainbowGradient,
+                            lineWidth: 3
                         )
                         .frame(width: 300 + CGFloat(index) * 50, height: 300 + CGFloat(index) * 50)
                         .scaleEffect(scale * 0.8)
                         .opacity(1.0 - Double(index) * 0.3)
                         .rotationEffect(.degrees(rotation + Double(index * 60)))
+                        .harajukuShadow(color: HarajukuColors.pastelPink)
                 }
             }
             .blur(radius: 4)
             .opacity(showStart ? 0 : 1)
 
             if showStart {
-                // Start! 表示
-                VStack(spacing: OnlyLonelySpacing.xl) {
-                    // "Start!" テキスト
-                    Text("Start!")
-                        .font(.system(size: 80, weight: .ultraLight, design: .rounded))
-                        .tracking(8)
-                        .foregroundColor(.white)
-                        .shadow(color: OnlyLonelyColors.lightningGold.opacity(0.8), radius: 20)
-                        .shadow(color: OnlyLonelyColors.lightningGold.opacity(0.5), radius: 40)
-                        .shadow(color: OnlyLonelyColors.lightningGold.opacity(0.3), radius: 60)
+                // スタート表示
+                VStack(spacing: HarajukuSpacing.xl) {
+                    // きらきら装飾
+                    HStack(spacing: 20) {
+                        ForEach(["✨", "🌟", "💫", "⭐️"], id: \.self) { emoji in
+                            Text(emoji)
+                                .font(.system(size: 32))
+                                .rotationEffect(.degrees(sparkleRotation))
+                        }
+                    }
+
+                    // "スタート！" テキスト
+                    RainbowText(text: "スタート！", size: 64)
                         .scaleEffect(scale)
                         .rotationEffect(.degrees(rotation * 0.2))
 
                     // 風船が飛び立つ演出
                     HStack(spacing: 40) {
-                        BalloonLaunchView(color: OnlyLonelyColors.playerAPrimary, delay: 0)
-                        BalloonLaunchView(color: OnlyLonelyColors.playerBPrimary, delay: 0.2)
+                        BalloonLaunchView(color: HarajukuColors.pastelPink, emoji: "💗", delay: 0)
+                        BalloonLaunchView(color: HarajukuColors.pastelBlue, emoji: "💙", delay: 0.2)
+                        BalloonLaunchView(color: HarajukuColors.pastelMint, emoji: "💚", delay: 0.1)
                     }
                     .scaleEffect(scale * 0.8)
                 }
             } else {
                 // カウントダウン数字
                 ZStack {
+                    // きらきら装飾（周囲に配置）
+                    ForEach(0..<8, id: \.self) { index in
+                        Text(["✨", "🌟", "💫", "⭐️", "💖", "🎈", "🌈", "☁️"][index])
+                            .font(.system(size: 28))
+                            .offset(
+                                x: cos(Double(index) * .pi / 4) * 150,
+                                y: sin(Double(index) * .pi / 4) * 150
+                            )
+                            .rotationEffect(.degrees(sparkleRotation + Double(index * 45)))
+                            .opacity(glowIntensity)
+                    }
+
                     // 数字のグロウ
                     Text("\(countdown)")
-                        .font(.system(size: 180, weight: .ultraLight, design: .rounded))
-                        .foregroundColor(OnlyLonelyColors.lightningGold)
+                        .font(.system(size: 200, weight: .heavy, design: .rounded))
+                        .foregroundStyle(HarajukuColors.rainbowGradient)
                         .blur(radius: 30)
-                        .opacity(glowIntensity)
+                        .opacity(glowIntensity * 0.8)
 
                     // メイン数字
                     Text("\(countdown)")
-                        .font(.system(size: 180, weight: .ultraLight, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(color: OnlyLonelyColors.lightningGold.opacity(0.8), radius: 20)
-                        .shadow(color: OnlyLonelyColors.lightningGold.opacity(0.5), radius: 40)
+                        .font(.system(size: 200, weight: .heavy, design: .rounded))
+                        .foregroundStyle(HarajukuColors.rainbowGradient)
+                        .sparkleGlow()
                 }
                 .scaleEffect(scale)
-                .rotationEffect(.degrees(rotation))
+                .rotationEffect(.degrees(rotation * 0.3))
 
                 // サブテキスト
-                VStack(spacing: OnlyLonelySpacing.sm) {
-                    Text("息を準備して")
-                        .font(OnlyLonelyTypography.body(size: 18))
-                        .tracking(4)
-                        .foregroundColor(OnlyLonelyColors.textSecondary)
+                VStack(spacing: HarajukuSpacing.sm) {
+                    Text("いきをすって〜")
+                        .font(HarajukuTypography.body(size: 18))
+                        .fontWeight(.bold)
+                        .foregroundColor(HarajukuColors.textPrimary)
 
-                    Text("まもなく開始...")
-                        .font(OnlyLonelyTypography.caption(size: 14))
-                        .tracking(2)
-                        .foregroundColor(OnlyLonelyColors.textInactive)
+                    Text("もうすぐはじまるよ！")
+                        .font(HarajukuTypography.caption(size: 14))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
                 }
-                .offset(y: 180)
+                .offset(y: 200)
                 .opacity(scale > 0.8 ? 1 : 0)
             }
         }
@@ -120,18 +126,23 @@ struct CountdownScreen: View {
 
     private func startCountdown() {
         // 初回アニメーション
-        withAnimation(OnlyLonelyAnimation.slow) {
+        withAnimation(HarajukuAnimation.bounce(duration: 0.8)) {
             scale = 1.3
         }
 
         // グロウアニメーション
-        withAnimation(OnlyLonelyAnimation.pulse().delay(0.2)) {
+        withAnimation(HarajukuAnimation.sparkle(duration: 2).delay(0.2)) {
             glowIntensity = 1.0
         }
 
         // 回転アニメーション
-        withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+        withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
             rotation = 360
+        }
+
+        // きらきら回転
+        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+            sparkleRotation = 360
         }
 
         // 3, 2, 1 のカウントダウン
@@ -140,16 +151,16 @@ struct CountdownScreen: View {
             let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
             impactFeedback.impactOccurred()
 
-            // スケールダウンアニメーション
-            withAnimation(OnlyLonelyAnimation.fast) {
-                scale = 0.8
-                glowIntensity = 0.3
+            // ジャンプダウンアニメーション
+            withAnimation(HarajukuAnimation.jump) {
+                scale = 0.7
+                glowIntensity = 0.4
             }
 
-            // スケールアップアニメーション
+            // バウンスアップアニメーション
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                withAnimation(OnlyLonelyAnimation.medium) {
-                    scale = 1.3
+                withAnimation(HarajukuAnimation.bounce(duration: 0.6)) {
+                    scale = 1.4
                     glowIntensity = 1.0
                 }
             }
@@ -169,16 +180,16 @@ struct CountdownScreen: View {
             rotation = 0
         }
 
-        // Start! 表示
-        withAnimation(OnlyLonelyAnimation.slow) {
+        // スタート表示
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
             showStart = true
             scale = 0.5
         }
 
         // 爆発的なスケールアップ
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.5)) {
-                scale = 1.5
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.4)) {
+                scale = 1.6
                 rotation = 360
             }
 
@@ -189,8 +200,8 @@ struct CountdownScreen: View {
 
         // フェードアウト
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation(OnlyLonelyAnimation.fast) {
-                scale = 2.0
+            withAnimation(HarajukuAnimation.bounce(duration: 0.4)) {
+                scale = 2.2
                 glowIntensity = 0
             }
         }
@@ -206,45 +217,56 @@ struct CountdownScreen: View {
 
 private struct BalloonLaunchView: View {
     let color: Color
+    let emoji: String
     let delay: Double
     @State private var offset: CGFloat = 0
     @State private var opacity: Double = 1.0
     @State private var scale: CGFloat = 1.0
+    @State private var rotation: Double = 0
 
     var body: some View {
-        Circle()
-            .fill(
-                RadialGradient(
-                    colors: [
-                        color.opacity(0.9),
-                        color
-                    ],
-                    center: .topLeading,
-                    startRadius: 10,
-                    endRadius: 30
+        ZStack {
+            // ふわふわ風船
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            color.opacity(0.9),
+                            color,
+                            color.opacity(0.7)
+                        ],
+                        center: .topLeading,
+                        startRadius: 5,
+                        endRadius: 35
+                    )
                 )
-            )
-            .frame(width: 50, height: 50)
-            .shadow(color: color.opacity(0.6), radius: 10)
-            .shadow(color: color.opacity(0.3), radius: 20)
-            .overlay(
-                Circle()
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: 15, height: 15)
-                    .offset(x: -8, y: -8)
-            )
-            .offset(y: offset)
-            .opacity(opacity)
-            .scaleEffect(scale)
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    withAnimation(.easeOut(duration: 1.5)) {
-                        offset = -300
-                        opacity = 0
-                        scale = 0.5
-                    }
+                .frame(width: 60, height: 60)
+                .harajukuShadow(color: color)
+                .overlay(
+                    Circle()
+                        .fill(Color.white.opacity(0.4))
+                        .frame(width: 18, height: 18)
+                        .offset(x: -10, y: -10)
+                )
+
+            // 絵文字
+            Text(emoji)
+                .font(.system(size: 24))
+        }
+        .offset(y: offset)
+        .opacity(opacity)
+        .scaleEffect(scale)
+        .rotationEffect(.degrees(rotation))
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.spring(response: 1.2, dampingFraction: 0.6)) {
+                    offset = -350
+                    opacity = 0
+                    scale = 0.6
+                    rotation = Double.random(in: -45...45)
                 }
             }
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 //  PlayerNameInputScreen.swift
 //  OnlyLonely
 //
-//  07. プレイヤー名入力画面（iPhone）
+//  07. プレイヤー名入力画面（iPhone）- 原宿系ふわふわバージョン
 //  iPhone のみ
 //
 
@@ -13,101 +13,104 @@ struct PlayerNameInputScreen: View {
     @State private var playerName: String = ""
     @State private var isFloating = false
     @State private var showContent = false
+    @State private var sparkleRotation: Double = 0
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            AnimatedGradientBackground(colors: [
-                OnlyLonelyColors.midnightBlue,
-                OnlyLonelyColors.darkBlue,
-                OnlyLonelyColors.skyBlue
-            ])
-            .ignoresSafeArea()
+            // カラフル虹色背景
+            RainbowBackground()
+                .ignoresSafeArea()
 
-            // パーティクル
-            ParticleView()
+            // ふわふわ雲
+            FluffyCloudBackground()
                 .ignoresSafeArea()
                 .opacity(0.3)
 
-            VStack(spacing: OnlyLonelySpacing.xl) {
+            VStack(spacing: HarajukuSpacing.xl) {
                 Spacer()
 
                 // タイトル
-                VStack(spacing: OnlyLonelySpacing.lg) {
-                    GlowText(
-                        text: "あなたは誰？",
-                        size: 36,
-                        glowColor: OnlyLonelyColors.playerAPrimary
-                    )
+                VStack(spacing: HarajukuSpacing.lg) {
+                    // きらきら装飾
+                    HStack(spacing: 12) {
+                        Text("🌟")
+                            .font(.system(size: 20))
+                            .rotationEffect(.degrees(sparkleRotation))
+                        RainbowText(
+                            text: "あなたのなまえは？",
+                            size: 32
+                        )
+                        Text("🌟")
+                            .font(.system(size: 20))
+                            .rotationEffect(.degrees(-sparkleRotation))
+                    }
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : -20)
 
-                    Text("空に名前を刻んでください")
-                        .font(OnlyLonelyTypography.body(size: 16))
-                        .tracking(3)
-                        .foregroundColor(OnlyLonelyColors.textSecondary)
+                    Text("🎈 ふうせんにかいてね 🎈")
+                        .font(HarajukuTypography.body(size: 16))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
                         .opacity(showContent ? 1 : 0)
                         .offset(y: showContent ? 0 : -10)
                 }
 
-                // 風船アニメーション
+                // ふわふわ風船アニメーション
                 PlayerBalloonView()
-                    .frame(width: 120, height: 120)
+                    .frame(width: 130, height: 130)
                     .offset(y: isFloating ? -15 : 15)
                     .animation(
-                        OnlyLonelyAnimation.floating(duration: 3),
+                        HarajukuAnimation.bounce(duration: 2.5),
                         value: isFloating
                     )
                     .opacity(showContent ? 1 : 0)
-                    .scaleEffect(showContent ? 1 : 0.8)
-                    .padding(.vertical, OnlyLonelySpacing.lg)
+                    .scaleEffect(showContent ? 1 : 0.5)
+                    .padding(.vertical, HarajukuSpacing.lg)
 
                 // 名前入力フィールド
-                VStack(spacing: OnlyLonelySpacing.sm) {
-                    GlassNameTextField(
+                VStack(spacing: HarajukuSpacing.md) {
+                    FluffyTextField(
+                        placeholder: "なまえをかいてね",
                         text: $playerName,
-                        isTextFieldFocused: $isTextFieldFocused
+                        emoji: "✏️",
+                        gradient: HarajukuColors.pinkPurpleGradient,
+                        borderColor: HarajukuColors.pastelPink
                     )
 
-                    Text("名前が風船に刻まれます")
-                        .font(OnlyLonelyTypography.caption(size: 12))
-                        .tracking(2)
-                        .foregroundColor(OnlyLonelyColors.textInactive)
+                    Text("ふうせんにかざられるよ！")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
                 }
-                .padding(.horizontal, OnlyLonelySpacing.xl)
+                .padding(.horizontal, HarajukuSpacing.xl)
                 .opacity(showContent ? 1 : 0)
 
                 Spacer()
 
                 // 参加ボタン
-                VStack(spacing: OnlyLonelySpacing.md) {
-                    PrimaryButton(
-                        title: "空へ飛び立つ",
-                        gradient: LinearGradient(
-                            colors: [
-                                OnlyLonelyColors.playerAPrimary,
-                                OnlyLonelyColors.playerBPrimary
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                VStack(spacing: HarajukuSpacing.md) {
+                    FluffyButton(
+                        title: "そらへとびたつ！",
+                        emoji: "🎈",
+                        gradient: HarajukuColors.candyGradient,
+                        shadowColor: HarajukuColors.pastelPink
                     ) {
                         joinGame()
                     }
                     .opacity(showContent ? 1 : 0)
 
-                    Text(playerName.isEmpty ? "名前が空欄の場合、自動で名前が付きます" : "'\(playerName)' として参加します")
-                        .font(OnlyLonelyTypography.caption(size: 12))
-                        .tracking(1)
-                        .foregroundColor(OnlyLonelyColors.textSecondary)
+                    Text(playerName.isEmpty ? "なまえがからっぽだと、じどうでつけるよ" : "'\(playerName)' でさんかするよ！")
+                        .font(HarajukuTypography.caption(size: 12))
+                        .fontWeight(.medium)
+                        .foregroundColor(HarajukuColors.textSecondary)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, OnlyLonelySpacing.xl)
-                        .opacity(showContent ? 0.7 : 0)
+                        .padding(.horizontal, HarajukuSpacing.xl)
+                        .opacity(showContent ? 0.8 : 0)
                 }
 
                 Spacer()
-                    .frame(height: OnlyLonelySpacing.xxxl)
+                    .frame(height: HarajukuSpacing.xxxl)
             }
         }
         .onAppear {
@@ -119,7 +122,13 @@ struct PlayerNameInputScreen: View {
     private func startAnimations() {
         isFloating = true
 
-        withAnimation(OnlyLonelyAnimation.slow.delay(0.2)) {
+        // きらきら回転
+        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            sparkleRotation = 360
+        }
+
+        // コンテンツフェードイン
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
             showContent = true
         }
 
@@ -134,13 +143,13 @@ struct PlayerNameInputScreen: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
 
-        let name = playerName.isEmpty ? "旅人 \(Int.random(in: 1...99))" : playerName
+        let name = playerName.isEmpty ? "たびびと \(Int.random(in: 1...99))" : playerName
 
         // WebSocket でプレイヤー参加メッセージを送信（後で実装）
         // webSocketService.send(.playerJoin(playerName: name, playerId: UUID().uuidString))
 
         // キャリブレーション画面をスキップして待機画面へ（MVP）
-        withAnimation(OnlyLonelyAnimation.slow) {
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             coordinator.navigate(to: .waiting)
         }
     }
@@ -152,120 +161,11 @@ private struct PlayerBalloonView: View {
     @State private var isPulsing = false
 
     var body: some View {
-        ZStack {
-            // 外側のグロウ
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            OnlyLonelyColors.playerAPrimary.opacity(0.4),
-                            OnlyLonelyColors.playerAPrimary.opacity(0.1),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 30,
-                        endRadius: 70
-                    )
-                )
-                .frame(width: 140, height: 140)
-                .blur(radius: 10)
-                .scaleEffect(isPulsing ? 1.2 : 1.0)
-                .animation(OnlyLonelyAnimation.pulse(duration: 2), value: isPulsing)
-
-            // 風船本体
-            Circle()
-                .fill(
-                    AngularGradient(
-                        colors: [
-                            OnlyLonelyColors.playerAPrimary,
-                            OnlyLonelyColors.playerASecondary,
-                            OnlyLonelyColors.playerAPrimary
-                        ],
-                        center: .center
-                    )
-                )
-                .frame(width: 80, height: 80)
-                .shadow(color: OnlyLonelyColors.playerAPrimary.opacity(0.6), radius: 20)
-                .overlay(
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.white.opacity(0.4),
-                                    Color.clear
-                                ],
-                                center: UnitPoint(x: 0.3, y: 0.3),
-                                startRadius: 5,
-                                endRadius: 30
-                            )
-                        )
-                        .frame(width: 80, height: 80)
-                )
-
-            // 中央の疑問符
-            Text("?")
-                .font(.system(size: 48, weight: .ultraLight, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
-                .shadow(color: .white.opacity(0.5), radius: 10)
-        }
-        .onAppear {
-            isPulsing = true
-        }
-    }
-}
-
-// MARK: - Glass Name TextField
-
-private struct GlassNameTextField: View {
-    @Binding var text: String
-    var isTextFieldFocused: FocusState<Bool>.Binding
-
-    var body: some View {
-        TextField("", text: $text, prompt: Text("あなたの名前").foregroundColor(.white.opacity(0.4)))
-            .font(.system(size: 24, weight: .light, design: .rounded))
-            .tracking(2)
-            .foregroundColor(.white)
-            .multilineTextAlignment(.center)
-            .padding(.vertical, OnlyLonelySpacing.lg)
-            .padding(.horizontal, OnlyLonelySpacing.xl)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.15),
-                                        Color.white.opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(isTextFieldFocused.wrappedValue ? 0.6 : 0.3),
-                                Color.white.opacity(isTextFieldFocused.wrappedValue ? 0.3 : 0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: isTextFieldFocused.wrappedValue ? 2 : 1
-                    )
-            )
-            .shadow(
-                color: OnlyLonelyColors.playerAPrimary.opacity(isTextFieldFocused.wrappedValue ? 0.4 : 0),
-                radius: 20
-            )
-            .focused(isTextFieldFocused)
-            .submitLabel(.done)
-            .animation(OnlyLonelyAnimation.fast, value: isTextFieldFocused.wrappedValue)
+        FluffyBalloon(
+            color: HarajukuColors.pastelPink,
+            size: 100,
+            emoji: "❓"
+        )
     }
 }
 

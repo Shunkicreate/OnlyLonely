@@ -2,7 +2,7 @@
 //  ConnectionScreen.swift
 //  OnlyLonely
 //
-//  06. 接続画面（iPhone）
+//  06. 接続画面（iPhone）- 原宿系ふわふわバージョン
 //  iPhone のみ
 //
 
@@ -18,6 +18,7 @@ struct ConnectionScreen: View {
     @State private var errorMessage: String = ""
     @State private var isPulsing = false
     @State private var rotationAngle: Double = 0
+    @State private var sparkleRotation: Double = 0
 
     enum ConnectionState {
         case idle
@@ -28,131 +29,172 @@ struct ConnectionScreen: View {
 
     var body: some View {
         ZStack {
-            // 背景グラデーション
-            AnimatedGradientBackground(colors: [
-                OnlyLonelyColors.spaceBlack,
-                OnlyLonelyColors.midnightBlue,
-                OnlyLonelyColors.darkBlue
-            ])
-            .ignoresSafeArea()
+            // カラフル虹色背景
+            RainbowBackground()
+                .ignoresSafeArea()
 
-            // パーティクル
-            ParticleView()
+            // ふわふわ雲
+            FluffyCloudBackground()
                 .ignoresSafeArea()
                 .opacity(0.4)
 
-            VStack(spacing: OnlyLonelySpacing.xl) {
+            VStack(spacing: HarajukuSpacing.xl) {
                 Spacer()
 
-                // タイトル
-                VStack(spacing: OnlyLonelySpacing.md) {
-                    Text("iPad に接続")
-                        .font(OnlyLonelyTypography.title(size: 36))
-                        .tracking(4)
-                        .foregroundColor(.white)
-                        .shadow(color: OnlyLonelyColors.softGlow, radius: 10)
+                // タイトルセクション
+                VStack(spacing: HarajukuSpacing.md) {
+                    // きらきら装飾
+                    HStack(spacing: 12) {
+                        Text("✨")
+                            .font(.system(size: 24))
+                            .rotationEffect(.degrees(sparkleRotation))
+                        RainbowText(text: "iPadにつなぐよ", size: 32)
+                        Text("✨")
+                            .font(.system(size: 24))
+                            .rotationEffect(.degrees(-sparkleRotation))
+                    }
+                    .animation(HarajukuAnimation.sparkle(duration: 3), value: sparkleRotation)
 
-                    Text("同じWi-Fiネットワーク内のiPadを探します")
-                        .font(OnlyLonelyTypography.caption(size: 14))
-                        .tracking(2)
-                        .foregroundColor(OnlyLonelyColors.textSecondary)
+                    Text("おなじWi-Fiでつながろう！")
+                        .font(HarajukuTypography.body(size: 14))
+                        .fontWeight(.semibold)
+                        .foregroundColor(HarajukuColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
                 // 接続状態インジケーター
                 ConnectionIndicator(state: connectionState, isPulsing: $isPulsing, rotationAngle: $rotationAngle)
-                    .frame(height: 120)
-                    .padding(.vertical, OnlyLonelySpacing.lg)
+                    .frame(height: 140)
+                    .padding(.vertical, HarajukuSpacing.lg)
 
                 // 入力フィールド
-                VStack(spacing: OnlyLonelySpacing.lg) {
+                VStack(spacing: HarajukuSpacing.lg) {
                     // IP アドレス入力
-                    GlassTextField(
-                        title: "IP アドレス",
+                    FluffyTextField(
                         placeholder: "192.168.1.100",
                         text: $ipAddress,
+                        emoji: "🌐",
+                        gradient: HarajukuColors.skyGradient,
+                        borderColor: HarajukuColors.pastelBlue,
                         keyboardType: .decimalPad,
                         isDisabled: connectionState == .connecting
                     )
 
                     // ポート番号入力
-                    GlassTextField(
-                        title: "ポート番号",
+                    FluffyTextField(
                         placeholder: "8080",
                         text: $port,
+                        emoji: "🔌",
+                        gradient: HarajukuColors.blueMintGradient,
+                        borderColor: HarajukuColors.pastelMint,
                         keyboardType: .numberPad,
                         isDisabled: connectionState == .connecting
                     )
                 }
-                .padding(.horizontal, OnlyLonelySpacing.xl)
+                .padding(.horizontal, HarajukuSpacing.xl)
 
                 // QR コードボタン
-                GhostButton(title: "QR コードで接続") {
+                FluffyOutlineButton(
+                    title: "QRコードでつなぐ",
+                    emoji: "📷",
+                    color: HarajukuColors.pastelPurple
+                ) {
                     // QR コードスキャン機能（後で実装）
                 }
-                .padding(.top, OnlyLonelySpacing.sm)
+                .padding(.top, HarajukuSpacing.sm)
 
                 // 接続ボタン
-                PrimaryButton(
-                    title: connectionState == .connecting ? "接続中..." : "接続する",
-                    gradient: OnlyLonelyColors.playerBButtonGradient
+                FluffyButton(
+                    title: connectionState == .connecting ? "つなぎちゅう..." : "せつぞく！",
+                    emoji: connectionState == .connecting ? "🔄" : "🎈",
+                    gradient: HarajukuColors.candyGradient,
+                    shadowColor: HarajukuColors.pastelPink
                 ) {
                     connect()
                 }
                 .disabled(connectionState == .connecting)
-                .padding(.top, OnlyLonelySpacing.lg)
+                .padding(.top, HarajukuSpacing.lg)
 
                 // 状態メッセージ
-                VStack(spacing: OnlyLonelySpacing.sm) {
-                    Text(statusMessage)
-                        .font(OnlyLonelyTypography.body(size: 14))
-                        .tracking(2)
-                        .foregroundColor(
-                            connectionState == .failed ?
-                            Color(hex: "#FF4444") :
-                            OnlyLonelyColors.textSecondary
-                        )
+                VStack(spacing: HarajukuSpacing.sm) {
+                    HStack(spacing: 6) {
+                        Text(statusEmoji)
+                            .font(.system(size: 16))
+                        Text(statusMessage)
+                            .font(HarajukuTypography.body(size: 14))
+                            .fontWeight(.semibold)
+                            .foregroundColor(statusColor)
+                    }
 
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
-                            .font(OnlyLonelyTypography.caption(size: 12))
-                            .foregroundColor(Color(hex: "#FF4444").opacity(0.8))
+                            .font(HarajukuTypography.caption(size: 12))
+                            .foregroundColor(Color(hex: "#FF6B9D").opacity(0.8))
                     }
                 }
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, OnlyLonelySpacing.xl)
+                .padding(.horizontal, HarajukuSpacing.xl)
 
                 Spacer()
             }
         }
         .onAppear {
             isPulsing = true
+            withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
+                sparkleRotation = 360
+            }
         }
     }
 
     private var statusMessage: String {
         switch connectionState {
         case .idle:
-            return "接続情報を入力してください"
+            return "じょうほうをいれてね"
         case .connecting:
-            return "iPad を探しています..."
+            return "iPadをさがしてるよ..."
         case .connected:
-            return "接続成功！"
+            return "つながったよ！"
         case .failed:
-            return "接続に失敗しました"
+            return "つながらなかった..."
+        }
+    }
+
+    private var statusEmoji: String {
+        switch connectionState {
+        case .idle:
+            return "💭"
+        case .connecting:
+            return "🔍"
+        case .connected:
+            return "🎉"
+        case .failed:
+            return "😢"
+        }
+    }
+
+    private var statusColor: Color {
+        switch connectionState {
+        case .idle:
+            return HarajukuColors.textSecondary
+        case .connecting:
+            return HarajukuColors.pastelBlue
+        case .connected:
+            return HarajukuColors.pastelMint
+        case .failed:
+            return Color(hex: "#FF6B9D")
         }
     }
 
     private func connect() {
         guard !ipAddress.isEmpty, let portNumber = Int(port) else {
-            errorMessage = "正しいIPアドレスとポート番号を入力してください"
-            withAnimation(OnlyLonelyAnimation.fast) {
+            errorMessage = "ただしいばんごうをいれてね"
+            withAnimation(HarajukuAnimation.jump) {
                 connectionState = .failed
             }
             return
         }
 
-        withAnimation(OnlyLonelyAnimation.medium) {
+        withAnimation(HarajukuAnimation.bounce(duration: 0.5)) {
             connectionState = .connecting
             errorMessage = ""
         }
@@ -166,7 +208,7 @@ struct ConnectionScreen: View {
             do {
                 try await webSocketService.connectToServer(host: ipAddress, port: portNumber)
                 await MainActor.run {
-                    withAnimation(OnlyLonelyAnimation.medium) {
+                    withAnimation(HarajukuAnimation.bounce(duration: 0.6)) {
                         connectionState = .connected
                         rotationAngle = 0
                     }
@@ -182,7 +224,7 @@ struct ConnectionScreen: View {
                 }
             } catch {
                 await MainActor.run {
-                    withAnimation(OnlyLonelyAnimation.medium) {
+                    withAnimation(HarajukuAnimation.wiggle()) {
                         connectionState = .failed
                         errorMessage = error.localizedDescription
                         rotationAngle = 0
@@ -206,142 +248,87 @@ private struct ConnectionIndicator: View {
 
     var body: some View {
         ZStack {
-            // 外側のリング
+            // ふわふわ外側のリング
             Circle()
                 .stroke(
                     LinearGradient(
                         colors: [
-                            OnlyLonelyColors.playerBPrimary.opacity(0.3),
-                            OnlyLonelyColors.neonGlow.opacity(0.3)
+                            HarajukuColors.pastelPink.opacity(0.4),
+                            HarajukuColors.pastelBlue.opacity(0.4),
+                            HarajukuColors.pastelPurple.opacity(0.4)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 2
+                    lineWidth: 3
                 )
-                .frame(width: 100, height: 100)
-                .scaleEffect(isPulsing ? 1.2 : 1.0)
-                .opacity(isPulsing ? 0.3 : 0.6)
-                .animation(OnlyLonelyAnimation.pulse(duration: 2), value: isPulsing)
+                .frame(width: 110, height: 110)
+                .scaleEffect(isPulsing ? 1.3 : 1.0)
+                .opacity(isPulsing ? 0.4 : 0.7)
+                .animation(HarajukuAnimation.bounce(duration: 1.5), value: isPulsing)
 
-            // 中間のリング（接続中のみ回転）
+            // 虹色リング（接続中のみ回転）
             if state == .connecting {
                 Circle()
-                    .trim(from: 0, to: 0.7)
+                    .trim(from: 0, to: 0.6)
                     .stroke(
-                        LinearGradient(
-                            colors: [
-                                OnlyLonelyColors.playerBPrimary,
-                                OnlyLonelyColors.neonGlow
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                        HarajukuColors.rainbowGradient,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
-                    .frame(width: 80, height: 80)
+                    .frame(width: 90, height: 90)
                     .rotationEffect(.degrees(rotationAngle))
+                    .harajukuShadow(color: HarajukuColors.pastelPink)
             }
 
-            // 中央のアイコン
+            // ふわふわ中央アイコン
             ZStack {
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
-                                iconColor.opacity(0.4),
-                                iconColor.opacity(0.1)
+                                iconColor.opacity(0.6),
+                                iconColor.opacity(0.2)
                             ],
                             center: .center,
-                            startRadius: 10,
+                            startRadius: 5,
                             endRadius: 40
                         )
                     )
-                    .frame(width: 60, height: 60)
-                    .shadow(color: iconColor.opacity(0.6), radius: 20)
+                    .frame(width: 70, height: 70)
+                    .harajukuShadow(color: iconColor)
 
-                Image(systemName: iconName)
-                    .font(.system(size: 30, weight: .light))
-                    .foregroundColor(.white)
-                    .shadow(color: iconColor, radius: 10)
+                Text(iconEmoji)
+                    .font(.system(size: 36))
+                    .scaleEffect(state == .connected ? 1.2 : 1.0)
             }
             .scaleEffect(state == .connected ? 1.1 : 1.0)
-            .animation(OnlyLonelyAnimation.medium, value: state)
+            .animation(HarajukuAnimation.bounce(duration: 0.6), value: state)
         }
     }
 
-    private var iconName: String {
+    private var iconEmoji: String {
         switch state {
         case .idle:
-            return "antenna.radiowaves.left.and.right"
+            return "📡"
         case .connecting:
-            return "dot.radiowaves.left.and.right"
+            return "🔄"
         case .connected:
-            return "checkmark.circle"
+            return "✨"
         case .failed:
-            return "xmark.circle"
+            return "💔"
         }
     }
 
     private var iconColor: Color {
         switch state {
         case .idle:
-            return OnlyLonelyColors.playerBPrimary
+            return HarajukuColors.pastelBlue
         case .connecting:
-            return OnlyLonelyColors.neonGlow
+            return HarajukuColors.pastelPurple
         case .connected:
-            return Color(hex: "#00FF88")
+            return HarajukuColors.pastelMint
         case .failed:
-            return Color(hex: "#FF4444")
-        }
-    }
-}
-
-// MARK: - Glass TextField
-
-private struct GlassTextField: View {
-    let title: String
-    let placeholder: String
-    @Binding var text: String
-    let keyboardType: UIKeyboardType
-    let isDisabled: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: OnlyLonelySpacing.sm) {
-            Text(title)
-                .font(OnlyLonelyTypography.caption(size: 12))
-                .tracking(2)
-                .foregroundColor(OnlyLonelyColors.textSecondary)
-                .textCase(.uppercase)
-
-            TextField(placeholder, text: $text)
-                .font(OnlyLonelyTypography.body(size: 18))
-                .foregroundColor(.white)
-                .padding(OnlyLonelySpacing.md)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.1),
-                                            Color.white.opacity(0.05)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
-                .keyboardType(keyboardType)
-                .disabled(isDisabled)
-                .opacity(isDisabled ? 0.5 : 1.0)
+            return Color(hex: "#FF6B9D")
         }
     }
 }
