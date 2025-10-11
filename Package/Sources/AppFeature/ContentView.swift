@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var levelManager = MicrophoneLevelManager()
 
     var body: some View {
+        NavigationStack {
         VStack(spacing: 24) {
             VStack(spacing: 8) {
                 Text("マイクのアクセス状態")
@@ -57,6 +58,18 @@ struct ContentView: View {
             }
 
             Spacer()
+
+            // P2P navigation
+            VStack(spacing: 12) {
+                Text("P2P")
+                    .font(.headline)
+                HStack {
+                    NavigationLink("Host へ", destination: { HostView() })
+                        .buttonStyle(.borderedProminent)
+                    NavigationLink("Guest へ", destination: { GuestView() })
+                        .buttonStyle(.bordered)
+                }
+            }
         }
         .padding()
         .onAppear {
@@ -69,6 +82,7 @@ struct ContentView: View {
         }
         .onDisappear {
             levelManager.stopMonitoring()
+        }
         }
     }
 
