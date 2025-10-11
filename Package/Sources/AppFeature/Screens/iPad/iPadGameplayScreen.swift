@@ -198,6 +198,8 @@ struct PlayerInfoPanel: View {
 class GameScene: SKScene {
     private var balloonA: SKSpriteNode!
     private var balloonB: SKSpriteNode!
+    private var clouds: [Int: SKNode] = [:]  // cloudId -> SKNode
+    private var lightningNodes: [Int: SKNode] = [:]  // cloudId -> 雷エフェクト
 
     // 物理エンジンへの参照（弱参照で保持）
     private weak var physicsCoordinator: GamePhysicsCoordinator?
@@ -213,6 +215,12 @@ class GameScene: SKScene {
 
     override func didMove(to view: SKView) {
         setupScene()
+        clouds = CloudLoader.loadRandomClouds(
+            sceneSize: size,
+            cloudsPerPlayer: 10,
+            physicsCoordinator: physicsCoordinator,
+            scene: self
+        )
     }
 
     private func setupScene() {
@@ -294,6 +302,31 @@ class GameScene: SKScene {
         if let stateB = physicsCoordinator?.playerBState {
             balloonB.position = CGPoint(x: size.width * 3 / 4, y: stateB.position.y)
         }
+
+        // 雲との衝突チェック
+        guard let coordinator = physicsCoordinator else { return }
+
+        CloudCollisionDetector.checkBalloonCloudCollision(
+            balloon: balloonA,
+            playerId: "A",
+            balloonPosition: balloonA.position,
+            balloonVelocity: coordinator.playerAState.velocity,
+            physicsCoordinator: coordinator,
+            clouds: clouds,
+            lightningNodes: &lightningNodes,
+            scene: self
+        )
+
+        CloudCollisionDetector.checkBalloonCloudCollision(
+            balloon: balloonB,
+            playerId: "B",
+            balloonPosition: balloonB.position,
+            balloonVelocity: coordinator.playerBState.velocity,
+            physicsCoordinator: coordinator,
+            clouds: clouds,
+            lightningNodes: &lightningNodes,
+            scene: self
+        )
     }
 
     func updateBalloonPosition(playerA: CGFloat, playerB: CGFloat) {
