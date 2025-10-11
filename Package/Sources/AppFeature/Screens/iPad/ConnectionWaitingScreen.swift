@@ -58,6 +58,30 @@ struct ConnectionWaitingScreen: View {
 
                 Spacer()
 
+                // デバッグ用ボタン
+                #if DEBUG
+                VStack(spacing: 16) {
+                    Text("🐛 デバッグメニュー")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.6))
+
+                    Button {
+                        coordinator.navigate(to: .iPadGameplay)
+                    } label: {
+                        Text("ゲーム画面へ直接移動")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 12)
+                            .background(
+                                Capsule()
+                                    .fill(Color.orange.opacity(0.7))
+                            )
+                    }
+                }
+                .padding(.bottom, 20)
+                #endif
+
                 // キャンセルボタン
                 Button {
                     webSocketService.stopServer()
