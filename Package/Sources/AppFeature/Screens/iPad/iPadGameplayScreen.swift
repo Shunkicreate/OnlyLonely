@@ -109,8 +109,12 @@ struct iPadGameplayScreen: View {
         .navigationBarBackButtonHidden()
     }
 
-    private func createGameScene(size: CGSize) -> SKScene {
-        let scene = GameScene(size: size, physicsCoordinator: physicsCoordinator)
+    private func createGameScene(size: CGSize) -> GameScene {
+        let scene = GameScene(
+            size: size,
+            physicsCoordinator: physicsCoordinator,
+            sessionManager: sessionManager
+        )
         scene.scaleMode = .aspectFill
         scene.backgroundColor = .clear
         return scene
@@ -156,9 +160,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // 物理エンジンへの参照（弱参照で保持）
     private weak var physicsCoordinator: GamePhysicsCoordinator?
+    private weak var sessionManager: P2PSessionManager?
 
-    init(size: CGSize, physicsCoordinator: GamePhysicsCoordinator) {
+    init(size: CGSize, physicsCoordinator: GamePhysicsCoordinator, sessionManager: P2PSessionManager?) {
         self.physicsCoordinator = physicsCoordinator
+        self.sessionManager = sessionManager
         super.init(size: size)
     }
 
@@ -307,26 +313,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // 雲との衝突チェック
         guard let coordinator = physicsCoordinator else { return }
 
+        let playerAId = coordinator.playerId(for: .playerA) ?? "A"
         CloudCollisionDetector.checkBalloonCloudCollision(
             balloon: balloonA,
-            playerId: "A",
+            playerId: playerAId,
             balloonPosition: balloonA.position,
             balloonVelocity: coordinator.playerAState.velocity,
             physicsCoordinator: coordinator,
             clouds: clouds,
             lightningNodes: &lightningNodes,
-            scene: self
+            scene: self,
+            sessionManager: sessionManager
         )
 
+        let playerBId = coordinator.playerId(for: .playerB) ?? "B"
         CloudCollisionDetector.checkBalloonCloudCollision(
             balloon: balloonB,
-            playerId: "B",
+            playerId: playerBId,
             balloonPosition: balloonB.position,
             balloonVelocity: coordinator.playerBState.velocity,
             physicsCoordinator: coordinator,
             clouds: clouds,
             lightningNodes: &lightningNodes,
-            scene: self
+            scene: self,
+            sessionManager: sessionManager
         )
     }
 

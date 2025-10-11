@@ -68,6 +68,7 @@ final class MicrophoneLevelManager: NSObject, ObservableObject {
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.mixWithOthers])
+            try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(true)
             try audioSession.setActive(true, options: [])
         } catch {
             throw MicrophoneLevelManagerError.audioSessionConfigurationFailed(underlying: error)

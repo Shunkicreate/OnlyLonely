@@ -5,15 +5,18 @@
 //  雲との衝突判定ロジック管理
 //
 
+import Foundation
 import SpriteKit
 
 /// 雲との衝突判定を管理するクラス
 class CloudCollisionDetector {
+    private static var lastLightningHit: [String: Date] = [:]
+    private static let lightningEventCooldown: TimeInterval = 1.5
 
     /// 風船と雲の衝突をチェックし、エフェクトを再生
     /// - Parameters:
     ///   - balloon: 風船ノード
-    ///   - playerId: プレイヤーID ("A" または "B")
+        ///   - playerId: プレイヤーID（Multipeer の ID 等）
     ///   - balloonPosition: 風船の位置
     ///   - balloonVelocity: 風船の速度
     ///   - physicsCoordinator: 物理演算コーディネーター
@@ -29,7 +32,8 @@ class CloudCollisionDetector {
         physicsCoordinator: GamePhysicsCoordinator,
         clouds: [Int: SKNode],
         lightningNodes: inout [Int: SKNode],
-        scene: SKScene
+        scene: SKScene,
+        sessionManager: P2PSessionManager?
     ) {
         // 物理エンジンから衝突結果を取得
         let collisionResult = physicsCoordinator.checkCollision(
@@ -59,7 +63,8 @@ class CloudCollisionDetector {
             at: balloonPosition,
             clouds: clouds,
             lightningNodes: &lightningNodes,
-            scene: scene
+            scene: scene,
+            sessionManager: sessionManager
         )
     }
 
@@ -87,14 +92,14 @@ class CloudCollisionDetector {
     /// 衝突結果の処理とエフェクト再生
     /// - Parameters:
     ///   - result: 衝突結果
-    ///   - playerId: プレイヤーID
+        ///   - playerId: プレイヤーID
     ///   - balloon: 風船ノード
     ///   - cloudId: 雲のID
     ///   - position: 衝突位置
     ///   - clouds: 雲ノードの辞書
     ///   - lightningNodes: 雷エフェクトノードの辞書（参照渡し）
     ///   - scene: エフェクトを表示するシーン
-    private static func handleCollision(
+  @MainActor private static func handleCollision(
         _ result: CollisionResult,
         forPlayer playerId: String,
         balloon: SKSpriteNode,
@@ -102,7 +107,8 @@ class CloudCollisionDetector {
         at position: CGPoint,
         clouds: [Int: SKNode],
         lightningNodes: inout [Int: SKNode],
-        scene: SKScene
+        scene: SKScene,
+        sessionManager: P2PSessionManager?
     ) {
         guard let cloudNode = clouds[cloudId] else { return }
 
@@ -117,6 +123,7 @@ class CloudCollisionDetector {
                 lightningNodes: &lightningNodes
             )
             print("⚡ Lightning hit player \(playerId)!")
+            sendLightningEvent(forPlayer: playerId, cloudId: cloudId, sessionManager: sessionManager)
 
         case .blocked:
             // 梅の雲：ブロック時のエフェクト
@@ -140,6 +147,30 @@ class CloudCollisionDetector {
 
         case .none:
             break
+        }
+    }
+
+  @MainActor private static func sendLightningEvent(
+        forPlayer playerId: String,
+        cloudId: Int,
+        sessionManager: P2PSessionManager?
+    ) {
+        guard let sessionManager else { return }
+
+        let now = Date()
+        let cacheKey = "\(playerId)#\(cloudId)"
+
+        if let lastHit = lastLightningHit[cacheKey],
+           now.timeIntervalSince(lastHit) < lightningEventCooldown {
+            return
+        }
+
+        lastLightningHit[cacheKey] = now
+        let event = GameEventMessage(type: .lightningHit, timestamp: now, playerId: playerId)
+        if let targetPeer = sessionManager.connectedPeers.first(where: { $0.id == playerId }) {
+            sessionManager.sendGameEvent(event, to: [targetPeer])
+        } else {
+            sessionManager.sendGameEvent(event)
         }
     }
 }

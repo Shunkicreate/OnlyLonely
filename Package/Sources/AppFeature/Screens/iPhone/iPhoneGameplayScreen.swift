@@ -6,10 +6,12 @@
 //  iPhone のみ
 //
 
-import SwiftUI
-import AVFoundation
-import UIKit
 import Combine
+import AVFoundation
+import CoreHaptics
+import Foundation
+import UIKit
+import SwiftUI
 
 struct iPhoneGameplayScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
@@ -23,6 +25,8 @@ struct iPhoneGameplayScreen: View {
     @State private var sendWindForceTimer: Timer?
     @State private var gameplayInitialized = false
     @State private var hasHandledGameFinished = false
+    @State private var localPlayerId: String?
+    private let lightningHaptics = LightningHaptics()
 
     init() {
         _screenModel = StateObject(wrappedValue: iPhoneGameplayScreenModel())
@@ -119,8 +123,12 @@ struct iPhoneGameplayScreen: View {
             gameplayInitialized = false
         }
         .onReceive(sessionManager.gameEventPublisher) { event in
-            guard event.type == .gameFinished else { return }
-            handleRemoteGameFinished()
+            switch event.type {
+            case .gameFinished:
+                handleRemoteGameFinished()
+            case .lightningHit:
+                handleLightningEvent(event)
+            }
         }
         .onReceive(sessionManager.$localPeerId.compactMap { $0 }.removeDuplicates()) { newId in
             setupGameplayIfNeeded(with: newId)
@@ -170,6 +178,7 @@ struct iPhoneGameplayScreen: View {
         screenModel.bindInputs(microphone: micLevelManager, motionManager: motionManager)
         startGame()
         gameplayInitialized = true
+        localPlayerId = resolvedId
     }
 
     private func handleRemoteGameFinished() {
@@ -181,6 +190,134 @@ struct iPhoneGameplayScreen: View {
         screenModel.cancelBindings()
         Task { @MainActor in
             coordinator.navigate(to: .iPhoneResult)
+        }
+    }
+
+    private func handleLightningEvent(_ event: GameEventMessage) {
+        guard let targetId = event.playerId else { return }
+        let resolvedLocalId = localPlayerId ?? sessionManager.resolveLocalPeerId()
+        guard let resolvedLocalId, resolvedLocalId == targetId else { return }
+        lightningHaptics.playLightningPattern()
+    }
+}
+
+private final class LightningHaptics {
+    private var engine: CHHapticEngine?
+    private var engineIsRunning = false
+    private var supportsHaptics: Bool
+    private let notificationGenerator = UINotificationFeedbackGenerator()
+    private let impactGenerator = UIImpactFeedbackGenerator(style: .heavy)
+
+    init() {
+        let capabilities = CHHapticEngine.capabilitiesForHardware()
+        supportsHaptics = capabilities.supportsHaptics
+        notificationGenerator.prepare()
+        impactGenerator.prepare()
+
+        guard supportsHaptics else { return }
+
+        do {
+            engine = try CHHapticEngine()
+            engine?.isAutoShutdownEnabled = true
+            engine?.resetHandler = { [weak self] in
+                do {
+                    try self?.engine?.start()
+                    self?.engineIsRunning = true
+                } catch {
+                    self?.supportsHaptics = false
+                    self?.engineIsRunning = false
+                    print("⚠️ Failed to restart haptics engine: \(error.localizedDescription)")
+                }
+            }
+            engine?.stoppedHandler = { [weak self] _ in
+                self?.engineIsRunning = false
+            }
+            try engine?.start()
+            engineIsRunning = true
+        } catch {
+            supportsHaptics = false
+            engineIsRunning = false
+            print("⚠️ Failed to start haptics engine: \(error.localizedDescription)")
+        }
+    }
+
+    func playLightningPattern() {
+        guard supportsHaptics else {
+            playFallbackPattern()
+            return
+        }
+
+        do {
+            try startEngineIfNeeded()
+
+            let strike = CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
+                ],
+                relativeTime: 0
+            )
+
+            let rumble = CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.65),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.2)
+                ],
+                relativeTime: 0.02,
+                duration: 0.28
+            )
+
+            let crackle1 = CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.8),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.7)
+                ],
+                relativeTime: 0.12
+            )
+
+            let crackle2 = CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+                ],
+                relativeTime: 0.22
+            )
+
+            let pattern = try CHHapticPattern(
+                events: [strike, rumble, crackle1, crackle2],
+                parameterCurves: []
+            )
+
+            let player = try engine?.makeAdvancedPlayer(with: pattern)
+            try player?.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            print("⚠️ Failed to play lightning haptics: \(error.localizedDescription)")
+            engineIsRunning = false
+            playFallbackPattern()
+        }
+    }
+
+    private func startEngineIfNeeded() throws {
+        guard let engine else { return }
+        if engineIsRunning { return }
+        try engine.start()
+        engineIsRunning = true
+    }
+
+    private func playFallbackPattern() {
+        notificationGenerator.prepare()
+        notificationGenerator.notificationOccurred(.error)
+
+        impactGenerator.prepare()
+        impactGenerator.impactOccurred(intensity: 1.0)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) {
+            self.impactGenerator.prepare()
+            self.impactGenerator.impactOccurred(intensity: 0.6)
         }
     }
 }
