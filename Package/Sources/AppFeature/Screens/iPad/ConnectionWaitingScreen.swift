@@ -11,6 +11,7 @@ import SwiftUI
 struct ConnectionWaitingScreen: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @EnvironmentObject private var hostModel: ConnectionWaitinScreenModel
+    @EnvironmentObject private var characterManager: CharacterAssignmentManager
 
     @State private var sparkleRotation: Double = 0
     @State private var balloonFloat: CGFloat = 0
@@ -56,6 +57,7 @@ struct ConnectionWaitingScreen: View {
             }
         }
         .onAppear {
+            hostModel.configure(characterManager: characterManager)
             hostModel.startHosting()
             startAnimations()
         }
