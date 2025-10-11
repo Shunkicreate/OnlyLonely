@@ -37,14 +37,14 @@ struct ConnectionWaitingScreen: View {
                     // ステータスセクション
                     statusSection
 
-                    // 接続可能なデバイス一覧
-                    if !hostModel.availableDevices.isEmpty {
-                        availableDevicesSection
-                    }
-
                     // 接続済みデバイス一覧
                     if !hostModel.connectedDevices.isEmpty {
                         connectedDevicesSection
+                    }
+
+                    // 接続可能なデバイス一覧
+                    if !hostModel.availableDevices.isEmpty {
+                        availableDevicesSection
                     }
 
                     // デバッグボタン

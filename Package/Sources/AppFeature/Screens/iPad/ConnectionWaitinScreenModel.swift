@@ -92,7 +92,23 @@ final class ConnectionWaitinScreenModel: ObservableObject {
         sessionManager.$availablePeers
             .receive(on: RunLoop.main)
             .map { $0.filter { !$0.isConnected }.map(PeerDevice.init) }
-            .assign(to: &$availableDevices)
+            .sink { [weak self] newDevices in
+                guard let self else { return }
+                
+                // 既存のデバイスIDセット
+                let existingIds = Set(self.availableDevices.map(\.id))
+                
+                // 新しく見つかったデバイス（既存にないもの）
+                let addedDevices = newDevices.filter { !existingIds.contains($0.id) }
+                
+                // 既存のデバイスで、まだ有効なもの（新しいリストに含まれているもの）
+                let newDeviceIds = Set(newDevices.map(\.id))
+                let remainingDevices = self.availableDevices.filter { newDeviceIds.contains($0.id) }
+                
+                // 新しく見つかったデバイスを先頭に、既存のデバイスをその後ろに配置
+                self.availableDevices = addedDevices + remainingDevices
+            }
+            .store(in: &cancellables)
 
         sessionManager.$connectedPeers
             .receive(on: RunLoop.main)
