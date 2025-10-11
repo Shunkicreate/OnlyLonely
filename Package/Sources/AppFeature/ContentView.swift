@@ -9,6 +9,7 @@ import SwiftUI
 
 public struct ContentView: View {
     @StateObject private var coordinator = AppCoordinator()
+    @StateObject private var micPermissionManager = MicrophonePermissionManager()
     @State private var showDebug = false
 
     public init() {}
@@ -21,6 +22,10 @@ public struct ContentView: View {
                 }
         }
         .environmentObject(coordinator)
+        .onAppear {
+            // アプリ起動時にマイク権限をリクエスト
+            micPermissionManager.requestPermission()
+        }
         .overlay(alignment: .bottomTrailing) {
             Button {
                 showDebug = true
