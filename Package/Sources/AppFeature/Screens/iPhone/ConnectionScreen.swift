@@ -144,6 +144,7 @@ struct ConnectionScreen: View {
                 sparkleRotation = 360
             }
         }
+        .navigationBarBackButtonHidden()
     }
 
     private var statusMessage: String {
