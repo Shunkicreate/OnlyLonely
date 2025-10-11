@@ -85,6 +85,7 @@ struct ConnectionWaitingScreen: View {
         .onChange(of: playerBState) { _, _ in
             checkReadyToStart()
         }
+        .navigationBarBackButtonHidden()
     }
 
     private func startServer() {
