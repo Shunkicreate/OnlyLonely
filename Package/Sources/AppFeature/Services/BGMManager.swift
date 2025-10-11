@@ -7,28 +7,72 @@
 
 import AVFoundation
 import Combine
+import SwiftUI
 
 @MainActor
 class BGMManager: ObservableObject {
     private var audioPlayer: AVAudioPlayer?
     @Published var isPlaying: Bool = false
     @Published var volume: Float = 0.3 // デフォルト音量（0.0〜1.0）
-    
+    private var wasPlayingBeforeBackground = false
+    private var cancellables = Set<AnyCancellable>()
+
     static let shared = BGMManager()
-    
+
     private init() {
         setupAudioSession()
+        setupAppLifecycleObservers()
     }
     
     /// オーディオセッションの設定
     private func setupAudioSession() {
         do {
-            // バックグラウンド再生は不要、アプリ内のみで再生
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            // アプリ内のみで再生、バックグラウンドでは停止
+            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("❌ BGMManager: オーディオセッションの設定に失敗: \(error)")
         }
+    }
+
+    /// アプリのライフサイクルイベントを監視
+    private func setupAppLifecycleObservers() {
+        // バックグラウンドに移行する時
+        NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleWillResignActive()
+                }
+            }
+            .store(in: &cancellables)
+
+        // フォアグラウンドに戻る時
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.handleDidBecomeActive()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// バックグラウンドに移行する時の処理
+    private func handleWillResignActive() {
+        wasPlayingBeforeBackground = isPlaying
+        if isPlaying {
+            pause()
+            print("📱 BGMManager: バックグラウンドに移行したため一時停止")
+        }
+    }
+
+    /// フォアグラウンドに戻る時の処理
+    private func handleDidBecomeActive() {
+        // iPadのみで、以前再生していた場合は再開
+        if DeviceType.current == .iPad && wasPlayingBeforeBackground {
+            resume()
+            print("📱 BGMManager: フォアグラウンドに戻ったため再開")
+        }
+        wasPlayingBeforeBackground = false
     }
     
     /// BGMの再生開始（ループ）
