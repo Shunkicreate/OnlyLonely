@@ -18,6 +18,8 @@ struct iPhoneGameplayScreen: View {
     @State private var currentAltitude: Double = 0
     @State private var windForce: Float = 0
     @State private var previousWindForce: Float = 0 // 前回の風力値（サンプル不足時用）
+    @State private var gameTimer: Timer?
+    @State private var altitudeTimer: Timer?
 
     var body: some View {
         ZStack {
@@ -118,6 +120,7 @@ struct iPhoneGameplayScreen: View {
         .onDisappear {
             micLevelManager.stopMonitoring()
             motionManager.stopDeviceMotionUpdates()
+            stopTimers()
         }
         .navigationBarBackButtonHidden()
     }
@@ -126,14 +129,18 @@ struct iPhoneGameplayScreen: View {
         // マイク監視開始
         micLevelManager.startMonitoring()
         motionManager.startDeviceMotionUpdates()
+        stopTimers()
 
         // タイマー開始
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             if timeRemaining > 0 {
                 timeRemaining -= 1
             } else {
                 timer.invalidate()
+                gameTimer = nil
                 // ゲーム終了
+                altitudeTimer?.invalidate()
+                altitudeTimer = nil
                 Task { @MainActor in
                     coordinator.navigate(to: .iPhoneResult)
                 }
@@ -141,7 +148,7 @@ struct iPhoneGameplayScreen: View {
         }
 
         // 高度更新（30Hz）
-        Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
+        altitudeTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
             // 高度を更新（簡易シミュレーション）
             currentAltitude += Double(micLevelManager.windForce) * 2.0
         }
@@ -213,6 +220,13 @@ struct iPhoneGameplayScreen: View {
         let normalizedTilt = max(-1, min(1, motionManager.roll / tiltRange))
         let maxOffset: CGFloat = 120
         return CGFloat(normalizedTilt) * maxOffset
+    }
+
+    private func stopTimers() {
+        gameTimer?.invalidate()
+        gameTimer = nil
+        altitudeTimer?.invalidate()
+        altitudeTimer = nil
     }
 }
 
