@@ -203,7 +203,29 @@ struct TitleScreen: View {
                         .padding(.horizontal, 16)
 
                     Spacer()
-                        .frame(height: 80)
+                        .frame(height: 20)
+                    
+                    // クレジットリンク（小さめ）
+                    Button {
+                        coordinator.navigate(to: .credits)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 12, weight: .regular))
+                            Text("クレジット")
+                                .nikumaruBody(size: 13)
+                        }
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(.white.opacity(0.1))
+                        )
+                    }
+                    
+                    Spacer()
+                        .frame(height: 40)
                 }
             }
         }

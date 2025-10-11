@@ -8,6 +8,7 @@ import SwiftUI
 enum AppRoute: Hashable {
     // Common
     case title
+    case credits
 
     // iPad
     case connectionWaiting

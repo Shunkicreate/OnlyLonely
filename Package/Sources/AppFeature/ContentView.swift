@@ -63,6 +63,8 @@ public struct ContentView: View {
         // Common
         case .title:
             TitleScreen()
+        case .credits:
+            CreditsScreen()
 
         // iPad
         case .connectionWaiting:
