@@ -71,16 +71,6 @@ struct WaitingScreen: View {
                     .padding(.top, 20)
 
                 Spacer()
-
-                // キャンセルボタン
-                Button {
-                    coordinator.navigateToRoot()
-                } label: {
-                    Text("キャンセル")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.bottom, 40)
             }
         }
         .onAppear {
@@ -96,6 +86,7 @@ struct WaitingScreen: View {
                 }
             }
         }
+        .navigationBarBackButtonHidden()
     }
 }
 

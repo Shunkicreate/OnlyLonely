@@ -118,6 +118,7 @@ struct iPhoneGameplayScreen: View {
         .onDisappear {
             micLevelManager.stopMonitoring()
         }
+        .navigationBarBackButtonHidden()
     }
 
     private func startGame() {

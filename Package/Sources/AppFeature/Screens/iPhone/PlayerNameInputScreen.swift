@@ -71,21 +71,12 @@ struct PlayerNameInputScreen: View {
                 .padding(.top, 20)
 
                 Spacer()
-
-                // 戻るボタン
-                Button {
-                    coordinator.navigateBack()
-                } label: {
-                    Text("戻る")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.bottom, 40)
             }
         }
         .onAppear {
             isTextFieldFocused = true
         }
+        .navigationBarBackButtonHidden()
     }
 
     private func joinGame() {

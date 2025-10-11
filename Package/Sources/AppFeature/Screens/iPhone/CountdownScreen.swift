@@ -49,6 +49,7 @@ struct CountdownScreen: View {
         .onAppear {
             startCountdown()
         }
+        .navigationBarBackButtonHidden()
     }
 
     private func startCountdown() {
