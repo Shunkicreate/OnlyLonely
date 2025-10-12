@@ -11,8 +11,8 @@ import SwiftUI
 struct iPhoneResultScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
 
-    @State private var playerAltitude: Double = 450
-    @State private var opponentAltitude: Double = 380
+    @State private var playerAltitude: Double = 0
+    @State private var opponentAltitude: Double = 0
     @State private var showAnimation = false
     @State private var sparkleRotation: Double = 0
     @State private var balloonFloatOffset: CGFloat = 0
