@@ -272,41 +272,21 @@ struct iPadResultScreen: View {
                     
                     Spacer().frame(height: 20)
                     
-                    // ボタンエリア
-                    HStack(spacing: 40) {
-                        // もう一度ボタン
-                        FluffyResultButton(
-                            title: "もういちど",
-                            gradient: LinearGradient(
-                                colors: [
-                                    Color(hex: "#A29BFE"),
-                                    Color(hex: "#6C5CE7")
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            shadowColor: Color(hex: "#A29BFE"),
-                            icon: "blue"
-                        ) {
-                            coordinator.replace(with: .connectionWaiting)
-                        }
-                        
-                        // おわるボタン
-                        FluffyResultButton(
-                            title: "おわる",
-                            gradient: LinearGradient(
-                                colors: [
-                                    Color(hex: "#FDA7DF"),
-                                    Color(hex: "#F48FB1")
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            shadowColor: Color(hex: "#FDA7DF"),
-                            icon: "red"
-                        ) {
-                            coordinator.navigateToRoot()
-                        }
+                    // おわるボタン
+                    FluffyResultButton(
+                        title: "おわる",
+                        gradient: LinearGradient(
+                            colors: [
+                                Color(hex: "#FDA7DF"),
+                                Color(hex: "#F48FB1")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        shadowColor: Color(hex: "#FDA7DF"),
+                        icon: "red"
+                    ) {
+                        coordinator.navigateToRoot()
                     }
                     .padding(.bottom, 60)
                 }
