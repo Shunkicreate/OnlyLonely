@@ -162,6 +162,7 @@ struct iPadGameplayScreen: View {
                         VStack {
                             Spacer()
                             AltitudeLabel(
+                                playerName: screenModel.displayName(for: .playerA),
                                 altitude: playerAAltitude,
                                 character: characterManager.character(for: "A")
                             )
@@ -174,6 +175,7 @@ struct iPadGameplayScreen: View {
                         VStack {
                             Spacer()
                             AltitudeLabel(
+                                playerName: screenModel.displayName(for: .playerB),
                                 altitude: playerBAltitude,
                                 character: characterManager.character(for: "B")
                             )
@@ -647,6 +649,7 @@ final class PlayerLaneScene: SKScene, SKPhysicsContactDelegate {
 
 /// 高度ラベル（画面左端に配置）
 struct AltitudeLabel: View {
+    let playerName: String
     let altitude: Double
     let character: CharacterInfo
 
@@ -667,57 +670,93 @@ struct AltitudeLabel: View {
     }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            // 数値
+        HStack(alignment: .bottom, spacing: 12) {
+            HStack(alignment: .bottom, spacing: 6) {
+                // 数値
+                ZStack {
+                    // 4方向黒枠
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundColor(.black)
+                        .offset(x: -2, y: -2)
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundColor(.black)
+                        .offset(x: 2, y: -2)
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundColor(.black)
+                        .offset(x: -2, y: 2)
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundColor(.black)
+                        .offset(x: 2, y: 2)
+
+                    // グロー
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundStyle(gradient)
+                        .blur(radius: 5)
+
+                    // メインテキスト
+                    Text("\(displayAltitude)")
+                        .nikumaruTitle(size: 56)
+                        .foregroundStyle(gradient)
+                }
+
+                // 「m」を数値の右側に配置
+                ZStack {
+                    // 黒枠
+                    Text("m")
+                        .nikumaruBody(size: 24)
+                        .foregroundColor(.black)
+                        .offset(x: -1, y: -1)
+                    Text("m")
+                        .nikumaruBody(size: 24)
+                        .foregroundColor(.black)
+                        .offset(x: 1, y: 1)
+
+                    // メインテキスト
+                    Text("m")
+                        .nikumaruBody(size: 24)
+                        .foregroundColor(.white)
+                }
+                .offset(x: 0, y: -6)
+            }
+
+            Spacer().frame(width: 15)
+
+            // プレイヤー名（左側）
             ZStack {
                 // 4方向黒枠
-                Text("\(displayAltitude)")
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundColor(.black)
-                    .offset(x: -2, y: -2)
-                Text("\(displayAltitude)")
+                    .offset(x: -1.5, y: -1.5)
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundColor(.black)
-                    .offset(x: 2, y: -2)
-                Text("\(displayAltitude)")
+                    .offset(x: 1.5, y: -1.5)
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundColor(.black)
-                    .offset(x: -2, y: 2)
-                Text("\(displayAltitude)")
+                    .offset(x: -1.5, y: 1.5)
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundColor(.black)
-                    .offset(x: 2, y: 2)
+                    .offset(x: 1.5, y: 1.5)
 
                 // グロー
-                Text("\(displayAltitude)")
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundStyle(gradient)
-                    .blur(radius: 5)
+                    .blur(radius: 4)
 
                 // メインテキスト
-                Text("\(displayAltitude)")
+                Text(playerName)
                     .nikumaruTitle(size: 56)
                     .foregroundStyle(gradient)
             }
-
-            // 「m」を数値の右側に配置
-            ZStack {
-                // 黒枠
-                Text("m")
-                    .nikumaruBody(size: 24)
-                    .foregroundColor(.black)
-                    .offset(x: -1, y: -1)
-                Text("m")
-                    .nikumaruBody(size: 24)
-                    .foregroundColor(.black)
-                    .offset(x: 1, y: 1)
-
-                // メインテキスト
-                Text("m")
-                    .nikumaruBody(size: 24)
-                    .foregroundColor(.white)
-            }
-            .offset(x: 0, y: -6)
         }
     }
 }
