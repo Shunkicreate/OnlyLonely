@@ -11,8 +11,8 @@ import SwiftUI
 struct iPhoneResultScreen: View {
     @EnvironmentObject var coordinator: AppCoordinator
 
-    @State private var playerAltitude: Double = 450
-    @State private var opponentAltitude: Double = 380
+    @State private var playerAltitude: Double = 0
+    @State private var opponentAltitude: Double = 0
     @State private var showAnimation = false
     @State private var sparkleRotation: Double = 0
     @State private var balloonFloatOffset: CGFloat = 0
@@ -39,11 +39,6 @@ struct iPhoneResultScreen: View {
                 .ignoresSafeArea()
                 .opacity(0.3)
 
-            // 勝利時の紙吹雪
-            if isWinner {
-                confettiView
-            }
-
             // 花びら（全ての結果で表示、勝利時はより多く）
             petalView
 
@@ -57,10 +52,6 @@ struct iPhoneResultScreen: View {
 
                     // きらきら装飾
                     sparkleDecoration
-
-                    // スコア表示
-                    scoreSection
-                        .padding(.horizontal, HarajukuSpacing.xl)
 
                     // 風船アニメーション
                     balloonAnimation
@@ -109,14 +100,14 @@ struct iPhoneResultScreen: View {
             VStack(spacing: HarajukuSpacing.md) {
                 ZStack {
                     // 影（最下層）
-                    Text(resultTitle)
+                    Text("げーむしゅうりょう！！")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(.black.opacity(0.6))
                         .offset(x: 0, y: 8)
                         .blur(radius: 4)
 
                     // グロウ（中間層）
-                    Text(resultTitle)
+                    Text("げーむしゅうりょう！！")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(resultTitleGradient)
                         .offset(x: 0, y: 4)
@@ -126,7 +117,7 @@ struct iPhoneResultScreen: View {
                     // ストローク（4方向）
                     ForEach([-2, 2], id: \.self) { x in
                         ForEach([-2, 2], id: \.self) { y in
-                            Text(resultTitle)
+                            Text("げーむしゅうりょう！！")
                                 .nikumaruTitle(size: titleSize(for: geometry.size.width))
                                 .foregroundStyle(.white)
                                 .offset(x: CGFloat(x), y: CGFloat(y))
@@ -135,12 +126,12 @@ struct iPhoneResultScreen: View {
                     }
 
                     // メインテキスト
-                    Text(resultTitle)
+                    Text("げーむしゅうりょう！！")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(resultTitleGradient)
 
                     // ハイライト
-                    Text(resultTitle)
+                    Text("げーむしゅうりょう！！")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(
                             LinearGradient(
@@ -156,7 +147,7 @@ struct iPhoneResultScreen: View {
                 .shadow(color: resultShadowColor.opacity(0.6), radius: 20, x: 0, y: 8)
 
                 // サブタイトル
-                Text(resultSubtitle)
+                Text("またあそんでね！！！")
                     .nikumaruBody(size: subtitleSize(for: geometry.size.width))
                     .foregroundColor(.white)
                     .opacity(0.9)
@@ -236,49 +227,6 @@ struct iPhoneResultScreen: View {
     private func sparkleOffset(for width: CGFloat) -> CGFloat {
         // 画像が重ならないように、画像サイズの80%でオフセット
         sparkleSize(for: width) * 0.8
-    }
-
-    // MARK: - Score Section
-
-    private var scoreSection: some View {
-        VStack(spacing: HarajukuSpacing.lg) {
-            // あなたのスコア
-            ResultCard(
-                label: "あなた",
-                altitude: playerAltitude,
-                isHighlight: isWinner,
-                color: HarajukuColors.pastelPink
-            )
-
-            // 相手のスコア
-            ResultCard(
-                label: "あいて",
-                altitude: opponentAltitude,
-                isHighlight: !isWinner && !isDraw,
-                color: HarajukuColors.pastelBlue
-            )
-
-            // 差分表示
-            if !isDraw {
-                HStack(spacing: 8) {
-                    Text("さ")
-                        .nikumaruCaption(size: 16)
-                        .foregroundColor(.white.opacity(0.8))
-
-                    Text("\(isWinner ? "+" : "")\(Int(abs(playerAltitude - opponentAltitude)))メートル")
-                        .nikumaruHeadline(size: 22)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .fluffyBorder(color: .white, width: 2)
-                )
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-            }
-        }
     }
 
     // MARK: - Balloon Animation
@@ -383,7 +331,7 @@ struct iPhoneResultScreen: View {
     }
 
     private var petalCount: Int {
-        isWinner ? 30 : 15
+       return 30
     }
 
     private func petalSize(index: Int) -> CGFloat {
@@ -403,58 +351,15 @@ struct iPhoneResultScreen: View {
         return colors[index % colors.count]
     }
 
-    // MARK: - Computed Properties
-
-    private var resultTitle: String {
-        if isDraw {
-            return "ひきわけ！"
-        } else if isWinner {
-            return "かち！"
-        } else {
-            return "まけ..."
-        }
-    }
-
-    private var resultSubtitle: String {
-        if isDraw {
-            return "おなじたかさだね！"
-        } else if isWinner {
-            return "すごい！たかくとんだね！"
-        } else {
-            return "またチャレンジしよう！"
-        }
-    }
-
     private var resultTitleGradient: LinearGradient {
-        if isWinner {
-            return LinearGradient(
-                colors: [
-                    Color(hex: "#FFD700"),
-                    Color(hex: "#FFA500"),
-                    Color(hex: "#FF6B9D")
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else if isDraw {
-            return LinearGradient(
-                colors: [
-                    HarajukuColors.pastelBlueLight,
-                    HarajukuColors.pastelMint
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        } else {
-            return LinearGradient(
-                colors: [
-                    HarajukuColors.pastelPurple,
-                    HarajukuColors.pastelBlue
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
+        return LinearGradient(
+            colors: [
+                HarajukuColors.pastelBlueLight,
+                HarajukuColors.pastelMint
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     private var resultShadowColor: Color {
