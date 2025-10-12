@@ -100,14 +100,14 @@ struct iPhoneResultScreen: View {
             VStack(spacing: HarajukuSpacing.md) {
                 ZStack {
                     // 影（最下層）
-                    Text("げーむしゅうりょう！！")
+                    Text("おわり")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(.black.opacity(0.6))
                         .offset(x: 0, y: 8)
                         .blur(radius: 4)
 
                     // グロウ（中間層）
-                    Text("げーむしゅうりょう！！")
+                    Text("おわり")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(resultTitleGradient)
                         .offset(x: 0, y: 4)
@@ -117,7 +117,7 @@ struct iPhoneResultScreen: View {
                     // ストローク（4方向）
                     ForEach([-2, 2], id: \.self) { x in
                         ForEach([-2, 2], id: \.self) { y in
-                            Text("げーむしゅうりょう！！")
+                            Text("おわり")
                                 .nikumaruTitle(size: titleSize(for: geometry.size.width))
                                 .foregroundStyle(.white)
                                 .offset(x: CGFloat(x), y: CGFloat(y))
@@ -126,12 +126,12 @@ struct iPhoneResultScreen: View {
                     }
 
                     // メインテキスト
-                    Text("げーむしゅうりょう！！")
+                    Text("おわり")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(resultTitleGradient)
 
                     // ハイライト
-                    Text("げーむしゅうりょう！！")
+                    Text("おわり")
                         .nikumaruTitle(size: titleSize(for: geometry.size.width))
                         .foregroundStyle(
                             LinearGradient(
